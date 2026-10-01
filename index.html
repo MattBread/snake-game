@@ -7,333 +7,286 @@
 <title>MattBread Arcade</title>
 
 <style>
+
 * {
     box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-html {
-    scroll-behavior: smooth;
 }
 
 body {
-    min-height: 100vh;
+    margin: 0;
     font-family: Arial, Helvetica, sans-serif;
     background:
-        radial-gradient(circle at 20% 20%, rgba(90, 50, 180, .25), transparent 35%),
-        radial-gradient(circle at 80% 30%, rgba(0, 180, 255, .18), transparent 35%),
-        linear-gradient(135deg, #070914, #101326 50%, #070914);
+        radial-gradient(circle at top, #18234d 0%, #090b18 45%, #05060d 100%);
     color: white;
+    min-height: 100vh;
 }
-
-/* HEADER */
 
 header {
     position: sticky;
     top: 0;
-    z-index: 100;
-    backdrop-filter: blur(15px);
-    background: rgba(7, 9, 20, .82);
-    border-bottom: 1px solid rgba(255,255,255,.1);
-}
+    z-index: 10;
 
-.nav {
-    max-width: 1200px;
-    margin: auto;
-    padding: 18px 25px;
+    padding: 18px 30px;
+
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
+
+    background: rgba(5, 7, 18, 0.9);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(12px);
 }
 
 .logo {
-    font-size: 25px;
-    font-weight: 900;
-    letter-spacing: 1px;
-}
-
-.logo span {
-    color: #7c5cff;
-}
-
-.nav-links {
-    display: flex;
-    gap: 20px;
-}
-
-.nav-links a {
-    color: #ddd;
-    text-decoration: none;
+    font-size: 24px;
     font-weight: bold;
 }
 
-.nav-links a:hover {
-    color: #8d72ff;
+nav a {
+    color: #ccc;
+    text-decoration: none;
+    margin-left: 25px;
 }
 
-/* HERO */
+nav a:hover {
+    color: white;
+}
 
 .hero {
-    max-width: 1200px;
-    margin: auto;
-    padding: 80px 25px 55px;
     text-align: center;
+    padding: 80px 20px 50px;
 }
 
 .hero h1 {
-    font-size: clamp(42px, 7vw, 80px);
-    line-height: 1;
-    font-weight: 1000;
-    margin-bottom: 20px;
-}
+    font-size: clamp(42px, 8vw, 82px);
+    margin: 0;
 
-.hero h1 span {
-    background: linear-gradient(90deg, #8b5cf6, #22d3ee);
+    background: linear-gradient(90deg, #ffffff, #7dd3fc, #a78bfa);
     -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    -webkit-text-fill-color: transparent;
 }
 
 .hero p {
-    color: #b8bdd3;
-    font-size: 20px;
-    max-width: 650px;
-    margin: auto;
+    color: #aaa;
+    font-size: 18px;
+    margin-top: 15px;
 }
 
-/* SEARCH */
+.search {
+    display: block;
+    width: min(500px, 90%);
+    margin: 30px auto 0;
 
-.search-area {
-    max-width: 650px;
-    margin: 35px auto 0;
-}
+    padding: 15px 20px;
 
-#search {
-    width: 100%;
-    padding: 17px 22px;
     border-radius: 14px;
-    border: 1px solid rgba(255,255,255,.15);
-    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,0.15);
+
+    background: rgba(255,255,255,0.07);
     color: white;
-    font-size: 17px;
+
+    font-size: 16px;
     outline: none;
 }
 
-#search:focus {
-    border-color: #7c5cff;
-    box-shadow: 0 0 25px rgba(124,92,255,.25);
+.search::placeholder {
+    color: #888;
 }
-
-#search::placeholder {
-    color: #9297ac;
-}
-
-/* MAIN */
 
 .container {
-    max-width: 1200px;
+    width: min(1200px, 92%);
     margin: auto;
-    padding: 20px 25px 80px;
+    padding-bottom: 80px;
 }
 
 .section-title {
     font-size: 28px;
-    margin: 35px 0 20px;
+    margin: 40px 0 20px;
 }
 
-.section-title span {
-    color: #8d72ff;
-}
-
-/* GAME GRID */
-
-.game-grid {
+.games {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 22px;
 }
-
-/* GAME CARD */
 
 .game-card {
     position: relative;
-    min-height: 230px;
-    padding: 25px;
-    border-radius: 20px;
-    overflow: hidden;
-    text-decoration: none;
+
+    display: block;
+
+    padding: 28px;
+
+    min-height: 250px;
+
+    border-radius: 22px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,0.10),
+            rgba(255,255,255,0.035)
+        );
+
+    border: 1px solid rgba(255,255,255,0.12);
+
     color: white;
-    border: 1px solid rgba(255,255,255,.12);
-    background: linear-gradient(
-        145deg,
-        rgba(255,255,255,.1),
-        rgba(255,255,255,.035)
-    );
-    box-shadow: 0 15px 35px rgba(0,0,0,.25);
-    transition: .25s ease;
+    text-decoration: none;
+
+    transition:
+        transform 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .game-card:hover {
-    transform: translateY(-8px);
-    border-color: rgba(139,92,246,.65);
+    transform: translateY(-7px);
+
+    border-color: rgba(125,211,252,0.7);
+
     box-shadow:
-        0 20px 45px rgba(0,0,0,.4),
-        0 0 30px rgba(124,92,255,.15);
+        0 15px 40px rgba(0,0,0,0.35),
+        0 0 25px rgba(125,211,252,0.12);
 }
 
 .game-icon {
-    font-size: 58px;
-    margin-bottom: 18px;
+    font-size: 55px;
+    margin-bottom: 15px;
 }
 
 .game-card h3 {
-    font-size: 24px;
-    margin-bottom: 8px;
+    margin: 0 0 10px;
+    font-size: 25px;
 }
 
 .game-card p {
-    color: #aeb3c7;
+    color: #aaa;
     line-height: 1.5;
 }
 
 .play {
-    position: absolute;
-    right: 20px;
-    bottom: 20px;
+    margin-top: 22px;
+
+    display: inline-block;
+
     padding: 9px 15px;
+
     border-radius: 10px;
-    background: #7c5cff;
+
+    background: rgba(125,211,252,0.12);
+
+    color: #7dd3fc;
+
     font-weight: bold;
-    font-size: 13px;
 }
 
 .coming-soon {
-    opacity: .68;
-    cursor: default;
-}
-
-.coming-soon:hover {
-    transform: none;
-    border-color: rgba(255,255,255,.12);
-    box-shadow: 0 15px 35px rgba(0,0,0,.25);
+    opacity: 0.65;
 }
 
 .badge {
     position: absolute;
     top: 18px;
     right: 18px;
-    font-size: 11px;
-    padding: 6px 9px;
-    border-radius: 20px;
-    background: rgba(255,255,255,.1);
-    color: #aaaec0;
-}
 
-/* FOOTER */
+    padding: 6px 10px;
+
+    border-radius: 8px;
+
+    background: rgba(255,255,255,0.08);
+
+    color: #999;
+
+    font-size: 11px;
+    font-weight: bold;
+}
 
 footer {
     text-align: center;
-    padding: 35px 20px;
-    color: #74798f;
-    border-top: 1px solid rgba(255,255,255,.08);
+    color: #666;
+    padding: 30px;
+    border-top: 1px solid rgba(255,255,255,0.08);
 }
 
-footer strong {
-    color: #a5a9bd;
-}
+@media(max-width:600px) {
 
-/* MOBILE */
-
-@media (max-width: 650px) {
-
-    .nav {
+    header {
         padding: 15px;
     }
 
-    .nav-links {
-        gap: 10px;
-        font-size: 13px;
+    nav a {
+        margin-left: 10px;
+        font-size: 14px;
     }
 
     .hero {
-        padding: 60px 18px 40px;
+        padding-top: 55px;
     }
 
-    .hero p {
-        font-size: 17px;
-    }
-
-    .container {
-        padding-left: 18px;
-        padding-right: 18px;
-    }
-
-    .game-grid {
-        grid-template-columns: 1fr;
-    }
 }
+
 </style>
 </head>
 
 <body>
 
 <header>
-    <div class="nav">
 
-        <div class="logo">
-            🎮 <span>MattBread</span> Arcade
-        </div>
-
-        <div class="nav-links">
-            <a href="#games">Games</a>
-            <a href="#coming">Coming Soon</a>
-        </div>
-
+    <div class="logo">
+        🎮 MattBread Arcade
     </div>
+
+    <nav>
+        <a href="#games">Games</a>
+        <a href="#coming">Coming Soon</a>
+    </nav>
+
 </header>
 
 
 <section class="hero">
 
-    <h1>
-        Welcome to<br>
-        <span>MattBread Arcade</span>
-    </h1>
+    <h1>MattBread Arcade</h1>
 
     <p>
-        Free browser games made for fun.
-        Pick a game and start playing.
+        Play games. Beat records. Have fun.
     </p>
 
-    <div class="search-area">
-        <input
-            type="text"
-            id="search"
-            placeholder="🔎 Search games..."
-            onkeyup="searchGames()"
-        >
-    </div>
+    <input
+        id="search"
+        class="search"
+        type="text"
+        placeholder="🔎 Search games..."
+        oninput="searchGames()"
+    >
 
 </section>
 
 
-<main class="container" id="games">
+<main class="container">
 
-    <h2 class="section-title">
-        🎮 <span>Play Now</span>
+    <h2 class="section-title" id="games">
+        🎮 Games
     </h2>
 
-    <div class="game-grid">
+
+    <div class="games">
+
+        <!-- SNAKE -->
 
         <a class="game-card" href="games/snake/">
 
-            <div class="game-icon">🐍</div>
+            <div class="game-icon">
+                🐍
+            </div>
 
-            <h3>Snake V2</h3>
+            <h3>
+                Snake
+            </h3>
 
             <p>
-                Eat, grow and try to beat your best score.
+                Classic Snake with colorful visuals,
+                records, wins and losses.
             </p>
 
             <div class="play">
@@ -343,95 +296,222 @@ footer strong {
         </a>
 
 
-        <div class="game-card coming-soon">
+        <!-- PONG -->
 
-            <div class="badge">COMING SOON</div>
+        <a class="game-card" href="games/pong/">
 
-            <div class="game-icon">🏓</div>
-
-            <h3>Pong</h3>
-
-            <p>
-                Classic paddle action with a modern arcade feel.
-            </p>
-
-        </div>
-
-
-        <div class="game-card coming-soon">
-
-            <div class="badge">COMING SOON</div>
-
-            <div class="game-icon">🧱</div>
-
-            <h3>Breakout</h3>
-
-            <p>
-                Smash the bricks and keep the ball alive.
-            </p>
-
-        </div>
-
-
-        <div class="game-card coming-soon">
-
-            <div class="badge">COMING SOON</div>
-
-            <div class="game-icon">🧠</div>
-
-            <h3>Memory Match</h3>
-
-            <p>
-                Test your memory and match the cards.
-            </p>
-
-        </div>
-
-    </div>
-
-
-    <section id="coming">
-
-        <h2 class="section-title">
-            🚀 <span>More Games Coming</span>
-        </h2>
-<a class="game-card" href="games/pong/">
-
-    <div class="game-icon">🏓</div>
-
-    <h3>Pong</h3>
-
-    <p>
-        Classic paddle action with a modern arcade feel.
-    </p>
-
-    <div class="play">
-        PLAY →
-    </div>
-
-</a>
-        
-               
-
-            
-
-          
-
-            
-            s you can.</p>
+            <div class="game-icon">
+                🏓
             </div>
 
+            <h3>
+                Pong
+            </h3>
+
+            <p>
+                Classic paddle action with a
+                modern arcade feel.
+            </p>
+
+            <div class="play">
+                PLAY →
+            </div>
+
+        </a>
+
+
+        <!-- BREAKOUT -->
+
+        <div class="game-card coming-soon">
+
+            <div class="badge">
+                COMING SOON
+            </div>
+
+            <div class="game-icon">
+                🧱
+            </div>
+
+            <h3>
+                Breakout
+            </h3>
+
+            <p>
+                Smash through bricks and chase
+                the highest score.
+            </p>
+
         </div>
 
-    </section>
+
+        <!-- MEMORY -->
+
+        <div class="game-card coming-soon">
+
+            <div class="badge">
+                COMING SOON
+            </div>
+
+            <div class="game-icon">
+                🧠
+            </div>
+
+            <h3>
+                Memory Match
+            </h3>
+
+            <p>
+                Test your memory and match
+                every pair.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <h2 class="section-title" id="coming">
+        🚀 More Games Coming
+    </h2>
+
+
+    <div class="games">
+
+        <div class="game-card coming-soon">
+
+            <div class="badge">
+                COMING SOON
+            </div>
+
+            <div class="game-icon">
+                🚀
+            </div>
+
+            <h3>
+                Space Shooter
+            </h3>
+
+            <p>
+                Defend the galaxy from waves
+                of enemies.
+            </p>
+
+        </div>
+
+
+        <div class="game-card coming-soon">
+
+            <div class="badge">
+                COMING SOON
+            </div>
+
+            <div class="game-icon">
+                🏎️
+            </div>
+
+            <h3>
+                Racing
+            </h3>
+
+            <p>
+                Race for the fastest lap time.
+            </p>
+
+        </div>
+
+
+        <div class="game-card coming-soon">
+
+            <div class="badge">
+                COMING SOON
+            </div>
+
+            <div class="game-icon">
+                🏀
+            </div>
+
+            <h3>
+                Basket Shot
+            </h3>
+
+            <p>
+                See how many baskets you can make.
+            </p>
+
+        </div>
+
+
+        <div class="game-card coming-soon">
+
+            <div class="badge">
+                COMING SOON
+            </div>
+
+            <div class="game-icon">
+                👽
+            </div>
+
+            <h3>
+                Alien Defense
+            </h3>
+
+            <p>
+                Stop the alien invasion.
+            </p>
+
+        </div>
+
+
+        <div class="game-card coming-soon">
+
+            <div class="badge">
+                COMING SOON
+            </div>
+
+            <div class="game-icon">
+                🎯
+            </div>
+
+            <h3>
+                Aim Trainer
+            </h3>
+
+            <p>
+                Test your speed and accuracy.
+            </p>
+
+        </div>
+
+
+        <div class="game-card coming-soon">
+
+            <div class="badge">
+                COMING SOON
+            </div>
+
+            <div class="game-icon">
+                🫧
+            </div>
+
+            <h3>
+                Bubble Pop
+            </h3>
+
+            <p>
+                Pop bubbles and chase a high score.
+            </p>
+
+        </div>
+
+    </div>
 
 </main>
 
 
 <footer>
-    <strong>MattBread Arcade</strong>
-    <br>
-    More games are being built.
+
+    © 2026 MattBread Arcade
+
 </footer>
 
 
@@ -440,9 +520,10 @@ footer strong {
 function searchGames() {
 
     const search =
-        document.getElementById("search")
-        .value
-        .toLowerCase();
+        document
+            .getElementById("search")
+            .value
+            .toLowerCase();
 
     const cards =
         document.querySelectorAll(".game-card");
@@ -453,12 +534,17 @@ function searchGames() {
             card.innerText.toLowerCase();
 
         if (text.includes(search)) {
+
             card.style.display = "";
+
         } else {
+
             card.style.display = "none";
+
         }
 
     });
+
 }
 
 </script>
