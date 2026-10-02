@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Memory Match - MattBread Arcade</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: #080a12;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.game-wrap {
+    width: 100%;
+    max-width: 650px;
+    padding: 25px 15px 40px;
+    text-align: center;
+}
+
+h1 {
+    margin: 0;
+    font-size: 42px;
+}
+
+.subtitle {
+    color: #999;
+    margin: 8px 0 20px;
+}
+
+.stats {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+
+.stat {
+    background: #151923;
+    border: 1px solid #292e3d;
+    border-radius: 10px;
+    padding: 10px 16px;
+}
+
+.stat span {
+    font-weight: bold;
+}
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.card {
+    aspect-ratio: 1 / 1;
+    border: 0;
+    border-radius: 13px;
+    background: #202638;
+    color: white;
+    cursor: pointer;
+    font-size: 35px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.25s, background 0.2s;
+}
+
+.card:hover {
+    background: #2b344b;
+}
+
+.card.flipped {
+    transform: rotateY(180deg);
+}
+
+.card.matched {
+    background: #183d2a;
+}
+
+.card .front,
+.card .back {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backface-visibility: hidden;
+    border-radius: 13px;
+}
+
+.card .front {
+    background: #202638;
+    font-size: 28px;
+}
+
+.card .back {
+    background: #30394f;
+    transform: rotateY(180deg);
+}
+
+.card.matched .back {
+    background: #245c3a;
+}
+
+.buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 22px;
+}
+
+button.control {
+    border: 0;
+    border-radius: 9px;
+    padding: 11px 18px;
+    background: #1d2230;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button.control:hover {
+    background: #2b3244;
+}
+
+.message {
+    min-height: 28px;
+    margin-top: 16px;
+    font-weight: bold;
+}
+
+.instructions {
+    color: #777;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+@media (max-width: 500px) {
+    .game-wrap {
+        padding-top: 18px;
+    }
+
+    h1 {
+        font-size: 34px;
+    }
+
+    .board {
+        gap: 7px;
+    }
+
+    .card {
+        font-size: 27px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="game-wrap">
+
+    <h1>🧠 Memory Match</h1>
+
+    <div class="subtitle">
+        MattBread Arcade
+    </div>
+
+    <div class="stats">
+
+        <div class="stat">
+            Moves:
+            <span id="moves">0</span>
+        </div>
+
+        <div class="stat">
+            Matches:
+            <span id="matches">0</span>/8
+        </div>
+
+        <div class="stat">
+            Best:
+            <span id="best">--</span>
+        </div>
+
+    </div>
+
+    <div class="board" id="board"></div>
+
+    <div class="message" id="message"></div>
+
+    <div class="buttons">
+
+        <button class="control" onclick="newGame()">
+            ↻ NEW GAME
+        </button>
+
+        <button class="control" onclick="goHome()">
+            ⌂ ARCADE
+        </button>
+
+    </div>
+
+    <div class="instructions">
+        Find all 8 matching pairs using as few moves as possible.
+    </div>
+
+</div>
+
+<script>
+
+const symbols = [
+    "🍎",
+    "🍕",
+    "🚀",
+    "🎮",
+    "🐸",
+    "⭐",
+    "🌈",
+    "⚡"
+];
+
+const board = document.getElementById("board");
+const movesEl = document.getElementById("moves");
+const matchesEl = document.getElementById("matches");
+const bestEl = document.getElementById("best");
+const messageEl = document.getElementById("message");
+
+let cards = [];
+let firstCard = null;
+let secondCard = null;
+let locked = false;
+let moves = 0;
+let matches = 0;
+
+let best = Number(
+    localStorage.getItem("memoryMatchBest")
+) || 0;
+
+if (best > 0) {
+    bestEl.textContent = best;
+}
+
+function shuffle(array) {
+
+    for (let i = array.length - 1; i > 0; i--) {
+
+        const j = Math.floor(
+            Math.random() * (i + 1)
+        );
+
+        [array[i], array[j]] =
+            [array[j], array[i]];
+    }
+
+    return array;
+}
+
+function newGame() {
+
+    board.innerHTML = "";
+
+    firstCard = null;
+    secondCard = null;
+    locked = false;
+    moves = 0;
+    matches = 0;
+
+    movesEl.textContent = "0";
+    matchesEl.textContent = "0";
+    messageEl.textContent = "";
+
+    cards = shuffle([
+        ...symbols,
+        ...symbols
+    ]);
+
+    cards.forEach((symbol, index) => {
+
+        const card = document.createElement("button");
+
+        card.className = "card";
+        card.setAttribute(
+            "aria-label",
+            "Memory card"
+        );
+
+        card.innerHTML = `
+            <div class="front">?</div>
+            <div class="back">${symbol}</div>
+        `;
+
+        card.addEventListener(
+            "click",
+            () => flipCard(card, symbol)
+        );
+
+        board.appendChild(card);
+    });
+}
+
+function flipCard(card, symbol) {
+
+    if (locked) return;
+
+    if (card === firstCard) return;
+
+    if (card.classList.contains("matched")) {
+        return;
+    }
+
+    card.classList.add("flipped");
+
+    if (!firstCard) {
+
+        firstCard = card;
+
+        return;
+    }
+
+    secondCard = card;
+    moves++;
+
+    movesEl.textContent = moves;
+
+    checkMatch(symbol);
+}
+
+function checkMatch(symbol) {
+
+    const firstSymbol =
+        firstCard.querySelector(".back").textContent;
+
+    if (firstSymbol === symbol) {
+
+        firstCard.classList.add("matched");
+        secondCard.classList.add("matched");
+
+        matches++;
+
+        matchesEl.textContent = matches;
+
+        resetTurn();
+
+        if (matches === symbols.length) {
+            winGame();
+        }
+
+    } else {
+
+        locked = true;
+
+        setTimeout(() => {
+
+            firstCard.classList.remove("flipped");
+            secondCard.classList.remove("flipped");
+
+            resetTurn();
+
+        }, 800);
+    }
+}
+
+function resetTurn() {
+
+    firstCard = null;
+    secondCard = null;
+    locked = false;
+}
+
+function winGame() {
+
+    messageEl.textContent =
+        "🎉 You matched everything!";
+
+    if (best === 0 || moves < best) {
+
+        best = moves;
+
+        bestEl.textContent = best;
+
+        localStorage.setItem(
+            "memoryMatchBest",
+            best
+        );
+
+        messageEl.textContent =
+            "🏆 New Best Score!";
+    }
+}
+
+function goHome() {
+
+    window.location.href = "../../";
+}
+
+newGame();
+
+</script>
+
+</body>
+</html>
