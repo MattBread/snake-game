@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>MattBread Arcade</title>
+<title>Breakout - MattBread Arcade</title>
 
 <style>
 * {
@@ -13,210 +13,184 @@
 
 body {
     margin: 0;
-    font-family: Arial, Helvetica, sans-serif;
-    background:
-        radial-gradient(circle at top, #18234d 0%, #090b18 45%, #05060d 100%);
-    color: white;
     min-height: 100vh;
+    font-family: Arial, Helvetica, sans-serif;
+
+    background:
+        radial-gradient(circle at top, #18234d 0%, #090b18 50%, #05060d 100%);
+
+    color: white;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 20px;
 }
 
-header {
-    position: sticky;
-    top: 0;
-    z-index: 10;
+.game-wrapper {
+    width: min(950px, 100%);
+    text-align: center;
+}
 
-    padding: 18px 30px;
-
+.top-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
 
-    background: rgba(5, 7, 18, 0.9);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    backdrop-filter: blur(12px);
+    margin-bottom: 15px;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
-.logo {
-    font-size: 24px;
+.title {
+    font-size: 28px;
     font-weight: bold;
 }
 
-nav a {
-    color: #ccc;
-    text-decoration: none;
-    margin-left: 25px;
+.stats {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
-nav a:hover {
-    color: white;
+.stat {
+    padding: 8px 14px;
+    border-radius: 10px;
+
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.1);
+
+    font-weight: bold;
 }
 
-.hero {
-    text-align: center;
-    padding: 80px 20px 50px;
-}
-
-.hero h1 {
-    font-size: clamp(42px, 8vw, 82px);
-    margin: 0;
-
-    background: linear-gradient(90deg, #ffffff, #7dd3fc, #a78bfa);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.hero p {
-    color: #aaa;
-    font-size: 18px;
-    margin-top: 15px;
-}
-
-.search {
+canvas {
     display: block;
-    width: min(500px, 90%);
-    margin: 30px auto 0;
 
-    padding: 15px 20px;
+    width: 100%;
+    max-width: 900px;
+    height: auto;
 
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,0.15);
-
-    background: rgba(255,255,255,0.07);
-    color: white;
-
-    font-size: 16px;
-    outline: none;
-}
-
-.search::placeholder {
-    color: #888;
-}
-
-.container {
-    width: min(1200px, 92%);
     margin: auto;
-    padding-bottom: 80px;
+
+    background:
+        radial-gradient(circle at center, #111936, #050712);
+
+    border: 2px solid rgba(125,211,252,0.35);
+    border-radius: 18px;
+
+    box-shadow:
+        0 20px 60px rgba(0,0,0,0.45),
+        0 0 30px rgba(125,211,252,0.08);
+
+    touch-action: none;
 }
 
-.section-title {
-    font-size: 28px;
-    margin: 40px 0 20px;
+.buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 18px;
+    flex-wrap: wrap;
 }
 
-.games {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 22px;
+button {
+    border: 0;
+    padding: 12px 20px;
+
+    border-radius: 10px;
+
+    background: rgba(125,211,252,0.12);
+    color: #7dd3fc;
+
+    border: 1px solid rgba(125,211,252,0.25);
+
+    font-size: 15px;
+    font-weight: bold;
+
+    cursor: pointer;
 }
 
-.game-card {
-    position: relative;
-    display: block;
+button:hover {
+    background: rgba(125,211,252,0.22);
+}
 
-    padding: 28px;
-    min-height: 250px;
+.instructions {
+    margin-top: 14px;
+    color: #888;
+    font-size: 14px;
+}
+
+.overlay {
+    position: fixed;
+    inset: 0;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background: rgba(3,5,12,0.72);
+
+    backdrop-filter: blur(5px);
+
+    z-index: 20;
+}
+
+.overlay-box {
+    width: min(420px, 90%);
+
+    padding: 35px;
 
     border-radius: 22px;
 
     background:
         linear-gradient(
             145deg,
-            rgba(255,255,255,0.10),
-            rgba(255,255,255,0.035)
+            rgba(30,40,80,0.96),
+            rgba(8,10,25,0.96)
         );
 
-    border: 1px solid rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.14);
 
-    color: white;
-    text-decoration: none;
-
-    transition:
-        transform 0.2s ease,
-        border-color 0.2s ease,
-        box-shadow 0.2s ease;
+    box-shadow: 0 25px 80px rgba(0,0,0,0.5);
 }
 
-.game-card:hover {
-    transform: translateY(-7px);
-
-    border-color: rgba(125,211,252,0.7);
-
-    box-shadow:
-        0 15px 40px rgba(0,0,0,0.35),
-        0 0 25px rgba(125,211,252,0.12);
+.overlay h1 {
+    margin-top: 0;
+    font-size: 38px;
 }
 
-.game-icon {
-    font-size: 55px;
-    margin-bottom: 15px;
-}
-
-.game-card h3 {
-    margin: 0 0 10px;
-    font-size: 25px;
-}
-
-.game-card p {
+.overlay p {
     color: #aaa;
-    line-height: 1.5;
+    line-height: 1.6;
 }
 
-.play {
-    margin-top: 22px;
-
-    display: inline-block;
-
-    padding: 9px 15px;
-
-    border-radius: 10px;
-
-    background: rgba(125,211,252,0.12);
-
-    color: #7dd3fc;
-
-    font-weight: bold;
-}
-
-.coming-soon {
-    opacity: 0.65;
-}
-
-.badge {
-    position: absolute;
-    top: 18px;
-    right: 18px;
-
-    padding: 6px 10px;
-
-    border-radius: 8px;
-
-    background: rgba(255,255,255,0.08);
-
-    color: #999;
-
-    font-size: 11px;
-    font-weight: bold;
-}
-
-footer {
-    text-align: center;
-    color: #666;
-    padding: 30px;
-    border-top: 1px solid rgba(255,255,255,0.08);
+.hidden {
+    display: none;
 }
 
 @media(max-width:600px) {
-    header {
-        padding: 15px;
+
+    body {
+        padding: 10px;
     }
 
-    nav a {
-        margin-left: 10px;
-        font-size: 14px;
+    .title {
+        font-size: 22px;
     }
 
-    .hero {
-        padding-top: 55px;
+    .top-bar {
+        justify-content: center;
+    }
+
+    .stat {
+        font-size: 13px;
+        padding: 7px 10px;
+    }
+
+    button {
+        padding: 10px 15px;
     }
 }
 </style>
@@ -224,280 +198,951 @@ footer {
 
 <body>
 
-<header>
+<div class="game-wrapper">
 
-    <div class="logo">
-        🎮 MattBread Arcade
-    </div>
+    <div class="top-bar">
 
-    <nav>
-        <a href="#games">Games</a>
-        <a href="#coming">Coming Soon</a>
-    </nav>
+        <div class="title">
+            🧱 Breakout
+        </div>
 
-</header>
+        <div class="stats">
 
-
-<section class="hero">
-
-    <h1>MattBread Arcade</h1>
-
-    <p>
-        Play games. Beat records. Have fun.
-    </p>
-
-    <input
-        id="search"
-        class="search"
-        type="text"
-        placeholder="🔎 Search games..."
-        oninput="searchGames()"
-    >
-
-</section>
-
-
-<main class="container">
-
-    <h2 class="section-title" id="games">
-        🎮 Games
-    </h2>
-
-
-    <div class="games">
-
-        <!-- SNAKE -->
-
-        <a class="game-card" href="games/snake/">
-
-            <div class="game-icon">
-                🐍
+            <div class="stat">
+                Score: <span id="score">0</span>
             </div>
 
-            <h3>
-                Snake
-            </h3>
-
-            <p>
-                Classic Snake with colorful visuals,
-                records, wins and losses.
-            </p>
-
-            <div class="play">
-                PLAY →
+            <div class="stat">
+                Best: <span id="best">0</span>
             </div>
 
-        </a>
-
-
-        <!-- PONG -->
-
-        <a class="game-card" href="games/pong/">
-
-            <div class="game-icon">
-                🏓
+            <div class="stat">
+                Lives: <span id="lives">3</span>
             </div>
-
-            <h3>
-                Pong
-            </h3>
-
-            <p>
-                Classic paddle action with a
-                modern arcade feel.
-            </p>
-
-            <div class="play">
-                PLAY →
-            </div>
-
-        </a>
-
-
-        <!-- BREAKOUT -->
-
-        <a class="game-card" href="games/breakout/">
-
-            <div class="game-icon">
-                🧱
-            </div>
-
-            <h3>
-                Breakout
-            </h3>
-
-            <p>
-                Smash through bricks and chase
-                the highest score.
-            </p>
-
-            <div class="play">
-                PLAY →
-            </div>
-
-        </a>
-
-
-        <!-- MEMORY -->
-
-        <div class="game-card coming-soon">
-
-            <div class="badge">
-                COMING SOON
-            </div>
-
-            <div class="game-icon">
-                🧠
-            </div>
-
-            <h3>
-                Memory Match
-            </h3>
-
-            <p>
-                Test your memory and match
-                every pair.
-            </p>
 
         </div>
 
     </div>
 
 
-    <h2 class="section-title" id="coming">
-        🚀 More Games Coming
-    </h2>
+    <canvas id="game" width="900" height="600"></canvas>
 
 
-    <div class="games">
+    <div class="buttons">
 
-        <div class="game-card coming-soon">
+        <button onclick="togglePause()">
+            ⏸ Pause
+        </button>
 
-            <div class="badge">COMING SOON</div>
+        <button onclick="restartGame()">
+            🔄 Restart
+        </button>
 
-            <div class="game-icon">🚀</div>
-
-            <h3>Space Shooter</h3>
-
-            <p>
-                Defend the galaxy from waves
-                of enemies.
-            </p>
-
-        </div>
-
-
-        <div class="game-card coming-soon">
-
-            <div class="badge">COMING SOON</div>
-
-            <div class="game-icon">🏎️</div>
-
-            <h3>Racing</h3>
-
-            <p>
-                Race for the fastest lap time.
-            </p>
-
-        </div>
-
-
-        <div class="game-card coming-soon">
-
-            <div class="badge">COMING SOON</div>
-
-            <div class="game-icon">🏀</div>
-
-            <h3>Basket Shot</h3>
-
-            <p>
-                See how many baskets you can make.
-            </p>
-
-        </div>
-
-
-        <div class="game-card coming-soon">
-
-            <div class="badge">COMING SOON</div>
-
-            <div class="game-icon">👽</div>
-
-            <h3>Alien Defense</h3>
-
-            <p>
-                Stop the alien invasion.
-            </p>
-
-        </div>
-
-
-        <div class="game-card coming-soon">
-
-            <div class="badge">COMING SOON</div>
-
-            <div class="game-icon">🎯</div>
-
-            <h3>Aim Trainer</h3>
-
-            <p>
-                Test your speed and accuracy.
-            </p>
-
-        </div>
-
-
-        <div class="game-card coming-soon">
-
-            <div class="badge">COMING SOON</div>
-
-            <div class="game-icon">🫧</div>
-
-            <h3>Bubble Pop</h3>
-
-            <p>
-                Pop bubbles and chase a high score.
-            </p>
-
-        </div>
+        <button onclick="goHome()">
+            🏠 Back to Arcade
+        </button>
 
     </div>
 
-</main>
+
+    <div class="instructions">
+        Move with ← → or A / D • Mouse and touch supported • Press Space to pause
+    </div>
+
+</div>
 
 
-<footer>
-    © 2026 MattBread Arcade
-</footer>
+<div id="overlay" class="overlay">
+
+    <div class="overlay-box">
+
+        <h1 id="overlayTitle">
+            🧱 Breakout
+        </h1>
+
+        <p id="overlayText">
+            Break all the bricks and get the highest score!
+        </p>
+
+        <button onclick="startGame()">
+            ▶ Start Game
+        </button>
+
+    </div>
+
+</div>
 
 
 <script>
 
-function searchGames() {
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-    const search =
-        document
-            .getElementById("search")
-            .value
-            .toLowerCase();
+const scoreElement = document.getElementById("score");
+const bestElement = document.getElementById("best");
+const livesElement = document.getElementById("lives");
 
-    const cards =
-        document.querySelectorAll(".game-card");
+const overlay = document.getElementById("overlay");
+const overlayTitle = document.getElementById("overlayTitle");
+const overlayText = document.getElementById("overlayText");
 
-    cards.forEach(card => {
 
-        const text =
-            card.innerText.toLowerCase();
+const WIDTH = canvas.width;
+const HEIGHT = canvas.height;
 
-        if (text.includes(search)) {
-            card.style.display = "";
-        } else {
-            card.style.display = "none";
+
+/* =========================
+   GAME SETTINGS
+========================= */
+
+let score = 0;
+
+let best =
+    Number(localStorage.getItem("breakoutBest")) || 0;
+
+let lives = 3;
+
+let running = false;
+let paused = false;
+
+let animation;
+
+
+/* =========================
+   PADDLE
+========================= */
+
+const paddle = {
+
+    width: 150,
+    height: 18,
+
+    x: WIDTH / 2 - 75,
+    y: HEIGHT - 45,
+
+    speed: 9,
+
+    dx: 0
+
+};
+
+
+/* =========================
+   BALL
+========================= */
+
+const ball = {
+
+    x: WIDTH / 2,
+    y: HEIGHT - 75,
+
+    radius: 9,
+
+    speed: 6,
+
+    dx: 4,
+    dy: -4
+
+};
+
+
+/* =========================
+   BRICKS
+========================= */
+
+const brickRows = 6;
+const brickColumns = 10;
+
+const brickWidth = 72;
+const brickHeight = 24;
+
+const brickGap = 10;
+
+const brickStartX =
+    (WIDTH -
+        (
+            brickColumns * brickWidth +
+            (brickColumns - 1) * brickGap
+        )
+    ) / 2;
+
+const brickStartY = 75;
+
+let bricks = [];
+
+
+function createBricks() {
+
+    bricks = [];
+
+    for (let row = 0; row < brickRows; row++) {
+
+        for (let col = 0; col < brickColumns; col++) {
+
+            bricks.push({
+
+                x:
+                    brickStartX +
+                    col * (brickWidth + brickGap),
+
+                y:
+                    brickStartY +
+                    row * (brickHeight + brickGap),
+
+                width: brickWidth,
+                height: brickHeight,
+
+                alive: true
+
+            });
+
         }
+
+    }
+
+}
+
+
+/* =========================
+   RESET BALL
+========================= */
+
+function resetBall() {
+
+    ball.x = WIDTH / 2;
+
+    ball.y = HEIGHT - 75;
+
+    ball.speed = Math.min(
+        9,
+        6 + Math.floor(score / 500) * 0.5
+    );
+
+    ball.dx =
+        (Math.random() > 0.5 ? 1 : -1) *
+        ball.speed *
+        0.7;
+
+    ball.dy =
+        -ball.speed;
+
+}
+
+
+/* =========================
+   START GAME
+========================= */
+
+function startGame() {
+
+    score = 0;
+    lives = 3;
+
+    scoreElement.textContent = score;
+    livesElement.textContent = lives;
+
+    paddle.x =
+        WIDTH / 2 -
+        paddle.width / 2;
+
+    createBricks();
+
+    resetBall();
+
+    running = true;
+    paused = false;
+
+    overlay.classList.add("hidden");
+
+    cancelAnimationFrame(animation);
+
+    gameLoop();
+
+}
+
+
+/* =========================
+   RESTART
+========================= */
+
+function restartGame() {
+
+    startGame();
+
+}
+
+
+/* =========================
+   PAUSE
+========================= */
+
+function togglePause() {
+
+    if (!running) return;
+
+    paused = !paused;
+
+    if (!paused) {
+
+        gameLoop();
+
+    }
+
+}
+
+
+/* =========================
+   GAME OVER
+========================= */
+
+function gameOver(title, message) {
+
+    running = false;
+
+    overlayTitle.textContent = title;
+
+    overlayText.textContent = message;
+
+    overlay.classList.remove("hidden");
+
+}
+
+
+/* =========================
+   DRAW BACKGROUND
+========================= */
+
+function drawBackground() {
+
+    ctx.fillStyle = "#070a17";
+
+    ctx.fillRect(
+        0,
+        0,
+        WIDTH,
+        HEIGHT
+    );
+
+    /* grid */
+
+    ctx.strokeStyle =
+        "rgba(255,255,255,0.035)";
+
+    ctx.lineWidth = 1;
+
+    for (let x = 0; x < WIDTH; x += 45) {
+
+        ctx.beginPath();
+
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, HEIGHT);
+
+        ctx.stroke();
+
+    }
+
+    for (let y = 0; y < HEIGHT; y += 45) {
+
+        ctx.beginPath();
+
+        ctx.moveTo(0, y);
+        ctx.lineTo(WIDTH, y);
+
+        ctx.stroke();
+
+    }
+
+}
+
+
+/* =========================
+   DRAW PADDLE
+========================= */
+
+function drawPaddle() {
+
+    const gradient =
+        ctx.createLinearGradient(
+            paddle.x,
+            paddle.y,
+            paddle.x + paddle.width,
+            paddle.y
+        );
+
+    gradient.addColorStop(
+        0,
+        "#7dd3fc"
+    );
+
+    gradient.addColorStop(
+        1,
+        "#a78bfa"
+    );
+
+    ctx.fillStyle = gradient;
+
+    ctx.shadowColor = "#7dd3fc";
+
+    ctx.shadowBlur = 18;
+
+    ctx.beginPath();
+
+    ctx.roundRect(
+        paddle.x,
+        paddle.y,
+        paddle.width,
+        paddle.height,
+        8
+    );
+
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+
+}
+
+
+/* =========================
+   DRAW BALL
+========================= */
+
+function drawBall() {
+
+    ctx.beginPath();
+
+    ctx.arc(
+        ball.x,
+        ball.y,
+        ball.radius,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fillStyle = "#ffffff";
+
+    ctx.shadowColor = "#7dd3fc";
+
+    ctx.shadowBlur = 22;
+
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+
+}
+
+
+/* =========================
+   DRAW BRICKS
+========================= */
+
+function drawBricks() {
+
+    bricks.forEach((brick, index) => {
+
+        if (!brick.alive) return;
+
+        const row =
+            Math.floor(index / brickColumns);
+
+        const gradients = [
+
+            ["#ff6b6b", "#ff8e8e"],
+            ["#ff9f43", "#ffc15a"],
+            ["#ffe66d", "#fff39a"],
+            ["#4cd97b", "#78e08f"],
+            ["#4dabf7", "#74c0fc"],
+            ["#a78bfa", "#c4b5fd"]
+
+        ];
+
+        const colors =
+            gradients[row % gradients.length];
+
+        const gradient =
+            ctx.createLinearGradient(
+                brick.x,
+                brick.y,
+                brick.x + brick.width,
+                brick.y
+            );
+
+        gradient.addColorStop(
+            0,
+            colors[0]
+        );
+
+        gradient.addColorStop(
+            1,
+            colors[1]
+        );
+
+        ctx.fillStyle = gradient;
+
+        ctx.beginPath();
+
+        ctx.roundRect(
+            brick.x,
+            brick.y,
+            brick.width,
+            brick.height,
+            6
+        );
+
+        ctx.fill();
 
     });
 
 }
+
+
+/* =========================
+   UPDATE PADDLE
+========================= */
+
+function updatePaddle() {
+
+    paddle.x += paddle.dx;
+
+    if (paddle.x < 0) {
+
+        paddle.x = 0;
+
+    }
+
+    if (
+        paddle.x +
+        paddle.width >
+        WIDTH
+    ) {
+
+        paddle.x =
+            WIDTH -
+            paddle.width;
+
+    }
+
+}
+
+
+/* =========================
+   UPDATE BALL
+========================= */
+
+function updateBall() {
+
+    ball.x += ball.dx;
+    ball.y += ball.dy;
+
+
+    /* walls */
+
+    if (
+        ball.x -
+        ball.radius <= 0
+    ) {
+
+        ball.x =
+            ball.radius;
+
+        ball.dx =
+            Math.abs(ball.dx);
+
+    }
+
+
+    if (
+        ball.x +
+        ball.radius >= WIDTH
+    ) {
+
+        ball.x =
+            WIDTH -
+            ball.radius;
+
+        ball.dx =
+            -Math.abs(ball.dx);
+
+    }
+
+
+    if (
+        ball.y -
+        ball.radius <= 0
+    ) {
+
+        ball.y =
+            ball.radius;
+
+        ball.dy =
+            Math.abs(ball.dy);
+
+    }
+
+
+    /* paddle collision */
+
+    if (
+
+        ball.y +
+        ball.radius >=
+        paddle.y &&
+
+        ball.y -
+        ball.radius <=
+        paddle.y +
+        paddle.height &&
+
+        ball.x >= paddle.x &&
+
+        ball.x <=
+        paddle.x +
+        paddle.width
+
+    ) {
+
+        ball.y =
+            paddle.y -
+            ball.radius;
+
+        ball.dy =
+            -Math.abs(ball.dy);
+
+
+        const hitPosition =
+            (
+                ball.x -
+                (
+                    paddle.x +
+                    paddle.width / 2
+                )
+            ) /
+            (
+                paddle.width / 2
+            );
+
+
+        ball.dx =
+            hitPosition *
+            ball.speed;
+
+    }
+
+
+    /* brick collision */
+
+    for (const brick of bricks) {
+
+        if (!brick.alive) continue;
+
+
+        if (
+
+            ball.x +
+            ball.radius >
+            brick.x &&
+
+            ball.x -
+            ball.radius <
+            brick.x +
+            brick.width &&
+
+            ball.y +
+            ball.radius >
+            brick.y &&
+
+            ball.y -
+            ball.radius <
+            brick.y +
+            brick.height
+
+        ) {
+
+            brick.alive = false;
+
+            score += 10;
+
+            scoreElement.textContent =
+                score;
+
+
+            if (score > best) {
+
+                best = score;
+
+                localStorage.setItem(
+                    "breakoutBest",
+                    best
+                );
+
+            }
+
+            bestElement.textContent =
+                best;
+
+
+            ball.dy =
+                -ball.dy;
+
+            break;
+
+        }
+
+    }
+
+
+    /* ball lost */
+
+    if (
+        ball.y -
+        ball.radius >
+        HEIGHT
+    ) {
+
+        lives--;
+
+        livesElement.textContent =
+            lives;
+
+        if (lives <= 0) {
+
+            gameOver(
+                "💥 Game Over",
+                "Final Score: " +
+                score +
+                " — Press Restart to play again."
+            );
+
+        } else {
+
+            resetBall();
+
+        }
+
+    }
+
+
+    /* win */
+
+    const remaining =
+        bricks.some(
+            brick => brick.alive
+        );
+
+    if (!remaining) {
+
+        gameOver(
+            "🏆 You Win!",
+            "Amazing! You destroyed every brick with a score of " +
+            score +
+            "."
+        );
+
+    }
+
+}
+
+
+/* =========================
+   DRAW
+========================= */
+
+function draw() {
+
+    drawBackground();
+
+    drawBricks();
+
+    drawPaddle();
+
+    drawBall();
+
+}
+
+
+/* =========================
+   GAME LOOP
+========================= */
+
+function gameLoop() {
+
+    if (!running) {
+
+        draw();
+
+        return;
+
+    }
+
+    if (!paused) {
+
+        updatePaddle();
+
+        updateBall();
+
+        draw();
+
+    }
+
+    animation =
+        requestAnimationFrame(
+            gameLoop
+        );
+
+}
+
+
+/* =========================
+   KEYBOARD
+========================= */
+
+document.addEventListener(
+    "keydown",
+    event => {
+
+        if (
+            event.key === "ArrowLeft" ||
+            event.key.toLowerCase() === "a"
+        ) {
+
+            paddle.dx =
+                -paddle.speed;
+
+        }
+
+
+        if (
+            event.key === "ArrowRight" ||
+            event.key.toLowerCase() === "d"
+        ) {
+
+            paddle.dx =
+                paddle.speed;
+
+        }
+
+
+        if (
+            event.code === "Space"
+        ) {
+
+            event.preventDefault();
+
+            togglePause();
+
+        }
+
+    }
+);
+
+
+document.addEventListener(
+    "keyup",
+    event => {
+
+        if (
+
+            event.key === "ArrowLeft" ||
+            event.key === "ArrowRight" ||
+            event.key.toLowerCase() === "a" ||
+            event.key.toLowerCase() === "d"
+
+        ) {
+
+            paddle.dx = 0;
+
+        }
+
+    }
+);
+
+
+/* =========================
+   MOUSE CONTROL
+========================= */
+
+canvas.addEventListener(
+    "mousemove",
+    event => {
+
+        const rect =
+            canvas.getBoundingClientRect();
+
+        const scaleX =
+            WIDTH /
+            rect.width;
+
+        const mouseX =
+            (
+                event.clientX -
+                rect.left
+            ) *
+            scaleX;
+
+        paddle.x =
+            mouseX -
+            paddle.width / 2;
+
+    }
+);
+
+
+/* =========================
+   TOUCH CONTROL
+========================= */
+
+canvas.addEventListener(
+    "touchmove",
+    event => {
+
+        event.preventDefault();
+
+        const rect =
+            canvas.getBoundingClientRect();
+
+        const scaleX =
+            WIDTH /
+            rect.width;
+
+        const touchX =
+            (
+                event.touches[0].clientX -
+                rect.left
+            ) *
+            scaleX;
+
+        paddle.x =
+            touchX -
+            paddle.width / 2;
+
+    },
+    {
+        passive: false
+    }
+);
+
+
+/* =========================
+   HOME BUTTON
+========================= */
+
+function goHome() {
+
+    window.location.href =
+        "../../";
+
+}
+
+
+/* =========================
+   INITIALIZE
+========================= */
+
+bestElement.textContent =
+    best;
+
+createBricks();
+
+draw();
 
 </script>
 
