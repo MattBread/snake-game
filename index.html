@@ -7,7 +7,6 @@
 <title>MattBread Arcade</title>
 
 <style>
-
 * {
     box-sizing: border-box;
 }
@@ -25,13 +24,10 @@ header {
     position: sticky;
     top: 0;
     z-index: 10;
-
     padding: 18px 30px;
-
     display: flex;
     justify-content: space-between;
     align-items: center;
-
     background: rgba(5, 7, 18, 0.9);
     border-bottom: 1px solid rgba(255,255,255,0.1);
     backdrop-filter: blur(12px);
@@ -60,7 +56,6 @@ nav a:hover {
 .hero h1 {
     font-size: clamp(42px, 8vw, 82px);
     margin: 0;
-
     background: linear-gradient(90deg, #ffffff, #7dd3fc, #a78bfa);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -76,15 +71,11 @@ nav a:hover {
     display: block;
     width: min(500px, 90%);
     margin: 30px auto 0;
-
     padding: 15px 20px;
-
     border-radius: 14px;
     border: 1px solid rgba(255,255,255,0.15);
-
     background: rgba(255,255,255,0.07);
     color: white;
-
     font-size: 16px;
     outline: none;
 }
@@ -112,27 +103,19 @@ nav a:hover {
 
 .game-card {
     position: relative;
-
     display: block;
-
     padding: 28px;
-
     min-height: 250px;
-
     border-radius: 22px;
-
     background:
         linear-gradient(
             145deg,
             rgba(255,255,255,0.10),
             rgba(255,255,255,0.035)
         );
-
     border: 1px solid rgba(255,255,255,0.12);
-
     color: white;
     text-decoration: none;
-
     transition:
         transform 0.2s ease,
         border-color 0.2s ease,
@@ -141,9 +124,7 @@ nav a:hover {
 
 .game-card:hover {
     transform: translateY(-7px);
-
     border-color: rgba(125,211,252,0.7);
-
     box-shadow:
         0 15px 40px rgba(0,0,0,0.35),
         0 0 25px rgba(125,211,252,0.12);
@@ -166,17 +147,11 @@ nav a:hover {
 
 .play {
     margin-top: 22px;
-
     display: inline-block;
-
     padding: 9px 15px;
-
     border-radius: 10px;
-
     background: rgba(125,211,252,0.12);
-
     color: #7dd3fc;
-
     font-weight: bold;
 }
 
@@ -188,15 +163,10 @@ nav a:hover {
     position: absolute;
     top: 18px;
     right: 18px;
-
     padding: 6px 10px;
-
     border-radius: 8px;
-
     background: rgba(255,255,255,0.08);
-
     color: #999;
-
     font-size: 11px;
     font-weight: bold;
 }
@@ -209,7 +179,6 @@ footer {
 }
 
 @media(max-width:600px) {
-
     header {
         padding: 15px;
     }
@@ -222,9 +191,7 @@ footer {
     .hero {
         padding-top: 55px;
     }
-
 }
-
 </style>
 </head>
 
@@ -242,7 +209,6 @@ footer {
     </nav>
 
 </header>
-
 
 <section class="hero">
 
@@ -262,13 +228,11 @@ footer {
 
 </section>
 
-
 <main class="container">
 
     <h2 class="section-title" id="games">
         🎮 Games
     </h2>
-
 
     <div class="games">
 
@@ -280,9 +244,7 @@ footer {
                 🐍
             </div>
 
-            <h3>
-                Snake
-            </h3>
+            <h3>Snake</h3>
 
             <p>
                 Classic Snake with colorful visuals,
@@ -304,9 +266,7 @@ footer {
                 🏓
             </div>
 
-            <h3>
-                Pong
-            </h3>
+            <h3>Pong</h3>
 
             <p>
                 Classic paddle action with a
@@ -322,26 +282,24 @@ footer {
 
         <!-- BREAKOUT -->
 
-        <div class="game-card coming-soon">
-
-            <div class="badge">
-                COMING SOON
-            </div>
+        <a class="game-card" href="games/breakout/">
 
             <div class="game-icon">
                 🧱
             </div>
 
-            <h3>
-                Breakout
-            </h3>
+            <h3>Breakout</h3>
 
             <p>
                 Smash through bricks and chase
                 the highest score.
             </p>
 
-        </div>
+            <div class="play">
+                PLAY →
+            </div>
+
+        </a>
 
 
         <!-- MEMORY -->
@@ -356,9 +314,7 @@ footer {
                 🧠
             </div>
 
-            <h3>
-                Memory Match
-            </h3>
+            <h3>Memory Match</h3>
 
             <p>
                 Test your memory and match
@@ -374,22 +330,15 @@ footer {
         🚀 More Games Coming
     </h2>
 
-
     <div class="games">
 
         <div class="game-card coming-soon">
 
-            <div class="badge">
-                COMING SOON
-            </div>
+            <div class="badge">COMING SOON</div>
 
-            <div class="game-icon">
-                🚀
-            </div>
+            <div class="game-icon">🚀</div>
 
-            <h3>
-                Space Shooter
-            </h3>
+            <h3>Space Shooter</h3>
 
             <p>
                 Defend the galaxy from waves
@@ -401,17 +350,11 @@ footer {
 
         <div class="game-card coming-soon">
 
-            <div class="badge">
-                COMING SOON
-            </div>
+            <div class="badge">COMING SOON</div>
 
-            <div class="game-icon">
-                🏎️
-            </div>
+            <div class="game-icon">🏎️</div>
 
-            <h3>
-                Racing
-            </h3>
+            <h3>Racing</h3>
 
             <p>
                 Race for the fastest lap time.
@@ -422,17 +365,11 @@ footer {
 
         <div class="game-card coming-soon">
 
-            <div class="badge">
-                COMING SOON
-            </div>
+            <div class="badge">COMING SOON</div>
 
-            <div class="game-icon">
-                🏀
-            </div>
+            <div class="game-icon">🏀</div>
 
-            <h3>
-                Basket Shot
-            </h3>
+            <h3>Basket Shot</h3>
 
             <p>
                 See how many baskets you can make.
@@ -443,17 +380,11 @@ footer {
 
         <div class="game-card coming-soon">
 
-            <div class="badge">
-                COMING SOON
-            </div>
+            <div class="badge">COMING SOON</div>
 
-            <div class="game-icon">
-                👽
-            </div>
+            <div class="game-icon">👽</div>
 
-            <h3>
-                Alien Defense
-            </h3>
+            <h3>Alien Defense</h3>
 
             <p>
                 Stop the alien invasion.
@@ -464,17 +395,11 @@ footer {
 
         <div class="game-card coming-soon">
 
-            <div class="badge">
-                COMING SOON
-            </div>
+            <div class="badge">COMING SOON</div>
 
-            <div class="game-icon">
-                🎯
-            </div>
+            <div class="game-icon">🎯</div>
 
-            <h3>
-                Aim Trainer
-            </h3>
+            <h3>Aim Trainer</h3>
 
             <p>
                 Test your speed and accuracy.
@@ -485,17 +410,11 @@ footer {
 
         <div class="game-card coming-soon">
 
-            <div class="badge">
-                COMING SOON
-            </div>
+            <div class="badge">COMING SOON</div>
 
-            <div class="game-icon">
-                🫧
-            </div>
+            <div class="game-icon">🫧</div>
 
-            <h3>
-                Bubble Pop
-            </h3>
+            <h3>Bubble Pop</h3>
 
             <p>
                 Pop bubbles and chase a high score.
@@ -507,13 +426,9 @@ footer {
 
 </main>
 
-
 <footer>
-
     © 2026 MattBread Arcade
-
 </footer>
-
 
 <script>
 
@@ -534,13 +449,9 @@ function searchGames() {
             card.innerText.toLowerCase();
 
         if (text.includes(search)) {
-
             card.style.display = "";
-
         } else {
-
             card.style.display = "none";
-
         }
 
     });
