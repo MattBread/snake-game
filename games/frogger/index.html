@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frogger - MattBread Arcade</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    min-height: 100vh;
+    background: #070b16;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+}
+
+.game-wrapper {
+    width: min(900px, 100%);
+    text-align: center;
+}
+
+h1 {
+    font-size: clamp(32px, 7vw, 58px);
+    margin-bottom: 8px;
+    color: #66ff66;
+    text-shadow: 0 0 12px #22ff55, 0 0 30px #22ff55;
+}
+
+.subtitle {
+    color: #aaa;
+    margin-bottom: 15px;
+}
+
+.stats {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.stat {
+    background: #111827;
+    border: 1px solid #293653;
+    border-radius: 10px;
+    padding: 9px 16px;
+    min-width: 100px;
+}
+
+.stat span {
+    display: block;
+    color: #8f9bb3;
+    font-size: 12px;
+    margin-bottom: 3px;
+}
+
+.stat strong {
+    font-size: 20px;
+}
+
+#gameCanvas {
+    width: 100%;
+    max-width: 800px;
+    aspect-ratio: 8 / 7;
+    display: block;
+    margin: 0 auto;
+    background: #111;
+    border: 3px solid #66ff66;
+    border-radius: 12px;
+    box-shadow:
+        0 0 15px rgba(60,255,100,.35),
+        0 0 45px rgba(60,255,100,.12);
+    touch-action: none;
+}
+
+.buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+}
+
+button {
+    border: none;
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    color: white;
+    background: #172033;
+    border: 1px solid #354563;
+    transition: .15s;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    background: #22304a;
+}
+
+.pause {
+    border-color: #ffc400;
+    color: #ffd84d;
+}
+
+.restart {
+    border-color: #ff4f81;
+    color: #ff7fa3;
+}
+
+.arcade {
+    border-color: #6d7cff;
+    color: #9ba5ff;
+}
+
+.mobile-controls {
+    width: 220px;
+    margin: 18px auto 0;
+    display: grid;
+    grid-template-columns: repeat(3, 65px);
+    grid-template-rows: repeat(2, 55px);
+    gap: 7px;
+    justify-content: center;
+}
+
+.mobile-controls button {
+    padding: 0;
+    font-size: 23px;
+    background: #111827;
+    border-color: #35506d;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+}
+
+.mobile-controls .up {
+    grid-column: 2;
+}
+
+.mobile-controls .left {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.mobile-controls .down {
+    grid-column: 2;
+    grid-row: 2;
+}
+
+.mobile-controls .right {
+    grid-column: 3;
+    grid-row: 2;
+}
+
+.instructions {
+    margin-top: 12px;
+    color: #77839b;
+    font-size: 13px;
+}
+
+@media (min-width: 700px) {
+    .mobile-controls {
+        display: none;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="game-wrapper">
+
+    <h1>🐸 FROGGER</h1>
+    <div class="subtitle">Cross the road. Cross the river. Don't get squashed!</div>
+
+    <div class="stats">
+        <div class="stat">
+            <span>SCORE</span>
+            <strong id="score">0</strong>
+        </div>
+
+        <div class="stat">
+            <span>HIGH SCORE</span>
+            <strong id="highScore">0</strong>
+        </div>
+
+        <div class="stat">
+            <span>LEVEL</span>
+            <strong id="level">1</strong>
+        </div>
+
+        <div class="stat">
+            <span>LIVES</span>
+            <strong id="lives">3</strong>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas" width="800" height="700"></canvas>
+
+    <div class="buttons">
+        <button class="pause" id="pauseBtn">⏸ Pause</button>
+        <button class="restart" id="restartBtn">🔄 Restart</button>
+        <button class="arcade" id="arcadeBtn">🏠 Back to Arcade</button>
+    </div>
+
+    <div class="mobile-controls">
+        <button class="up" data-dir="up">▲</button>
+        <button class="left" data-dir="left">◀</button>
+        <button class="down" data-dir="down">▼</button>
+        <button class="right" data-dir="right">▶</button>
+    </div>
+
+    <div class="instructions">
+        Use the arrow keys or WASD to move the frog.
+    </div>
+
+</div>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+const scoreDisplay = document.getElementById("score");
+const highScoreDisplay = document.getElementById("highScore");
+const levelDisplay = document.getElementById("level");
+const livesDisplay = document.getElementById("lives");
+
+const pauseBtn = document.getElementById("pauseBtn");
+const restartBtn = document.getElementById("restartBtn");
+const arcadeBtn = document.getElementById("arcadeBtn");
+
+const WIDTH = canvas.width;
+const HEIGHT = canvas.height;
+
+const ROWS = 14;
+const ROW_HEIGHT = HEIGHT / ROWS;
+
+let score = 0;
+let level = 1;
+let lives = 3;
+let paused = false;
+let gameOver = false;
+
+let highScore =
+    Number(localStorage.getItem("mattbreadFroggerHighScore")) || 0;
+
+highScoreDisplay.textContent = highScore;
+
+let frog = {
+    x: WIDTH / 2,
+    y: HEIGHT - ROW_HEIGHT / 2,
+    size: 34,
+    startX: WIDTH / 2,
+    startY: HEIGHT - ROW_HEIGHT / 2
+};
+
+let lastTime = 0;
+
+const roadRows = [8, 9, 10, 11, 12];
+const riverRows = [2, 3, 4, 5, 6];
+
+let vehicles = [];
+let logs = [];
+
+function createVehicles() {
+    vehicles = [];
+
+    const colors = [
+        "#ff405c",
+        "#ff9f1c",
+        "#35a7ff",
+        "#c85cff",
+        "#ffdc42"
+    ];
+
+    roadRows.forEach((row, index) => {
+        const direction = index % 2 === 0 ? 1 : -1;
+
+        for (let i = 0; i < 3; i++) {
+            const width = 70 + Math.random() * 35;
+
+            vehicles.push({
+                x: i * 300 + Math.random() * 100,
+                y: row * ROW_HEIGHT + 9,
+                width: width,
+                height: ROW_HEIGHT - 18,
+                speed: (65 + index * 10 + level * 9) * direction,
+                color: colors[index % colors.length],
+                row: row
+            });
+        }
+    });
+}
+
+function createLogs() {
+    logs = [];
+
+    riverRows.forEach((row, index) => {
+        const direction = index % 2 === 0 ? 1 : -1;
+
+        for (let i = 0; i < 3; i++) {
+            logs.push({
+                x: i * 310 + Math.random() * 80,
+                y: row * ROW_HEIGHT + 12,
+                width: 150 + Math.random() * 35,
+                height: ROW_HEIGHT - 24,
+                speed: (45 + index * 8 + level * 5) * direction,
+                row: row
+            });
+        }
+    });
+}
+
+function resetFrog() {
+    frog.x = frog.startX;
+    frog.y = frog.startY;
+}
+
+function restartGame() {
+    score = 0;
+    level = 1;
+    lives = 3;
+    paused = false;
+    gameOver = false;
+
+    resetFrog();
+    createVehicles();
+    createLogs();
+
+    pauseBtn.textContent = "⏸ Pause";
+    updateStats();
+}
+
+function updateStats() {
+    scoreDisplay.textContent = score;
+    levelDisplay.textContent = level;
+    livesDisplay.textContent = lives;
+
+    if (score > highScore) {
+        highScore = score;
+        localStorage.setItem(
+            "mattbreadFroggerHighScore",
+            highScore
+        );
+    }
+
+    highScoreDisplay.textContent = highScore;
+}
+
+function moveFrog(direction) {
+    if (paused || gameOver) return;
+
+    const oldY = frog.y;
+    const move = ROW_HEIGHT;
+
+    if (direction === "up") frog.y -= move;
+    if (direction === "down") frog.y += move;
+    if (direction === "left") frog.x -= move;
+    if (direction === "right") frog.x += move;
+
+    frog.x = Math.max(
+        frog.size / 2,
+        Math.min(WIDTH - frog.size / 2, frog.x)
+    );
+
+    frog.y = Math.max(
+        frog.size / 2,
+        Math.min(HEIGHT - frog.size / 2, frog.y)
+    );
+
+    if (frog.y < oldY) {
+        score += 10;
+
+        if (score > 0 && score % 100 === 0) {
+            level++;
+            createVehicles();
+            createLogs();
+        }
+
+        updateStats();
+    }
+}
+
+function rectangleCollision(a, b) {
+    return (
+        a.x - a.size / 2 < b.x + b.width &&
+        a.x + a.size / 2 > b.x &&
+        a.y - a.size / 2 < b.y + b.height &&
+        a.y + a.size / 2 > b.y
+    );
+}
+
+function loseLife() {
+    lives--;
+
+    if (lives <= 0) {
+        gameOver = true;
+        lives = 0;
+    }
+
+    resetFrog();
+    updateStats();
+}
+
+function update(dt) {
+    if (paused || gameOver) return;
+
+    vehicles.forEach(vehicle => {
+        vehicle.x += vehicle.speed * dt;
+
+        if (vehicle.speed > 0 && vehicle.x > WIDTH + 50) {
+            vehicle.x = -vehicle.width - 50;
+        }
+
+        if (vehicle.speed < 0 && vehicle.x + vehicle.width < -50) {
+            vehicle.x = WIDTH + 50;
+        }
+    });
+
+    logs.forEach(log => {
+        log.x += log.speed * dt;
+
+        if (log.speed > 0 && log.x > WIDTH + 100) {
+            log.x = -log.width - 100;
+        }
+
+        if (log.speed < 0 && log.x + log.width < -100) {
+            log.x = WIDTH + 100;
+        }
+    });
+
+    for (const vehicle of vehicles) {
+        if (rectangleCollision(frog, vehicle)) {
+            loseLife();
+            return;
+        }
+    }
+
+    const frogRow = Math.floor(frog.y / ROW_HEIGHT);
+
+    if (riverRows.includes(frogRow)) {
+        let ridingLog = null;
+
+        for (const log of logs) {
+            if (rectangleCollision(frog, log)) {
+                ridingLog = log;
+                break;
+            }
+        }
+
+        if (!ridingLog) {
+            loseLife();
+            return;
+        }
+
+        frog.x += ridingLog.speed * dt;
+
+        if (
+            frog.x < -frog.size ||
+            frog.x > WIDTH + frog.size
+        ) {
+            loseLife();
+            return;
+        }
+    }
+
+    if (frogRow <= 0) {
+        score += 100;
+        level++;
+
+        createVehicles();
+        createLogs();
+        resetFrog();
+        updateStats();
+    }
+}
+
+function drawBackground() {
+    ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+    ctx.fillStyle = "#163d1c";
+    ctx.fillRect(0, 0, WIDTH, ROW_HEIGHT * 2);
+    ctx.fillRect(0, ROW_HEIGHT * 7, WIDTH, ROW_HEIGHT);
+    ctx.fillRect(0, ROW_HEIGHT * 13, WIDTH, ROW_HEIGHT);
+
+    ctx.fillStyle = "#07517a";
+    ctx.fillRect(
+        0,
+        ROW_HEIGHT * 2,
+        WIDTH,
+        ROW_HEIGHT * 5
+    );
+
+    ctx.fillStyle = "#24272d";
+    ctx.fillRect(
+        0,
+        ROW_HEIGHT * 8,
+        WIDTH,
+        ROW_HEIGHT * 5
+    );
+
+    ctx.strokeStyle = "#d9d25b";
+    ctx.lineWidth = 4;
+    ctx.setLineDash([35, 25]);
+
+    for (let i = 8; i < 13; i++) {
+        ctx.beginPath();
+        ctx.moveTo(0, i * ROW_HEIGHT);
+        ctx.lineTo(WIDTH, i * ROW_HEIGHT);
+        ctx.stroke();
+    }
+
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = "#42c95b";
+    ctx.fillRect(0, ROW_HEIGHT * 7, WIDTH, 5);
+
+    ctx.fillStyle = "#102c17";
+    ctx.fillRect(0, 0, WIDTH, ROW_HEIGHT * 2);
+
+    for (let i = 0; i < 5; i++) {
+        const x = 75 + i * 165;
+
+        ctx.fillStyle = "#102c17";
+        ctx.beginPath();
+        ctx.arc(
+            x,
+            ROW_HEIGHT * 0.75,
+            29,
+            0,
+            Math.PI * 2
+        );
+        ctx.fill();
+
+        ctx.strokeStyle = "#66ff66";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+    }
+
+    ctx.strokeStyle = "rgba(255,255,255,.04)";
+    ctx.lineWidth = 1;
+
+    for (let x = 0; x < WIDTH; x += ROW_HEIGHT) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, HEIGHT);
+        ctx.stroke();
+    }
+
+    for (let y = 0; y < HEIGHT; y += ROW_HEIGHT) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(WIDTH, y);
+        ctx.stroke();
+    }
+}
+
+function drawVehicles() {
+    vehicles.forEach(vehicle => {
+        ctx.fillStyle = "rgba(0,0,0,.35)";
+        ctx.fillRect(
+            vehicle.x + 4,
+            vehicle.y + 5,
+            vehicle.width,
+            vehicle.height
+        );
+
+        ctx.fillStyle = vehicle.color;
+        ctx.fillRect(
+            vehicle.x,
+            vehicle.y,
+            vehicle.width,
+            vehicle.height
+        );
+
+        ctx.fillStyle = "#18202b";
+
+        ctx.fillRect(
+            vehicle.x + vehicle.width * 0.2,
+            vehicle.y + 6,
+            vehicle.width * 0.23,
+            vehicle.height * 0.42
+        );
+
+        ctx.fillRect(
+            vehicle.x + vehicle.width * 0.57,
+            vehicle.y + 6,
+            vehicle.width * 0.23,
+            vehicle.height * 0.42
+        );
+
+        ctx.fillStyle = "#080b10";
+
+        ctx.beginPath();
+        ctx.arc(
+            vehicle.x + vehicle.width * 0.2,
+            vehicle.y + vehicle.height,
+            9,
+            0,
+            Math.PI * 2
+        );
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(
+            vehicle.x + vehicle.width * 0.8,
+            vehicle.y + vehicle.height,
+            9,
+            0,
+            Math.PI * 2
+        );
+        ctx.fill();
+    });
+}
+
+function drawLogs() {
+    logs.forEach(log => {
+        ctx.fillStyle = "#6b351d";
+        ctx.fillRect(
+            log.x,
+            log.y,
+            log.width,
+            log.height
+        );
+
+        ctx.strokeStyle = "#a85b32";
+        ctx.lineWidth = 4;
+        ctx.strokeRect(
+            log.x,
+            log.y,
+            log.width,
+            log.height
+        );
+
+        ctx.strokeStyle = "#d1814e";
+        ctx.lineWidth = 2;
+
+        ctx.beginPath();
+        ctx.arc(
+            log.x + 13,
+            log.y + log.height / 2,
+            7,
+            0,
+            Math.PI * 2
+        );
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(
+            log.x + log.width - 13,
+            log.y + log.height / 2,
+            7,
+            0,
+            Math.PI * 2
+        );
+        ctx.stroke();
+    });
+}
+
+function drawFrog() {
+    const x = frog.x;
+    const y = frog.y;
+    const s = frog.size;
+
+    ctx.fillStyle = "rgba(0,0,0,.35)";
+    ctx.beginPath();
+    ctx.ellipse(
+        x,
+        y + s * 0.45,
+        s * 0.55,
+        s * 0.18,
+        0,
+        0,
+        Math.PI * 2
+    );
+    ctx.fill();
+
+    ctx.fillStyle = "#54e35b";
+    ctx.beginPath();
+    ctx.ellipse(
+        x,
+        y + 4,
+        s * 0.45,
+        s * 0.42,
+        0,
+        0,
+        Math.PI * 2
+    );
+    ctx.fill();
+
+    ctx.fillStyle = "#66ff66";
+
+    ctx.beginPath();
+    ctx.arc(
+        x - s * 0.25,
+        y - s * 0.22,
+        s * 0.19,
+        0,
+        Math.PI * 2
+    );
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(
+        x + s * 0.25,
+        y - s * 0.22,
+        s * 0.19,
+        0,
+        Math.PI * 2
+    );
+    ctx.fill();
+
+    ctx.fillStyle = "#10151b";
+
+    ctx.beginPath();
+    ctx.arc(
+        x - s * 0.25,
+        y - s * 0.22,
+        s * 0.07,
+        0,
+        Math.PI * 2
+    );
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(
+        x + s * 0.25,
+        y - s * 0.22,
+        s * 0.07,
+        0,
+        Math.PI * 2
+    );
+    ctx.fill();
+
+    ctx.strokeStyle = "#163a1b";
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+    ctx.arc(
+        x,
+        y + 2,
+        s * 0.22,
+        0.15,
+        Math.PI - 0.15
+    );
+    ctx.stroke();
+}
+
+function drawOverlay(title, message) {
+    ctx.fillStyle = "rgba(0,0,0,.72)";
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+    ctx.textAlign = "center";
+
+    ctx.fillStyle = "#66ff66";
+    ctx.font = "bold 58px Arial";
+    ctx.fillText(
+        title,
+        WIDTH / 2,
+        HEIGHT / 2 - 35
+    );
+
+    ctx.fillStyle = "white";
+    ctx.font = "22px Arial";
+    ctx.fillText(
+        message,
+        WIDTH / 2,
+        HEIGHT / 2 + 15
+    );
+
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "#aeb7c8";
+    ctx.fillText(
+        "Press Restart to play again",
+        WIDTH / 2,
+        HEIGHT / 2 + 55
+    );
+
+    ctx.textAlign = "left";
+}
+
+function draw() {
+    drawBackground();
+    drawLogs();
+    drawVehicles();
+    drawFrog();
+
+    if (paused && !gameOver) {
+        drawOverlay("PAUSED", "Take a break!");
+    }
+
+    if (gameOver) {
+        drawOverlay(
+            "GAME OVER",
+            "Final Score: " + score
+        );
+    }
+}
+
+function gameLoop(timestamp) {
+    const dt = Math.min(
+        (timestamp - lastTime) / 1000,
+        0.05
+    );
+
+    lastTime = timestamp;
+
+    update(dt);
+    draw();
+
+    requestAnimationFrame(gameLoop);
+}
+
+document.addEventListener("keydown", event => {
+    const key = event.key.toLowerCase();
+
+    if (
+        [
+            "arrowup",
+            "arrowdown",
+            "arrowleft",
+            "arrowright",
+            "w",
+            "a",
+            "s",
+            "d",
+            " "
+        ].includes(key)
+    ) {
+        event.preventDefault();
+    }
+
+    if (key === "arrowup" || key === "w") {
+        moveFrog("up");
+    }
+
+    if (key === "arrowdown" || key === "s") {
+        moveFrog("down");
+    }
+
+    if (key === "arrowleft" || key === "a") {
+        moveFrog("left");
+    }
+
+    if (key === "arrowright" || key === "d") {
+        moveFrog("right");
+    }
+
+    if (key === " ") {
+        togglePause();
+    }
+});
+
+function togglePause() {
+    if (gameOver) return;
+
+    paused = !paused;
+
+    pauseBtn.textContent = paused
+        ? "▶ Resume"
+        : "⏸ Pause";
+}
+
+pauseBtn.addEventListener("click", togglePause);
+
+restartBtn.addEventListener("click", restartGame);
+
+arcadeBtn.addEventListener("click", () => {
+    window.location.href = "../../index.html";
+});
+
+document.querySelectorAll(".mobile-controls button").forEach(button => {
+    const direction = button.dataset.dir;
+
+    button.addEventListener("pointerdown", event => {
+        event.preventDefault();
+        moveFrog(direction);
+    });
+});
+
+createVehicles();
+createLogs();
+updateStats();
+
+requestAnimationFrame(gameLoop);
+</script>
+
+</body>
+</html>
