@@ -489,13 +489,19 @@ function openLevel(level) {
         return;
     }
 
-    if (level === 3) {
+if (level === 3) {
+    window.location.href =
+        "/snake-game/games/bread-quest/level3.html";
 
-        window.location.href =
-            "/snake-game/games/bread-quest/level3.html";
+    return;
+}
+    if (level === 4) {
+    window.location.href =
+        "/snake-game/games/bread-quest/level4.html";
 
-        return;
-    }
+    return;
+}
+     
 
     alert(
         "🍞 Level " + level +
