@@ -1,1 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<title>The Bread Quest - World Map</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at top, #314a72 0%, #111827 55%, #080b12 100%);
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    overflow-x: hidden;
+}
+
+#page {
+    width: min(1100px, 96%);
+    margin: 0 auto;
+    padding: 25px 15px 50px;
+    text-align: center;
+}
+
+h1 {
+    margin: 0;
+    font-size: clamp(30px, 5vw, 48px);
+    text-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.subtitle {
+    margin: 8px 0 20px;
+    font-size: 18px;
+    color: #dbeafe;
+}
+
+#stats {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 25px;
+}
+
+.stat {
+    background: rgba(20, 27, 43, 0.85);
+    border: 1px solid #46546f;
+    border-radius: 12px;
+    padding: 10px 18px;
+    font-weight: bold;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.25);
+}
+
+#map {
+    position: relative;
+    width: 100%;
+    max-width: 1000px;
+    min-height: 700px;
+    margin: 0 auto;
+    border: 3px solid #7dd3fc;
+    border-radius: 25px;
+    overflow: hidden;
+    background:
+        linear-gradient(
+            180deg,
+            #60a5fa 0%,
+            #93c5fd 38%,
+            #65a30d 38%,
+            #365314 100%
+        );
+    box-shadow:
+        0 20px 50px rgba(0,0,0,0.45),
+        inset 0 0 60px rgba(255,255,255,0.15);
+}
+
+/* Clouds */
+
+.cloud {
+    position: absolute;
+    width: 120px;
+    height: 35px;
+    background: rgba(255,255,255,0.8);
+    border-radius: 40px;
+    opacity: 0.8;
+}
+
+.cloud::before,
+.cloud::after {
+    content: "";
+    position: absolute;
+    background: inherit;
+    border-radius: 50%;
+}
+
+.cloud::before {
+    width: 55px;
+    height: 55px;
+    left: 20px;
+    bottom: 10px;
+}
+
+.cloud::after {
+    width: 70px;
+    height: 70px;
+    right: 15px;
+    bottom: 5px;
+}
+
+.cloud1 {
+    top: 70px;
+    left: 7%;
+}
+
+.cloud2 {
+    top: 145px;
+    right: 8%;
+    transform: scale(0.8);
+}
+
+.cloud3 {
+    top: 250px;
+    left: 35%;
+    transform: scale(0.65);
+}
+
+/* Map title */
+
+.mapTitle {
+    position: absolute;
+    top: 25px;
+    left: 0;
+    right: 0;
+    font-size: 30px;
+    font-weight: bold;
+    color: #3f2a16;
+    text-shadow: 0 2px 0 rgba(255,255,255,0.5);
+}
+
+/* Path */
+
+.path {
+    position: absolute;
+    background: #d6a85f;
+    border: 5px solid #8a5a2b;
+    border-radius: 30px;
+    transform-origin: center;
+    z-index: 1;
+}
+
+/* Level nodes */
+
+.level {
+    position: absolute;
+    width: 78px;
+    height: 78px;
+    border-radius: 50%;
+    border: 5px solid white;
+    background: #2563eb;
+    color: white;
+    font-size: 22px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 5;
+    box-shadow:
+        0 6px 0 #123b8c,
+        0 10px 20px rgba(0,0,0,0.3);
+    transition: transform 0.15s, filter 0.15s;
+}
+
+.level:hover {
+    transform: scale(1.12);
+    filter: brightness(1.15);
+}
+
+.level.locked {
+    background: #4b5563;
+    border-color: #9ca3af;
+    cursor: not-allowed;
+    box-shadow:
+        0 6px 0 #252b33,
+        0 10px 20px rgba(0,0,0,0.25);
+}
+
+.level.completed {
+    background: #16a34a;
+    box-shadow:
+        0 6px 0 #166534,
+        0 10px 20px rgba(0,0,0,0.3);
+}
+
+.level.boss {
+    width: 92px;
+    height: 92px;
+    background: #dc2626;
+    box-shadow:
+        0 7px 0 #7f1d1d,
+        0 10px 20px rgba(0,0,0,0.35);
+}
+
+/* Level labels */
+
+.label {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 88px;
+    width: 150px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+    text-shadow: 0 2px 4px black;
+    pointer-events: none;
+}
+
+/* World banner */
+
+.worldBanner {
+    position: absolute;
+    top: 590px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(17,24,39,0.9);
+    border: 2px solid #facc15;
+    border-radius: 15px;
+    padding: 12px 25px;
+    font-size: 18px;
+    font-weight: bold;
+    z-index: 10;
+}
+
+/* Buttons */
+
+.buttons {
+    margin-top: 25px;
+}
+
+button {
+    border: 0;
+    border-radius: 10px;
+    padding: 13px 22px;
+    margin: 5px;
+    background: #252b3d;
+    color: white;
+    font-weight: bold;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #3b465f;
+}
+
+/* Mobile */
+
+@media (max-width: 700px) {
+
+    #map {
+        min-height: 850px;
+    }
+
+    .level {
+        width: 62px;
+        height: 62px;
+        font-size: 18px;
+    }
+
+    .level.boss {
+        width: 75px;
+        height: 75px;
+    }
+
+    .label {
+        margin-top: 72px;
+        font-size: 12px;
+    }
+
+    .worldBanner {
+        top: 745px;
+    }
+
+}
+</style>
+</head>
+
+<body>
+
+<div id="page">
+
+    <h1>🍞 The Bread Quest</h1>
+
+    <div class="subtitle">
+        🗺️ World Map
+    </div>
+
+    <div id="stats">
+
+        <div class="stat">
+            ⭐ Stars: <span id="stars">0</span>
+        </div>
+
+        <div class="stat">
+            🏆 Levels: <span id="levels">1</span> / 10
+        </div>
+
+        <div class="stat">
+            🌎 World: 1
+        </div>
+
+    </div>
+
+    <div id="map">
+
+        <div class="mapTitle">
+            🌾 Breadlands
+        </div>
+
+        <div class="cloud cloud1"></div>
+        <div class="cloud cloud2"></div>
+        <div class="cloud cloud3"></div>
+
+        <!-- Map paths -->
+
+        <div
+            class="path"
+            style="
+                width: 145px;
+                height: 18px;
+                left: 19%;
+                top: 445px;
+                transform: rotate(-32deg);
+            ">
+        </div>
+
+        <div
+            class="path"
+            style="
+                width: 135px;
+                height: 18px;
+                left: 31%;
+                top: 380px;
+                transform: rotate(35deg);
+            ">
+        </div>
+
+        <div
+            class="path"
+            style="
+                width: 145px;
+                height: 18px;
+                left: 42%;
+                top: 445px;
+                transform: rotate(-32deg);
+            ">
+        </div>
+
+        <div
+            class="path"
+            style="
+                width: 135px;
+                height: 18px;
+                left: 54%;
+                top: 380px;
+                transform: rotate(35deg);
+            ">
+        </div>
+
+        <div
+            class="path"
+            style="
+                width: 145px;
+                height: 18px;
+                left: 65%;
+                top: 445px;
+                transform: rotate(-32deg);
+            ">
+        </div>
+
+        <div
+            class="path"
+            style="
+                width: 135px;
+                height: 18px;
+                left: 77%;
+                top: 380px;
+                transform: rotate(35deg);
+            ">
+        </div>
+
+        <div
+            class="path"
+            style="
+                width: 145px;
+                height: 18px;
+                left: 65%;
+                top: 270px;
+                transform: rotate(32deg);
+            ">
+        </div>
+
+        <div
+            class="path"
+            style="
+                width: 135px;
+                height: 18px;
+                left: 53%;
+                top: 205px;
+                transform: rotate(-35deg);
+            ">
+        </div>
+
+        <div
+            class="path"
+            style="
+                width: 145px;
+                height: 18px;
+                left: 40%;
+                top: 270px;
+                transform: rotate(32deg);
+            ">
+        </div>
+
+        <!-- LEVEL 1 -->
+
+        <button
+            class="level completed"
+            style="left: 10%; top: 390px;"
+            onclick="openLevel(1)">
+            1
+            <span class="label">
+                Fresh Bread Fields
+            </span>
+        </button>
+
+        <!-- LEVEL 2 -->
+
+        <button
+            class="level"
+            style="left: 24%; top: 325px;"
+            onclick="openLevel(2)">
+            2
+            <span class="label">
+                Toasty Caverns
+            </span>
+        </button>
+
+        <!-- LEVEL 3 -->
+
+        <button
+            class="level locked"
+            style="left: 36%; top: 390px;"
+            onclick="openLevel(3)">
+            🔒
+            <span class="label">
+                Wheat Valley
+            </span>
+        </button>
+
+        <!-- LEVEL 4 -->
+
+        <button
+            class="level locked"
+            style="left: 49%; top: 325px;"
+            onclick="openLevel(4)">
+            🔒
+            <span class="label">
+                Sunny Loaf Hills
+            </span>
+        </button>
+
+        <!-- LEVEL 5 -->
+
+        <button
+            class="level locked"
+            style="left: 61%; top: 390px;"
+            onclick="openLevel(5)">
+            🔒
+            <span class="label">
+                Crouton Woods
+            </span>
+        </button>
+
+        <!-- LEVEL 6 -->
+
+        <button
+            class="level locked"
+            style="left: 73%; top: 325px;"
+            onclick="openLevel(6)">
+            🔒
+            <span class="label">
+                Butter Bridge
+            </span>
+        </button>
+
+        <!-- LEVEL 7 -->
+
+        <button
+            class="level locked"
+            style="left: 61%; top: 215px;"
+            onclick="openLevel(7)">
+            🔒
+            <span class="label">
+                Yeast Castle
+            </span>
+        </button>
+
+        <!-- LEVEL 8 -->
+
+        <button
+            class="level locked"
+            style="left: 49%; top: 150px;"
+            onclick="openLevel(8)">
+            🔒
+            <span class="label">
+                Rainy Rye Road
+            </span>
+        </button>
+
+        <!-- LEVEL 9 -->
+
+        <button
+            class="level locked"
+            style="left: 36%; top: 215px;"
+            onclick="openLevel(9)">
+            🔒
+            <span class="label">
+                Cheese Crossing
+            </span>
+        </button>
+
+        <!-- LEVEL 10 BOSS -->
+
+        <button
+            class="level boss locked"
+            style="left: 45%; top: 55px;"
+            onclick="openLevel(10)">
+            👑
+            <span class="label">
+                Level 10 Boss
+            </span>
+        </button>
+
+        <div class="worldBanner">
+            🌾 WORLD 1 — BREADLANDS
+        </div>
+
+    </div>
+
+    <div class="buttons">
+
+        <button onclick="location.href='index.html'">
+            🍞 Level 1
+        </button>
+
+        <button onclick="location.href='../../'">
+            🏠 Back to Arcade
+        </button>
+
+    </div>
+
+</div>
+
+<script>
+
+/*
+    ============================
+    BREAD QUEST WORLD MAP
+    ============================
+*/
+
+let unlockedLevel =
+    Number(localStorage.getItem("breadQuestUnlocked")) || 2;
+
+let completedLevels =
+    Number(localStorage.getItem("breadQuestCompleted")) || 1;
+
+
+/*
+    UPDATE MAP
+*/
+
+function updateMap() {
+
+    const levels =
+        document.querySelectorAll(".level");
+
+    levels.forEach((button, index) => {
+
+        const levelNumber = index + 1;
+
+        if (levelNumber <= unlockedLevel) {
+
+            button.classList.remove("locked");
+
+            if (levelNumber <= completedLevels) {
+
+                button.classList.add("completed");
+
+            }
+
+            const label =
+                button.textContent.trim();
+
+            if (levelNumber > completedLevels) {
+
+                button.innerHTML =
+                    levelNumber +
+                    button.querySelector(".label").outerHTML;
+
+            }
+
+        }
+
+    });
+
+    document.getElementById("levels").textContent =
+        completedLevels;
+
+}
+
+
+/*
+    OPEN LEVEL
+*/
+
+function openLevel(level) {
+
+    if (level > unlockedLevel) {
+
+        alert(
+            "🔒 This level is locked!\n\n" +
+            "Beat the previous levels to unlock it."
+        );
+
+        return;
+
+    }
+
+
+    if (level === 1) {
+
+        location.href = "index.html";
+
+        return;
+
+    }
+
+
+    if (level === 2) {
+
+        location.href = "level2.html";
+
+        return;
+
+    }
+
+
+    alert(
+        "🍞 Level " +
+        level +
+        " is coming soon!\n\n" +
+        "This level is already part of the map, " +
+        "and we'll build it next."
+    );
+
+}
+
+
+/*
+    LOAD MAP
+*/
+
+updateMap();
+
+</script>
+
+</body>
+</html>
