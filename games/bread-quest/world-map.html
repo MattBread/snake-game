@@ -13,578 +13,326 @@
 
 body {
     margin: 0;
-    min-height: 100vh;
-    background:
-        radial-gradient(circle at top, #314a72 0%, #111827 55%, #080b12 100%);
+    font-family: Arial, sans-serif;
+    background: linear-gradient(#15152e, #25245a);
     color: white;
-    font-family: Arial, Helvetica, sans-serif;
-    overflow-x: hidden;
+    min-height: 100vh;
 }
 
-#page {
-    width: min(1100px, 96%);
-    margin: 0 auto;
-    padding: 25px 15px 50px;
+header {
     text-align: center;
+    padding: 20px 10px 10px;
 }
 
-h1 {
+header h1 {
     margin: 0;
-    font-size: clamp(30px, 5vw, 48px);
-    text-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    font-size: 36px;
 }
 
-.subtitle {
-    margin: 8px 0 20px;
-    font-size: 18px;
-    color: #dbeafe;
+header p {
+    margin: 8px 0;
+    color: #cfcfff;
 }
 
-#stats {
+.stats {
     display: flex;
     justify-content: center;
-    gap: 15px;
+    gap: 12px;
     flex-wrap: wrap;
-    margin-bottom: 25px;
+    margin: 15px;
 }
 
 .stat {
-    background: rgba(20, 27, 43, 0.85);
-    border: 1px solid #46546f;
-    border-radius: 12px;
-    padding: 10px 18px;
-    font-weight: bold;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.25);
+    background: rgba(255,255,255,0.12);
+    padding: 10px 16px;
+    border-radius: 14px;
 }
 
-#map {
+.map {
     position: relative;
-    width: 100%;
-    max-width: 1000px;
-    min-height: 700px;
-    margin: 0 auto;
-    border: 3px solid #7dd3fc;
-    border-radius: 25px;
+    width: min(1100px, 94%);
+    height: 650px;
+    margin: 20px auto;
     overflow: hidden;
+    border-radius: 30px;
+    border: 4px solid rgba(255,255,255,0.25);
     background:
-        linear-gradient(
-            180deg,
-            #60a5fa 0%,
-            #93c5fd 38%,
-            #65a30d 38%,
-            #365314 100%
-        );
-    box-shadow:
-        0 20px 50px rgba(0,0,0,0.45),
-        inset 0 0 60px rgba(255,255,255,0.15);
+        linear-gradient(#73d7ff 0 52%, #72bd4e 52% 100%);
+    box-shadow: 0 15px 45px rgba(0,0,0,0.4);
 }
-
-/* Clouds */
 
 .cloud {
     position: absolute;
-    width: 120px;
+    width: 100px;
     height: 35px;
-    background: rgba(255,255,255,0.8);
+    background: white;
     border-radius: 40px;
-    opacity: 0.8;
+    opacity: .75;
 }
 
-.cloud::before,
-.cloud::after {
+.cloud:before,
+.cloud:after {
     content: "";
     position: absolute;
-    background: inherit;
+    background: white;
     border-radius: 50%;
 }
 
-.cloud::before {
-    width: 55px;
-    height: 55px;
-    left: 20px;
-    bottom: 10px;
+.cloud:before {
+    width: 50px;
+    height: 50px;
+    left: 15px;
+    top: -25px;
 }
 
-.cloud::after {
-    width: 70px;
-    height: 70px;
+.cloud:after {
+    width: 45px;
+    height: 45px;
     right: 15px;
-    bottom: 5px;
+    top: -20px;
 }
 
-.cloud1 {
-    top: 70px;
-    left: 7%;
-}
-
-.cloud2 {
-    top: 145px;
-    right: 8%;
-    transform: scale(0.8);
-}
-
-.cloud3 {
-    top: 250px;
-    left: 35%;
-    transform: scale(0.65);
-}
-
-/* Map title */
-
-.mapTitle {
-    position: absolute;
-    top: 25px;
-    left: 0;
-    right: 0;
-    font-size: 30px;
-    font-weight: bold;
-    color: #3f2a16;
-    text-shadow: 0 2px 0 rgba(255,255,255,0.5);
-}
-
-/* Path */
+.cloud1 { left: 8%; top: 12%; }
+.cloud2 { left: 55%; top: 8%; }
+.cloud3 { right: 8%; top: 25%; }
 
 .path {
     position: absolute;
-    background: #d6a85f;
-    border: 5px solid #8a5a2b;
-    border-radius: 30px;
-    transform-origin: center;
-    z-index: 1;
+    left: 8%;
+    right: 8%;
+    top: 50%;
+    height: 18px;
+    background: #d69a52;
+    border-radius: 20px;
+    transform: rotate(-2deg);
 }
-
-/* Level nodes */
 
 .level {
     position: absolute;
-    width: 78px;
-    height: 78px;
-    border-radius: 50%;
+    width: 70px;
+    height: 70px;
+
     border: 5px solid white;
-    background: #2563eb;
-    color: white;
-    font-size: 22px;
+    border-radius: 50%;
+
+    font-size: 20px;
     font-weight: bold;
+
     cursor: pointer;
-    z-index: 5;
-    box-shadow:
-        0 6px 0 #123b8c,
-        0 10px 20px rgba(0,0,0,0.3);
-    transition: transform 0.15s, filter 0.15s;
+
+    background: #3ed35c;
+    color: white;
+
+    box-shadow: 0 6px 15px rgba(0,0,0,.35);
+
+    transform: translate(-50%, -50%);
 }
 
 .level:hover {
-    transform: scale(1.12);
-    filter: brightness(1.15);
+    transform: translate(-50%, -50%) scale(1.1);
 }
 
 .level.locked {
-    background: #4b5563;
-    border-color: #9ca3af;
+    background: #555;
     cursor: not-allowed;
-    box-shadow:
-        0 6px 0 #252b33,
-        0 10px 20px rgba(0,0,0,0.25);
+    opacity: .7;
 }
 
 .level.completed {
-    background: #16a34a;
-    box-shadow:
-        0 6px 0 #166534,
-        0 10px 20px rgba(0,0,0,0.3);
+    background: #22a9ff;
 }
 
 .level.boss {
-    width: 92px;
-    height: 92px;
-    background: #dc2626;
-    box-shadow:
-        0 7px 0 #7f1d1d,
-        0 10px 20px rgba(0,0,0,0.35);
+    background: #e63946;
 }
 
-/* Level labels */
-
-.label {
+.level .label {
     position: absolute;
+    top: 78px;
     left: 50%;
     transform: translateX(-50%);
-    margin-top: 88px;
-    width: 150px;
-    color: #fff;
+    white-space: nowrap;
     font-size: 14px;
-    font-weight: bold;
-    text-shadow: 0 2px 4px black;
-    pointer-events: none;
-}
-
-/* World banner */
-
-.worldBanner {
-    position: absolute;
-    top: 590px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(17,24,39,0.9);
-    border: 2px solid #facc15;
-    border-radius: 15px;
-    padding: 12px 25px;
-    font-size: 18px;
-    font-weight: bold;
-    z-index: 10;
-}
-
-/* Buttons */
-
-.buttons {
-    margin-top: 25px;
-}
-
-button {
-    border: 0;
-    border-radius: 10px;
-    padding: 13px 22px;
-    margin: 5px;
-    background: #252b3d;
     color: white;
+    text-shadow: 0 2px 3px black;
+}
+
+.level1 { left: 10%; top: 68%; }
+.level2 { left: 25%; top: 50%; }
+.level3 { left: 40%; top: 65%; }
+.level4 { left: 55%; top: 48%; }
+.level5 { left: 68%; top: 65%; }
+.level6 { left: 78%; top: 45%; }
+.level7 { left: 85%; top: 68%; }
+.level8 { left: 62%; top: 82%; }
+.level9 { left: 42%; top: 84%; }
+.level10 { left: 22%; top: 82%; }
+
+.bottomButtons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 10px 10px 30px;
+}
+
+.bottomButtons button {
+    border: none;
+    border-radius: 14px;
+    padding: 13px 20px;
+
     font-weight: bold;
     font-size: 15px;
+
     cursor: pointer;
+
+    background: #ffcc33;
+    color: #382700;
+
+    box-shadow: 0 4px 0 #b98d00;
 }
 
-button:hover {
-    background: #3b465f;
+.bottomButtons button:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #b98d00;
 }
 
-/* Mobile */
+@media (max-width: 600px) {
 
-@media (max-width: 700px) {
+    header h1 {
+        font-size: 28px;
+    }
 
-    #map {
-        min-height: 850px;
+    .map {
+        height: 570px;
     }
 
     .level {
-        width: 62px;
-        height: 62px;
-        font-size: 18px;
+        width: 58px;
+        height: 58px;
+        font-size: 16px;
     }
 
-    .level.boss {
-        width: 75px;
-        height: 75px;
+    .level .label {
+        top: 64px;
+        font-size: 11px;
     }
-
-    .label {
-        margin-top: 72px;
-        font-size: 12px;
-    }
-
-    .worldBanner {
-        top: 745px;
-    }
-
 }
 </style>
 </head>
 
 <body>
 
-<div id="page">
-
+<header>
     <h1>🍞 The Bread Quest</h1>
+    <p>🗺️ World Map — World 1: 🌾 Breadlands</p>
+</header>
 
-    <div class="subtitle">
-        🗺️ World Map
-    </div>
+<div class="stats">
+    <div class="stat">⭐ Stars: <span id="stars">0</span></div>
+    <div class="stat">🏆 Completed: <span id="completed">0</span>/10</div>
+    <div class="stat">🔓 Unlocked: <span id="unlocked">3</span>/10</div>
+</div>
 
-    <div id="stats">
+<div class="map">
 
-        <div class="stat">
-            ⭐ Stars: <span id="stars">0</span>
-        </div>
+    <div class="cloud cloud1"></div>
+    <div class="cloud cloud2"></div>
+    <div class="cloud cloud3"></div>
 
-        <div class="stat">
-            🏆 Levels: <span id="levels">1</span> / 10
-        </div>
+    <div class="path"></div>
 
-        <div class="stat">
-            🌎 World: 1
-        </div>
+    <button class="level level1" onclick="openLevel(1)">
+        1
+        <span class="label">🌾 Start</span>
+    </button>
 
-    </div>
+    <button class="level level2" onclick="openLevel(2)">
+        2
+        <span class="label">🍞 Toasty Trail</span>
+    </button>
 
-    <div id="map">
+    <button class="level level3" onclick="openLevel(3)">
+        3
+        <span class="label">🥖 Breadlands Dash</span>
+    </button>
 
-        <div class="mapTitle">
-            🌾 Breadlands
-        </div>
+    <button class="level level4" onclick="openLevel(4)">
+        4
+        <span class="label">🔒 Locked</span>
+    </button>
 
-        <div class="cloud cloud1"></div>
-        <div class="cloud cloud2"></div>
-        <div class="cloud cloud3"></div>
+    <button class="level level5" onclick="openLevel(5)">
+        5
+        <span class="label">🔒 Locked</span>
+    </button>
 
-        <!-- Map paths -->
+    <button class="level level6" onclick="openLevel(6)">
+        6
+        <span class="label">🔒 Locked</span>
+    </button>
 
-        <div
-            class="path"
-            style="
-                width: 145px;
-                height: 18px;
-                left: 19%;
-                top: 445px;
-                transform: rotate(-32deg);
-            ">
-        </div>
+    <button class="level level7" onclick="openLevel(7)">
+        7
+        <span class="label">🔒 Locked</span>
+    </button>
 
-        <div
-            class="path"
-            style="
-                width: 135px;
-                height: 18px;
-                left: 31%;
-                top: 380px;
-                transform: rotate(35deg);
-            ">
-        </div>
+    <button class="level level8" onclick="openLevel(8)">
+        8
+        <span class="label">🔒 Locked</span>
+    </button>
 
-        <div
-            class="path"
-            style="
-                width: 145px;
-                height: 18px;
-                left: 42%;
-                top: 445px;
-                transform: rotate(-32deg);
-            ">
-        </div>
+    <button class="level level9" onclick="openLevel(9)">
+        9
+        <span class="label">🔒 Locked</span>
+    </button>
 
-        <div
-            class="path"
-            style="
-                width: 135px;
-                height: 18px;
-                left: 54%;
-                top: 380px;
-                transform: rotate(35deg);
-            ">
-        </div>
+    <button class="level level10 boss" onclick="openLevel(10)">
+        10
+        <span class="label">👑 Boss</span>
+    </button>
 
-        <div
-            class="path"
-            style="
-                width: 145px;
-                height: 18px;
-                left: 65%;
-                top: 445px;
-                transform: rotate(-32deg);
-            ">
-        </div>
+</div>
 
-        <div
-            class="path"
-            style="
-                width: 135px;
-                height: 18px;
-                left: 77%;
-                top: 380px;
-                transform: rotate(35deg);
-            ">
-        </div>
+<div class="bottomButtons">
 
-        <div
-            class="path"
-            style="
-                width: 145px;
-                height: 18px;
-                left: 65%;
-                top: 270px;
-                transform: rotate(32deg);
-            ">
-        </div>
+    <button onclick="window.location.href='index.html'">
+        🍞 Level 1
+    </button>
 
-        <div
-            class="path"
-            style="
-                width: 135px;
-                height: 18px;
-                left: 53%;
-                top: 205px;
-                transform: rotate(-35deg);
-            ">
-        </div>
-
-        <div
-            class="path"
-            style="
-                width: 145px;
-                height: 18px;
-                left: 40%;
-                top: 270px;
-                transform: rotate(32deg);
-            ">
-        </div>
-
-        <!-- LEVEL 1 -->
-
-        <button
-            class="level completed"
-            style="left: 10%; top: 390px;"
-            onclick="openLevel(1)">
-            1
-            <span class="label">
-                Fresh Bread Fields
-            </span>
-        </button>
-
-        <!-- LEVEL 2 -->
-
-        <button
-            class="level"
-            style="left: 24%; top: 325px;"
-            onclick="openLevel(2)">
-            2
-            <span class="label">
-                Toasty Caverns
-            </span>
-        </button>
-
-        <!-- LEVEL 3 -->
-
-        <button
-            class="level locked"
-            style="left: 36%; top: 390px;"
-            onclick="openLevel(3)">
-            🔒
-            <span class="label">
-                Wheat Valley
-            </span>
-        </button>
-
-        <!-- LEVEL 4 -->
-
-        <button
-            class="level locked"
-            style="left: 49%; top: 325px;"
-            onclick="openLevel(4)">
-            🔒
-            <span class="label">
-                Sunny Loaf Hills
-            </span>
-        </button>
-
-        <!-- LEVEL 5 -->
-
-        <button
-            class="level locked"
-            style="left: 61%; top: 390px;"
-            onclick="openLevel(5)">
-            🔒
-            <span class="label">
-                Crouton Woods
-            </span>
-        </button>
-
-        <!-- LEVEL 6 -->
-
-        <button
-            class="level locked"
-            style="left: 73%; top: 325px;"
-            onclick="openLevel(6)">
-            🔒
-            <span class="label">
-                Butter Bridge
-            </span>
-        </button>
-
-        <!-- LEVEL 7 -->
-
-        <button
-            class="level locked"
-            style="left: 61%; top: 215px;"
-            onclick="openLevel(7)">
-            🔒
-            <span class="label">
-                Yeast Castle
-            </span>
-        </button>
-
-        <!-- LEVEL 8 -->
-
-        <button
-            class="level locked"
-            style="left: 49%; top: 150px;"
-            onclick="openLevel(8)">
-            🔒
-            <span class="label">
-                Rainy Rye Road
-            </span>
-        </button>
-
-        <!-- LEVEL 9 -->
-
-        <button
-            class="level locked"
-            style="left: 36%; top: 215px;"
-            onclick="openLevel(9)">
-            🔒
-            <span class="label">
-                Cheese Crossing
-            </span>
-        </button>
-
-        <!-- LEVEL 10 BOSS -->
-
-        <button
-            class="level boss locked"
-            style="left: 45%; top: 55px;"
-            onclick="openLevel(10)">
-            👑
-            <span class="label">
-                Level 10 Boss
-            </span>
-        </button>
-
-        <div class="worldBanner">
-            🌾 WORLD 1 — BREADLANDS
-        </div>
-
-    </div>
-
-    <div class="buttons">
-
-        <button onclick="location.href='index.html'">
-            🍞 Level 1
-        </button>
-
-        <button onclick="location.href='../../'">
-            🏠 Back to Arcade
-        </button>
-
-    </div>
+    <button onclick="window.location.href='../../'">
+        🏠 Back to Arcade
+    </button>
 
 </div>
 
 <script>
 
-/*
-    ============================
-    BREAD QUEST WORLD MAP
-    ============================
-*/
+let completed =
+    Number(localStorage.getItem("breadQuestCompleted") || 1);
 
-let unlockedLevel =
-    Number(localStorage.getItem("breadQuestUnlocked")) || 2;
-
-let completedLevels =
-    Number(localStorage.getItem("breadQuestCompleted")) || 1;
+let unlocked =
+    Number(localStorage.getItem("breadQuestUnlocked") || 2);
 
 
-/*
-    UPDATE MAP
-*/
+// Make sure Level 3 is recognized if it was completed.
+
+if (completed >= 3) {
+    unlocked = Math.max(unlocked, 3);
+}
+
+
+// ------------------------------------------------------
+// UPDATE MAP
+// ------------------------------------------------------
 
 function updateMap() {
+
+    document.getElementById("completed").textContent =
+        completed;
+
+    document.getElementById("unlocked").textContent =
+        Math.min(unlocked, 10);
 
     const levels =
         document.querySelectorAll(".level");
@@ -593,87 +341,100 @@ function updateMap() {
 
         const levelNumber = index + 1;
 
-        if (levelNumber <= unlockedLevel) {
+        button.classList.remove("locked");
+        button.classList.remove("completed");
 
-            button.classList.remove("locked");
+        if (levelNumber <= completed) {
 
-            if (levelNumber <= completedLevels) {
+            button.classList.add("completed");
 
-                button.classList.add("completed");
+        } else if (levelNumber > unlocked) {
 
-            }
-
-            const label =
-                button.textContent.trim();
-
-            if (levelNumber > completedLevels) {
-
-                button.innerHTML =
-                    levelNumber +
-                    button.querySelector(".label").outerHTML;
-
-            }
+            button.classList.add("locked");
 
         }
 
+        const label =
+            button.querySelector(".label");
+
+        if (levelNumber <= completed) {
+
+            if (levelNumber === 1) {
+                label.textContent = "✅ Complete";
+            }
+
+            if (levelNumber === 2) {
+                label.textContent = "✅ Complete";
+            }
+
+            if (levelNumber === 3) {
+                label.textContent = "✅ Complete";
+            }
+
+        } else if (levelNumber > unlocked) {
+
+            label.textContent = "🔒 Locked";
+
+        } else {
+
+            if (levelNumber === 3) {
+                label.textContent =
+                    "🥖 Breadlands Dash";
+            } else {
+                label.textContent =
+                    "▶ Play";
+            }
+        }
     });
-
-    document.getElementById("levels").textContent =
-        completedLevels;
-
 }
 
 
-/*
-    OPEN LEVEL
-*/
+// ------------------------------------------------------
+// OPEN LEVEL
+// ------------------------------------------------------
 
 function openLevel(level) {
 
-    if (level > unlockedLevel) {
+    if (level > unlocked) {
 
         alert(
             "🔒 This level is locked!\n\n" +
-            "Beat the previous levels to unlock it."
+            "Complete the previous levels first."
         );
 
         return;
-
     }
-
 
     if (level === 1) {
 
-        location.href = "index.html";
+        window.location.href =
+            "index.html";
 
         return;
-
     }
-
 
     if (level === 2) {
 
-        location.href = "level2.html";
+        window.location.href =
+            "level2.html";
 
         return;
-
     }
 
+    if (level === 3) {
+
+        window.location.href =
+            "level3.html";
+
+        return;
+    }
 
     alert(
-        "🍞 Level " +
-        level +
-        " is coming soon!\n\n" +
-        "This level is already part of the map, " +
-        "and we'll build it next."
+        "🍞 Level " + level +
+        " is coming soon!"
     );
-
 }
 
-
-/*
-    LOAD MAP
-*/
 
 updateMap();
 
