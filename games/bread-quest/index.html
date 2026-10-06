@@ -1,1 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<title>The Bread Quest</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #10131c;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+#gameWrapper {
+    width: min(100%, 1000px);
+    padding: 15px;
+    text-align: center;
+}
+
+h1 {
+    margin: 0 0 8px;
+    font-size: 32px;
+}
+
+#info {
+    display: flex;
+    justify-content: space-between;
+    max-width: 900px;
+    margin: 0 auto 10px;
+    padding: 10px 15px;
+    background: #191d2a;
+    border: 1px solid #30374d;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    max-width: 900px;
+    height: auto;
+    margin: auto;
+    background: #75c9f5;
+    border: 3px solid #ffffff;
+    border-radius: 10px;
+    image-rendering: pixelated;
+}
+
+#message {
+    margin-top: 12px;
+    min-height: 28px;
+    font-weight: bold;
+}
+
+button {
+    border: 0;
+    border-radius: 10px;
+    padding: 12px 22px;
+    margin: 5px;
+    background: #252b3d;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #37405a;
+}
+
+#mobileControls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.control {
+    width: 65px;
+    height: 55px;
+    font-size: 24px;
+    touch-action: none;
+    user-select: none;
+}
+
+@media (max-width: 600px) {
+    h1 {
+        font-size: 24px;
+    }
+
+    #info {
+        font-size: 14px;
+    }
+
+    #mobileControls {
+        display: flex;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div id="gameWrapper">
+
+    <h1>🍞 The Bread Quest</h1>
+
+    <div id="info">
+        <span>🪙 Coins: <span id="coinText">0</span></span>
+        <span>⭐ Score: <span id="scoreText">0</span></span>
+        <span>❤️ Lives: <span id="livesText">3</span></span>
+    </div>
+
+    <canvas id="game" width="900" height="500"></canvas>
+
+    <div id="message">
+        Arrow keys / A & D to move • Space / W / ↑ to jump
+    </div>
+
+    <div>
+        <button onclick="restartGame()">🔄 Restart</button>
+        <button onclick="location.href='../../'">🏠 Back to Arcade</button>
+    </div>
+
+    <div id="mobileControls">
+        <button class="control" id="leftBtn">◀</button>
+        <button class="control" id="jumpBtn">⬆</button>
+        <button class="control" id="rightBtn">▶</button>
+    </div>
+
+</div>
+
+<script>
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const coinText = document.getElementById("coinText");
+const scoreText = document.getElementById("scoreText");
+const livesText = document.getElementById("livesText");
+const message = document.getElementById("message");
+
+const WORLD_WIDTH = 4200;
+
+let keys = {};
+let cameraX = 0;
+
+let score = 0;
+let coins = 0;
+let lives = 3;
+
+let gameOver = false;
+let levelComplete = false;
+
+const player = {
+    x: 100,
+    y: 350,
+    width: 38,
+    height: 48,
+    vx: 0,
+    vy: 0,
+    speed: 5,
+    jumpPower: -14,
+    onGround: false,
+    invincible: 0
+};
+
+const gravity = 0.65;
+
+const platforms = [
+
+    {x: 0, y: 450, w: 700, h: 50},
+    {x: 800, y: 450, w: 500, h: 50},
+    {x: 1400, y: 450, w: 650, h: 50},
+    {x: 2150, y: 450, w: 700, h: 50},
+    {x: 2950, y: 450, w: 550, h: 50},
+    {x: 3600, y: 450, w: 600, h: 50},
+
+    {x: 300, y: 350, w: 150, h: 25},
+    {x: 600, y: 290, w: 150, h: 25},
+
+    {x: 900, y: 350, w: 180, h: 25},
+    {x: 1150, y: 280, w: 130, h: 25},
+
+    {x: 1500, y: 350, w: 180, h: 25},
+    {x: 1800, y: 300, w: 150, h: 25},
+
+    {x: 2250, y: 350, w: 180, h: 25},
+    {x: 2550, y: 290, w: 170, h: 25},
+
+    {x: 3050, y: 350, w: 180, h: 25},
+    {x: 3300, y: 285, w: 140, h: 25},
+
+    {x: 3700, y: 350, w: 180, h: 25}
+];
+
+const coinsList = [
+
+    {x: 350, y: 310, collected: false},
+    {x: 650, y: 250, collected: false},
+    {x: 950, y: 310, collected: false},
+    {x: 1200, y: 240, collected: false},
+    {x: 1550, y: 310, collected: false},
+    {x: 1850, y: 260, collected: false},
+    {x: 2300, y: 310, collected: false},
+    {x: 2600, y: 250, collected: false},
+    {x: 3100, y: 310, collected: false},
+    {x: 3350, y: 245, collected: false},
+    {x: 3750, y: 310, collected: false},
+
+    {x: 550, y: 410, collected: false},
+    {x: 1000, y: 410, collected: false},
+    {x: 1700, y: 410, collected: false},
+    {x: 2400, y: 410, collected: false},
+    {x: 3200, y: 410, collected: false}
+];
+
+const enemies = [
+
+    {x: 500, y: 400, w: 38, h: 38, vx: 1.5, alive: true},
+    {x: 1050, y: 400, w: 38, h: 38, vx: -1.5, alive: true},
+    {x: 1600, y: 400, w: 38, h: 38, vx: 1.7, alive: true},
+    {x: 2000, y: 400, w: 38, h: 38, vx: -1.7, alive: true},
+    {x: 2450, y: 400, w: 38, h: 38, vx: 1.8, alive: true},
+    {x: 2800, y: 400, w: 38, h: 38, vx: -1.8, alive: true},
+    {x: 3150, y: 400, w: 38, h: 38, vx: 1.7, alive: true},
+    {x: 3500, y: 400, w: 38, h: 38, vx: -1.7, alive: true}
+];
+
+const goal = {
+    x: 4000,
+    y: 350,
+    w: 45,
+    h: 100
+};
+
+function resetPlayer() {
+
+    player.x = 100;
+    player.y = 350;
+    player.vx = 0;
+    player.vy = 0;
+
+}
+
+function restartGame() {
+
+    score = 0;
+    coins = 0;
+    lives = 3;
+
+    gameOver = false;
+    levelComplete = false;
+
+    cameraX = 0;
+
+    coinsList.forEach(c => c.collected = false);
+
+    enemies.forEach((enemy, index) => {
+
+        enemy.alive = true;
+
+        enemy.x = [
+            500,
+            1050,
+            1600,
+            2000,
+            2450,
+            2800,
+            3150,
+            3500
+        ][index];
+
+    });
+
+    resetPlayer();
+
+    message.textContent =
+        "Arrow keys / A & D to move • Space / W / ↑ to jump";
+
+    updateUI();
+
+}
+
+function updateUI() {
+
+    coinText.textContent = coins;
+    scoreText.textContent = score;
+    livesText.textContent = lives;
+
+}
+
+function rectsCollide(a, b) {
+
+    return (
+        a.x < b.x + b.w &&
+        a.x + a.width > b.x &&
+        a.y < b.y + b.h &&
+        a.y + a.height > b.y
+    );
+
+}
+
+function enemyCollide(a, b) {
+
+    return (
+        a.x < b.x + b.w &&
+        a.x + a.width > b.x &&
+        a.y < b.y + b.h &&
+        a.y + a.height > b.y
+    );
+
+}
+
+function jump() {
+
+    if (gameOver || levelComplete) return;
+
+    if (player.onGround) {
+
+        player.vy = player.jumpPower;
+        player.onGround = false;
+
+    }
+
+}
+
+document.addEventListener("keydown", e => {
+
+    keys[e.key.toLowerCase()] = true;
+
+    if (
+        e.key === " " ||
+        e.key === "ArrowUp" ||
+        e.key.toLowerCase() === "w"
+    ) {
+
+        e.preventDefault();
+        jump();
+
+    }
+
+});
+
+document.addEventListener("keyup", e => {
+
+    keys[e.key.toLowerCase()] = false;
+
+});
+
+function setupButton(id, key) {
+
+    const button = document.getElementById(id);
+
+    button.addEventListener("pointerdown", e => {
+
+        e.preventDefault();
+        keys[key] = true;
+
+        if (key === "jump") {
+            jump();
+        }
+
+    });
+
+    button.addEventListener("pointerup", e => {
+
+        e.preventDefault();
+        keys[key] = false;
+
+    });
+
+    button.addEventListener("pointerleave", () => {
+
+        keys[key] = false;
+
+    });
+
+}
+
+setupButton("leftBtn", "arrowleft");
+setupButton("rightBtn", "arrowright");
+setupButton("jumpBtn", "jump");
+
+function update() {
+
+    if (gameOver || levelComplete) return;
+
+    if (
+        keys["arrowleft"] ||
+        keys["a"]
+    ) {
+
+        player.vx = -player.speed;
+
+    } else if (
+        keys["arrowright"] ||
+        keys["d"]
+    ) {
+
+        player.vx = player.speed;
+
+    } else {
+
+        player.vx *= 0.8;
+
+    }
+
+    player.vy += gravity;
+
+    player.x += player.vx;
+    player.y += player.vy;
+
+    if (player.x < 0) {
+        player.x = 0;
+    }
+
+    if (player.x > WORLD_WIDTH - player.width) {
+        player.x = WORLD_WIDTH - player.width;
+    }
+
+    player.onGround = false;
+
+    for (const platform of platforms) {
+
+        const playerBottom =
+            player.y + player.height;
+
+        const previousBottom =
+            playerBottom - player.vy;
+
+        if (
+            player.x + player.width > platform.x &&
+            player.x < platform.x + platform.w &&
+            previousBottom <= platform.y &&
+            playerBottom >= platform.y &&
+            player.vy >= 0
+        ) {
+
+            player.y = platform.y - player.height;
+            player.vy = 0;
+            player.onGround = true;
+
+        }
+
+    }
+
+    for (const coin of coinsList) {
+
+        if (coin.collected) continue;
+
+        const coinBox = {
+            x: coin.x - 12,
+            y: coin.y - 12,
+            w: 24,
+            h: 24
+        };
+
+        if (rectsCollide(player, coinBox)) {
+
+            coin.collected = true;
+            coins++;
+            score += 100;
+
+        }
+
+    }
+
+    for (const enemy of enemies) {
+
+        if (!enemy.alive) continue;
+
+        enemy.x += enemy.vx;
+
+        if (
+            enemy.x < 50 ||
+            enemy.x > WORLD_WIDTH - 80
+        ) {
+
+            enemy.vx *= -1;
+
+        }
+
+        if (enemyCollide(player, enemy)) {
+
+            if (player.vy > 0 &&
+                player.y + player.height - player.vy <= enemy.y + 10) {
+
+                enemy.alive = false;
+                player.vy = -9;
+                score += 250;
+
+            } else if (player.invincible <= 0) {
+
+                lives--;
+
+                player.invincible = 120;
+
+                resetPlayer();
+
+                if (lives <= 0) {
+
+                    gameOver = true;
+
+                    message.textContent =
+                        "GAME OVER — Press Restart to try again.";
+
+                }
+
+            }
+
+        }
+
+    }
+
+    if (player.invincible > 0) {
+        player.invincible--;
+    }
+
+    if (player.y > canvas.height + 100) {
+
+        lives--;
+
+        if (lives <= 0) {
+
+            gameOver = true;
+
+            message.textContent =
+                "GAME OVER — Press Restart to try again.";
+
+        } else {
+
+            resetPlayer();
+
+        }
+
+    }
+
+    if (rectsCollide(player, goal)) {
+
+        levelComplete = true;
+
+        score += 1000;
+
+        message.textContent =
+            "🏆 LEVEL COMPLETE! You finished The Bread Quest!";
+
+    }
+
+    cameraX =
+        player.x - canvas.width / 2;
+
+    if (cameraX < 0) {
+        cameraX = 0;
+    }
+
+    if (cameraX > WORLD_WIDTH - canvas.width) {
+        cameraX = WORLD_WIDTH - canvas.width;
+    }
+
+    updateUI();
+
+}
+
+function drawBackground() {
+
+    ctx.fillStyle = "#75c9f5";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#ffffff";
+
+    for (let i = 0; i < 20; i++) {
+
+        const x =
+            ((i * 257 - cameraX * 0.25) %
+            (canvas.width + 300)) - 100;
+
+        const y =
+            60 + (i % 4) * 55;
+
+        ctx.beginPath();
+
+        ctx.arc(x, y, 25, 0, Math.PI * 2);
+
+        ctx.arc(x + 25, y - 10, 30, 0, Math.PI * 2);
+
+        ctx.arc(x + 55, y, 25, 0, Math.PI * 2);
+
+        ctx.fill();
+
+    }
+
+    ctx.fillStyle = "#65b85a";
+
+    for (let i = 0; i < 15; i++) {
+
+        const x =
+            i * 350 - cameraX * 0.5;
+
+        ctx.beginPath();
+
+        ctx.moveTo(x, 450);
+        ctx.lineTo(x + 180, 300);
+        ctx.lineTo(x + 360, 450);
+        ctx.fill();
+
+    }
+
+}
+
+function drawPlatforms() {
+
+    for (const platform of platforms) {
+
+        const x = platform.x - cameraX;
+
+        if (
+            x + platform.w < 0 ||
+            x > canvas.width
+        ) continue;
+
+        ctx.fillStyle = "#8b5a2b";
+
+        ctx.fillRect(
+            x,
+            platform.y,
+            platform.w,
+            platform.h
+        );
+
+        ctx.fillStyle = "#3fb34f";
+
+        ctx.fillRect(
+            x,
+            platform.y,
+            platform.w,
+            10
+        );
+
+        ctx.fillStyle = "#6f421f";
+
+        for (
+            let brickX = x;
+            brickX < x + platform.w;
+            brickX += 40
+        ) {
+
+            ctx.strokeStyle = "#553319";
+
+            ctx.strokeRect(
+                brickX,
+                platform.y + 10,
+                40,
+                platform.h - 10
+            );
+
+        }
+
+    }
+
+}
+
+function drawCoins() {
+
+    for (const coin of coinsList) {
+
+        if (coin.collected) continue;
+
+        const x = coin.x - cameraX;
+
+        if (
+            x < -30 ||
+            x > canvas.width + 30
+        ) continue;
+
+        ctx.fillStyle = "#ffd83d";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            coin.y,
+            12,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+        ctx.strokeStyle = "#c99600";
+        ctx.lineWidth = 3;
+
+        ctx.stroke();
+
+        ctx.fillStyle = "#fff2a3";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x - 4,
+            coin.y - 4,
+            3,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+    }
+
+}
+
+function drawEnemies() {
+
+    for (const enemy of enemies) {
+
+        if (!enemy.alive) continue;
+
+        const x = enemy.x - cameraX;
+
+        if (
+            x < -50 ||
+            x > canvas.width + 50
+        ) continue;
+
+        ctx.fillStyle = "#7c3aed";
+
+        ctx.fillRect(
+            x,
+            enemy.y,
+            enemy.w,
+            enemy.h
+        );
+
+        ctx.fillStyle = "white";
+
+        ctx.fillRect(
+            x + 7,
+            enemy.y + 8,
+            9,
+            9
+        );
+
+        ctx.fillRect(
+            x + 22,
+            enemy.y + 8,
+            9,
+            9
+        );
+
+        ctx.fillStyle = "#111";
+
+        ctx.fillRect(
+            x + 10,
+            enemy.y + 11,
+            4,
+            4
+        );
+
+        ctx.fillRect(
+            x + 25,
+            enemy.y + 11,
+            4,
+            4
+        );
+
+        ctx.fillStyle = "#54209e";
+
+        ctx.fillRect(
+            x + 4,
+            enemy.y + 30,
+            30,
+            8
+        );
+
+    }
+
+}
+
+function drawGoal() {
+
+    const x = goal.x - cameraX;
+
+    ctx.fillStyle = "#eeeeee";
+
+    ctx.fillRect(
+        x,
+        goal.y,
+        6,
+        goal.h
+    );
+
+    ctx.fillStyle = "#ff3b30";
+
+    ctx.beginPath();
+
+    ctx.moveTo(x + 6, goal.y);
+    ctx.lineTo(x + 48, goal.y + 18);
+    ctx.lineTo(x + 6, goal.y + 36);
+    ctx.closePath();
+
+    ctx.fill();
+
+}
+
+function drawPlayer() {
+
+    if (
+        player.invincible > 0 &&
+        Math.floor(player.invincible / 6) % 2 === 0
+    ) {
+        return;
+    }
+
+    const x = player.x - cameraX;
+    const y = player.y;
+
+    /*
+        Bread hero:
+        brown body
+        golden crust
+        red scarf
+    */
+
+    ctx.fillStyle = "#d79a45";
+
+    ctx.fillRect(
+        x,
+        y,
+        player.width,
+        player.height
+    );
+
+    ctx.fillStyle = "#f5c16c";
+
+    ctx.fillRect(
+        x + 5,
+        y + 5,
+        player.width - 10,
+        player.height - 15
+    );
+
+    ctx.fillStyle = "#b96d28";
+
+    ctx.fillRect(
+        x,
+        y,
+        player.width,
+        8
+    );
+
+    ctx.fillStyle = "#e63946";
+
+    ctx.fillRect(
+        x - 4,
+        y + 28,
+        player.width + 8,
+        7
+    );
+
+    ctx.fillStyle = "#222";
+
+    ctx.fillRect(
+        x + 9,
+        y + 15,
+        6,
+        6
+    );
+
+    ctx.fillRect(
+        x + 24,
+        y + 15,
+        6,
+        6
+    );
+
+    ctx.fillStyle = "#333";
+
+    ctx.fillRect(
+        x + 5,
+        y + player.height - 5,
+        12,
+        5
+    );
+
+    ctx.fillRect(
+        x + 22,
+        y + player.height - 5,
+        12,
+        5
+    );
+
+}
+
+function draw() {
+
+    drawBackground();
+
+    drawPlatforms();
+
+    drawCoins();
+
+    drawEnemies();
+
+    drawGoal();
+
+    drawPlayer();
+
+    if (gameOver) {
+
+        ctx.fillStyle = "rgba(0,0,0,0.65)";
+
+        ctx.fillRect(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+        ctx.fillStyle = "white";
+
+        ctx.textAlign = "center";
+
+        ctx.font = "bold 52px Arial";
+
+        ctx.fillText(
+            "GAME OVER",
+            canvas.width / 2,
+            220
+        );
+
+        ctx.font = "24px Arial";
+
+        ctx.fillText(
+            "Click Restart to play again",
+            canvas.width / 2,
+            270
+        );
+
+    }
+
+    if (levelComplete) {
+
+        ctx.fillStyle = "rgba(0,0,0,0.6)";
+
+        ctx.fillRect(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+        ctx.fillStyle = "white";
+
+        ctx.textAlign = "center";
+
+        ctx.font = "bold 44px Arial";
+
+        ctx.fillText(
+            "🏆 THE BREAD QUEST COMPLETE!",
+            canvas.width / 2,
+            220
+        );
+
+        ctx.font = "24px Arial";
+
+        ctx.fillText(
+            "Score: " + score,
+            canvas.width / 2,
+            270
+        );
+
+    }
+
+}
+
+function gameLoop() {
+
+    update();
+
+    draw();
+
+    requestAnimationFrame(gameLoop);
+
+}
+
+updateUI();
+gameLoop();
+
+</script>
+
+</body>
+</html>
