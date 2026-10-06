@@ -664,7 +664,23 @@ function update() {
 
     /* GOAL */
 
-    if (rectsCollide(player, goal)) {
+    /* =========================
+   GOAL
+========================= */
+
+if (rectsCollide(player, goal)) {
+
+    levelComplete = true;
+
+    // Save Level 2 completion and unlock Level 3
+    localStorage.setItem("breadQuestCompleted", "2");
+    localStorage.setItem("breadQuestUnlocked", "3");
+
+    score += 1500;
+
+    message.textContent =
+        "🏆 LEVEL 2 COMPLETE! You conquered the Toasty Caverns!";
+} 
 
         levelComplete = true;
 
