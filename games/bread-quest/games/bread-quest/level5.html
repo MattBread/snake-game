@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Bread Quest - Level 5</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #071522;
+    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    overflow-x: hidden;
+}
+
+h1 {
+    margin: 12px 0 4px;
+    color: #8eeaff;
+    text-shadow: 0 0 14px #39d9ff;
+}
+
+.subtitle {
+    margin-bottom: 10px;
+    color: #d7f7ff;
+}
+
+#gameContainer {
+    width: 100%;
+    max-width: 1100px;
+    margin: auto;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 1100px;
+    margin: 0 auto;
+    background: #bcecff;
+    border: 3px solid #69dfff;
+    border-radius: 12px;
+    box-shadow: 0 0 25px rgba(57, 217, 255, 0.6);
+}
+
+#stats {
+    margin: 10px auto;
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    flex-wrap: wrap;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+button {
+    border: none;
+    border-radius: 10px;
+    padding: 12px 18px;
+    margin: 5px;
+    background: #168dcc;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #27b9ef;
+}
+
+#message {
+    min-height: 28px;
+    margin: 8px;
+    font-weight: bold;
+    color: #c9f7ff;
+}
+
+.mobileControls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 10px auto;
+    flex-wrap: wrap;
+}
+
+.mobileControls button {
+    width: 80px;
+    height: 55px;
+    font-size: 24px;
+    touch-action: none;
+    user-select: none;
+}
+
+.instructions {
+    color: #d7e9ef;
+    font-size: 14px;
+    margin: 8px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>❄️ The Bread Quest</h1>
+<div class="subtitle">Level 5 — Frosted Freezer</div>
+
+<div id="stats">
+    <div>❤️ Lives: <span id="lives">3</span></div>
+    <div>⭐ Score: <span id="score">0</span></div>
+</div>
+
+<div id="gameContainer">
+    <canvas id="game" width="1100" height="600"></canvas>
+</div>
+
+<div id="message">
+    Brave the frozen halls and reach the golden bread flag!
+</div>
+
+<div class="instructions">
+    Arrow Keys / A-D = Move &nbsp; | &nbsp; Space / W / ↑ = Jump
+</div>
+
+<div class="mobileControls">
+    <button id="leftBtn">⬅️</button>
+    <button id="jumpBtn">⬆️</button>
+    <button id="rightBtn">➡️</button>
+</div>
+
+<div>
+    <button onclick="restartGame()">🔄 Restart</button>
+    <button onclick="goLevel4()">⬅ Level 4</button>
+    <button onclick="goWorldMap()">🗺️ World Map</button>
+    <button onclick="goArcade()">🏠 Arcade</button>
+</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const livesText = document.getElementById("lives");
+const scoreText = document.getElementById("score");
+const message = document.getElementById("message");
+
+const WORLD_WIDTH = 7200;
+
+let cameraX = 0;
+let score = 0;
+let lives = 3;
+let gameOver = false;
+let levelComplete = false;
+
+const keys = {};
+
+const player = {
+    x: 100,
+    y: 400,
+    width: 42,
+    height: 50,
+    vx: 0,
+    vy: 0,
+    speed: 5,
+    jumpPower: -13,
+    onGround: false,
+    onIce: false
+};
+
+/* =========================
+   PLATFORMS
+========================= */
+
+const platforms = [
+    { x: 0, y: 520, w: 750, h: 80, ice: false },
+
+    { x: 850, y: 520, w: 600, h: 80, ice: true },
+
+    { x: 1550, y: 520, w: 650, h: 80, ice: false },
+
+    { x: 2300, y: 520, w: 550, h: 80, ice: true },
+
+    { x: 2950, y: 520, w: 750, h: 80, ice: false },
+
+    { x: 3800, y: 520, w: 600, h: 80, ice: true },
+
+    { x: 4500, y: 520, w: 700, h: 80, ice: false },
+
+    { x: 5300, y: 520, w: 600, h: 80, ice: true },
+
+    { x: 6000, y: 520, w: 1200, h: 80, ice: false },
+
+    /* Elevated ice platforms */
+    { x: 1050, y: 410, w: 190, h: 25, ice: true },
+
+    { x: 1750, y: 400, w: 190, h: 25, ice: false },
+
+    { x: 2450, y: 400, w: 200, h: 25, ice: true },
+
+    { x: 3200, y: 405, w: 190, h: 25, ice: false },
+
+    { x: 4000, y: 390, w: 210, h: 25, ice: true },
+
+    { x: 4700, y: 400, w: 200, h: 25, ice: false },
+
+    { x: 5500, y: 385, w: 210, h: 25, ice: true },
+
+    { x: 6350, y: 400, w: 200, h: 25, ice: false }
+];
+
+/* =========================
+   ICE HAZARDS
+========================= */
+
+const iceHazards = [
+    { x: 1180, y: 490, w: 70, h: 30 },
+    { x: 2600, y: 490, w: 75, h: 30 },
+    { x: 4070, y: 490, w: 75, h: 30 },
+    { x: 5570, y: 490, w: 75, h: 30 }
+];
+
+/* =========================
+   SNOW GAPS
+========================= */
+
+const snowGaps = [
+    { x: 750, w: 100 },
+    { x: 1450, w: 100 },
+    { x: 2200, w: 100 },
+    { x: 2850, w: 100 },
+    { x: 3700, w: 100 },
+    { x: 4400, w: 100 },
+    { x: 5200, w: 100 },
+    { x: 5900, w: 100 }
+];
+
+/* =========================
+   COINS
+========================= */
+
+const coins = [
+    { x: 250, y: 430, collected: false },
+    { x: 430, y: 390, collected: false },
+    { x: 620, y: 430, collected: false },
+
+    { x: 950, y: 430, collected: false },
+    { x: 1120, y: 350, collected: false },
+    { x: 1350, y: 430, collected: false },
+
+    { x: 1650, y: 430, collected: false },
+    { x: 1800, y: 340, collected: false },
+    { x: 2100, y: 430, collected: false },
+
+    { x: 2400, y: 430, collected: false },
+    { x: 2500, y: 340, collected: false },
+    { x: 2750, y: 430, collected: false },
+
+    { x: 3100, y: 430, collected: false },
+    { x: 3250, y: 350, collected: false },
+    { x: 3550, y: 430, collected: false },
+
+    { x: 3900, y: 430, collected: false },
+    { x: 4050, y: 330, collected: false },
+    { x: 4300, y: 430, collected: false },
+
+    { x: 4600, y: 430, collected: false },
+    { x: 4800, y: 350, collected: false },
+    { x: 5100, y: 430, collected: false },
+
+    { x: 5400, y: 430, collected: false },
+    { x: 5550, y: 325, collected: false },
+    { x: 5800, y: 430, collected: false },
+
+    { x: 6150, y: 430, collected: false },
+    { x: 6400, y: 340, collected: false },
+    { x: 6700, y: 430, collected: false },
+    { x: 6950, y: 430, collected: false }
+];
+
+/* =========================
+   ENEMIES
+========================= */
+
+const enemies = [
+    {
+        x: 500,
+        y: 470,
+        w: 40,
+        h: 50,
+        vx: 1.5,
+        startX: 400,
+        endX: 680
+    },
+    {
+        x: 1000,
+        y: 470,
+        w: 40,
+        h: 50,
+        vx: 1.4,
+        startX: 900,
+        endX: 1380
+    },
+    {
+        x: 1700,
+        y: 470,
+        w: 40,
+        h: 50,
+        vx: 1.5,
+        startX: 1600,
+        endX: 2100
+    },
+    {
+        x: 2450,
+        y: 470,
+        w: 40,
+        h: 50,
+        vx: 1.6,
+        startX: 2350,
+        endX: 2780
+    },
+    {
+        x: 3150,
+        y: 470,
+        w: 40,
+        h: 50,
+        vx: 1.5,
+        startX: 3050,
+        endX: 3600
+    },
+    {
+        x: 3900,
+        y: 470,
+        w: 40,
+        h: 50,
+        vx: 1.7,
+        startX: 3850,
+        endX: 4320
+    },
+    {
+        x: 4600,
+        y: 470,
+        w: 40,
+        h: 50,
+        vx: 1.5,
+        startX: 4550,
+        endX: 5100
+    },
+    {
+        x: 5400,
+        y: 470,
+        w: 40,
+        h: 50,
+        vx: 1.7,
+        startX: 5350,
+        endX: 5850
+    },
+    {
+        x: 6250,
+        y: 470,
+        w: 40,
+        h: 50,
+        vx: 1.6,
+        startX: 6100,
+        endX: 6850
+    }
+];
+
+/* =========================
+   GOAL
+========================= */
+
+const goal = {
+    x: 7050,
+    y: 390,
+    w: 50,
+    h: 130
+};
+
+/* =========================
+   COLLISION
+========================= */
+
+function rectsCollide(a, b) {
+    const aw = a.width ?? a.w;
+    const ah = a.height ?? a.h;
+    const bw = b.width ?? b.w;
+    const bh = b.height ?? b.h;
+
+    return (
+        a.x < b.x + bw &&
+        a.x + aw > b.x &&
+        a.y < b.y + bh &&
+        a.y + ah > b.y
+    );
+}
+
+/* =========================
+   RESET PLAYER
+========================= */
+
+function resetPlayer() {
+    player.x = 100;
+    player.y = 400;
+    player.vx = 0;
+    player.vy = 0;
+    player.onGround = false;
+    player.onIce = false;
+    cameraX = 0;
+}
+
+/* =========================
+   RESTART
+========================= */
+
+function restartGame() {
+    score = 0;
+    lives = 3;
+    gameOver = false;
+    levelComplete = false;
+
+    coins.forEach(coin => {
+        coin.collected = false;
+    });
+
+    enemies.forEach(enemy => {
+        enemy.x = enemy.startX;
+        enemy.vx = Math.abs(enemy.vx);
+    });
+
+    resetPlayer();
+
+    livesText.textContent = lives;
+    scoreText.textContent = score;
+
+    message.textContent =
+        "Brave the frozen halls and reach the golden bread flag!";
+}
+
+/* =========================
+   KEYBOARD
+========================= */
+
+window.addEventListener("keydown", e => {
+
+    keys[e.key.toLowerCase()] = true;
+
+    if (
+        e.key === " " ||
+        e.key === "ArrowUp" ||
+        e.key.toLowerCase() === "w"
+    ) {
+        e.preventDefault();
+
+        if (
+            player.onGround &&
+            !gameOver &&
+            !levelComplete
+        ) {
+            player.vy = player.jumpPower;
+            player.onGround = false;
+        }
+    }
+});
+
+window.addEventListener("keyup", e => {
+    keys[e.key.toLowerCase()] = false;
+});
+
+/* =========================
+   MOBILE CONTROLS
+========================= */
+
+const leftBtn =
+    document.getElementById("leftBtn");
+
+const rightBtn =
+    document.getElementById("rightBtn");
+
+const jumpBtn =
+    document.getElementById("jumpBtn");
+
+leftBtn.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    keys["arrowleft"] = true;
+});
+
+leftBtn.addEventListener("pointerup", e => {
+    e.preventDefault();
+    keys["arrowleft"] = false;
+});
+
+leftBtn.addEventListener("pointerleave", () => {
+    keys["arrowleft"] = false;
+});
+
+rightBtn.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    keys["arrowright"] = true;
+});
+
+rightBtn.addEventListener("pointerup", e => {
+    e.preventDefault();
+    keys["arrowright"] = false;
+});
+
+rightBtn.addEventListener("pointerleave", () => {
+    keys["arrowright"] = false;
+});
+
+jumpBtn.addEventListener("pointerdown", e => {
+
+    e.preventDefault();
+
+    if (
+        player.onGround &&
+        !gameOver &&
+        !levelComplete
+    ) {
+        player.vy = player.jumpPower;
+        player.onGround = false;
+    }
+});
+
+/* =========================
+   UPDATE
+========================= */
+
+function update() {
+
+    if (gameOver || levelComplete) {
+        return;
+    }
+
+    /* Movement */
+
+    if (
+        keys["arrowright"] ||
+        keys["d"]
+    ) {
+        player.vx += 0.65;
+    } else if (
+        keys["arrowleft"] ||
+        keys["a"]
+    ) {
+        player.vx -= 0.65;
+    } else {
+        player.vx *= player.onIce ? 0.96 : 0.78;
+    }
+
+    const maxSpeed =
+        player.onIce ? 6.5 : 5;
+
+    if (player.vx > maxSpeed) {
+        player.vx = maxSpeed;
+    }
+
+    if (player.vx < -maxSpeed) {
+        player.vx = -maxSpeed;
+    }
+
+    player.x += player.vx;
+
+    /* Gravity */
+
+    player.vy += 0.65;
+
+    player.y += player.vy;
+
+    player.onGround = false;
+    player.onIce = false;
+
+    /* Platform collision */
+
+    for (const platform of platforms) {
+
+        if (
+            player.x + player.width > platform.x &&
+            player.x < platform.x + platform.w &&
+            player.y + player.height >= platform.y &&
+            player.y + player.height <=
+                platform.y + 28 &&
+            player.vy >= 0
+        ) {
+
+            player.y =
+                platform.y - player.height;
+
+            player.vy = 0;
+
+            player.onGround = true;
+
+            player.onIce = platform.ice;
+        }
+    }
+
+    /* World boundaries */
+
+    if (player.x < 0) {
+        player.x = 0;
+        player.vx = 0;
+    }
+
+    if (
+        player.x >
+        WORLD_WIDTH - player.width
+    ) {
+        player.x =
+            WORLD_WIDTH - player.width;
+    }
+
+    /* Ice hazard */
+
+    for (const hazard of iceHazards) {
+
+        if (
+            player.x + player.width > hazard.x &&
+            player.x < hazard.x + hazard.w &&
+            player.y + player.height > hazard.y &&
+            player.y < hazard.y + hazard.h
+        ) {
+            player.vx *= 0.7;
+        }
+    }
+
+    /* Fall into snow gaps */
+
+    for (const gap of snowGaps) {
+
+        if (
+            player.x + player.width > gap.x &&
+            player.x < gap.x + gap.w &&
+            player.y + player.height >= 535
+        ) {
+            loseLife();
+            return;
+        }
+    }
+
+    /* Falling */
+
+    if (player.y > canvas.height + 100) {
+        loseLife();
+        return;
+    }
+
+    /* Coins */
+
+    for (const coin of coins) {
+
+        if (coin.collected) {
+            continue;
+        }
+
+        const coinBox = {
+            x: coin.x - 14,
+            y: coin.y - 14,
+            w: 28,
+            h: 28
+        };
+
+        if (rectsCollide(player, coinBox)) {
+
+            coin.collected = true;
+
+            score += 250;
+
+            scoreText.textContent = score;
+        }
+    }
+
+    /* Enemies */
+
+    for (const enemy of enemies) {
+
+        if (enemy.x < -1000) {
+            continue;
+        }
+
+        enemy.x += enemy.vx;
+
+        if (enemy.x <= enemy.startX) {
+            enemy.x = enemy.startX;
+            enemy.vx =
+                Math.abs(enemy.vx);
+        }
+
+        if (
+            enemy.x + enemy.w >=
+            enemy.endX
+        ) {
+            enemy.x =
+                enemy.endX - enemy.w;
+
+            enemy.vx =
+                -Math.abs(enemy.vx);
+        }
+
+        if (rectsCollide(player, enemy)) {
+
+            const playerBottom =
+                player.y + player.height;
+
+            const enemyTop =
+                enemy.y;
+
+            if (
+                player.vy > 0 &&
+                playerBottom - enemyTop < 25
+            ) {
+
+                score += 500;
+
+                scoreText.textContent =
+                    score;
+
+                enemy.x = -1000;
+
+                player.vy = -9;
+
+            } else {
+
+                loseLife();
+                return;
+            }
+        }
+    }
+
+    /* Goal */
+
+    if (rectsCollide(player, goal)) {
+
+        levelComplete = true;
+
+        score += 1500;
+
+        scoreText.textContent =
+            score;
+
+        localStorage.setItem(
+            "breadQuestCompleted",
+            "5"
+        );
+
+        localStorage.setItem(
+            "breadQuestUnlocked",
+            "6"
+        );
+
+        message.textContent =
+            "🏆 LEVEL 5 COMPLETE! You escaped the Frosted Freezer! Level 6 unlocked!";
+    }
+
+    /* Camera */
+
+    cameraX =
+        player.x -
+        canvas.width * 0.35;
+
+    if (cameraX < 0) {
+        cameraX = 0;
+    }
+
+    if (
+        cameraX >
+        WORLD_WIDTH - canvas.width
+    ) {
+        cameraX =
+            WORLD_WIDTH - canvas.width;
+    }
+}
+
+/* =========================
+   LOSE LIFE
+========================= */
+
+function loseLife() {
+
+    lives--;
+
+    livesText.textContent =
+        lives;
+
+    if (lives <= 0) {
+
+        gameOver = true;
+
+        message.textContent =
+            "💀 GAME OVER! Press Restart to try again.";
+
+        return;
+    }
+
+    message.textContent =
+        "❄️ You slipped into the freezing depths!";
+
+    resetPlayer();
+}
+
+/* =========================
+   BACKGROUND
+========================= */
+
+function drawBackground() {
+
+    const gradient =
+        ctx.createLinearGradient(
+            0,
+            0,
+            0,
+            canvas.height
+        );
+
+    gradient.addColorStop(
+        0,
+        "#071b35"
+    );
+
+    gradient.addColorStop(
+        0.55,
+        "#5ebbd8"
+    );
+
+    gradient.addColorStop(
+        1,
+        "#d8f8ff"
+    );
+
+    ctx.fillStyle = gradient;
+
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    /* Distant mountains */
+
+    ctx.fillStyle =
+        "rgba(255,255,255,0.55)";
+
+    for (
+        let x = -600;
+        x < WORLD_WIDTH;
+        x += 900
+    ) {
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            x - cameraX,
+            520
+        );
+
+        ctx.lineTo(
+            x + 300 - cameraX,
+            220
+        );
+
+        ctx.lineTo(
+            x + 600 - cameraX,
+            520
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
+    }
+
+    /* Snow mist */
+
+    ctx.fillStyle =
+        "rgba(255,255,255,0.25)";
+
+    ctx.fillRect(
+        0,
+        410,
+        canvas.width,
+        110
+    );
+
+    /* Snowflakes */
+
+    ctx.fillStyle =
+        "rgba(255,255,255,0.75)";
+
+    for (let i = 0; i < 70; i++) {
+
+        const x =
+            ((i * 173) -
+                cameraX * 0.25) %
+            canvas.width;
+
+        const y =
+            (i * 79) %
+            500;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x < 0
+                ? x + canvas.width
+                : x,
+            y,
+            2 + (i % 3),
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    }
+}
+
+/* =========================
+   DRAW GAPS
+========================= */
+
+function drawGaps() {
+
+    for (const gap of snowGaps) {
+
+        const x =
+            gap.x - cameraX;
+
+        const gradient =
+            ctx.createLinearGradient(
+                x,
+                520,
+                x,
+                600
+            );
+
+        gradient.addColorStop(
+            0,
+            "#bff6ff"
+        );
+
+        gradient.addColorStop(
+            0.5,
+            "#4bc5e8"
+        );
+
+        gradient.addColorStop(
+            1,
+            "#08729b"
+        );
+
+        ctx.fillStyle = gradient;
+
+        ctx.fillRect(
+            x,
+            520,
+            gap.w,
+            80
+        );
+
+        ctx.fillStyle =
+            "rgba(255,255,255,0.7)";
+
+        ctx.fillRect(
+            x + 15,
+            535,
+            gap.w - 30,
+            5
+        );
+    }
+}
+
+/* =========================
+   DRAW PLATFORMS
+========================= */
+
+function drawPlatforms() {
+
+    for (const platform of platforms) {
+
+        const x =
+            platform.x - cameraX;
+
+        if (
+            x + platform.w < 0 ||
+            x > canvas.width
+        ) {
+            continue;
+        }
+
+        ctx.fillStyle =
+            platform.ice
+                ? "#8de5f7"
+                : "#d9f7ff";
+
+        ctx.fillRect(
+            x,
+            platform.y,
+            platform.w,
+            platform.h
+        );
+
+        ctx.fillStyle =
+            platform.ice
+                ? "#eaffff"
+                : "#ffffff";
+
+        ctx.fillRect(
+            x,
+            platform.y,
+            platform.w,
+            12
+        );
+
+        ctx.strokeStyle =
+            "#65bfd5";
+
+        ctx.lineWidth = 2;
+
+        ctx.strokeRect(
+            x,
+            platform.y,
+            platform.w,
+            platform.h
+        );
+
+        /* Ice shine */
+
+        if (platform.ice) {
+
+            ctx.fillStyle =
+                "rgba(255,255,255,0.55)";
+
+            for (
+                let shine = 15;
+                shine < platform.w;
+                shine += 70
+            ) {
+
+                ctx.fillRect(
+                    x + shine,
+                    platform.y + 20,
+                    35,
+                    5
+                );
+            }
+        }
+    }
+}
+
+/* =========================
+   DRAW ICE HAZARDS
+========================= */
+
+function drawIceHazards() {
+
+    for (const hazard of iceHazards) {
+
+        const x =
+            hazard.x - cameraX;
+
+        ctx.fillStyle =
+            "#54c8e8";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            x,
+            hazard.y + hazard.h
+        );
+
+        ctx.lineTo(
+            x + 12,
+            hazard.y
+        );
+
+        ctx.lineTo(
+            x + 24,
+            hazard.y + hazard.h
+        );
+
+        ctx.lineTo(
+            x + 36,
+            hazard.y
+        );
+
+        ctx.lineTo(
+            x + 48,
+            hazard.y + hazard.h
+        );
+
+        ctx.lineTo(
+            x + 60,
+            hazard.y
+        );
+
+        ctx.lineTo(
+            x + 70,
+            hazard.y + hazard.h
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
+    }
+}
+
+/* =========================
+   DRAW COINS
+========================= */
+
+function drawCoins() {
+
+    for (const coin of coins) {
+
+        if (coin.collected) {
+            continue;
+        }
+
+        const x =
+            coin.x - cameraX;
+
+        if (
+            x < -30 ||
+            x > canvas.width + 30
+        ) {
+            continue;
+        }
+
+        ctx.fillStyle =
+            "#ffe66d";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            coin.y,
+            12,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+        ctx.strokeStyle =
+            "#ffffff";
+
+        ctx.lineWidth = 2;
+
+        ctx.stroke();
+
+        ctx.fillStyle =
+            "#3dbbd9";
+
+        ctx.font =
+            "bold 14px Arial";
+
+        ctx.textAlign =
+            "center";
+
+        ctx.textBaseline =
+            "middle";
+
+        ctx.fillText(
+            "★",
+            x,
+            coin.y
+        );
+    }
+}
+
+/* =========================
+   DRAW ENEMIES
+========================= */
+
+function drawEnemies() {
+
+    for (const enemy of enemies) {
+
+        if (enemy.x < -1000) {
+            continue;
+        }
+
+        const x =
+            enemy.x - cameraX;
+
+        if (
+            x + enemy.w < 0 ||
+            x > canvas.width
+        ) {
+            continue;
+        }
+
+        /* Snow monster */
+
+        ctx.fillStyle =
+            "#f4fbff";
+
+        ctx.fillRect(
+            x,
+            enemy.y,
+            enemy.w,
+            enemy.h
+        );
+
+        ctx.strokeStyle =
+            "#4aa9c5";
+
+        ctx.lineWidth = 3;
+
+        ctx.strokeRect(
+            x,
+            enemy.y,
+            enemy.w,
+            enemy.h
+        );
+
+        /* Eyes */
+
+        ctx.fillStyle =
+            "#17384b";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x + 11,
+            enemy.y + 17,
+            4,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.arc(
+            x + 29,
+            enemy.y + 17,
+            4,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+        /* Mouth */
+
+        ctx.fillStyle =
+            "#58b9d6";
+
+        ctx.fillRect(
+            x + 9,
+            enemy.y + 33,
+            22,
+            6
+        );
+    }
+}
+
+/* =========================
+   DRAW PLAYER
+========================= */
+
+function drawPlayer() {
+
+    const x =
+        player.x - cameraX;
+
+    /* Bread body */
+
+    ctx.fillStyle =
+        "#f4c77a";
+
+    ctx.fillRect(
+        x,
+        player.y,
+        player.width,
+        player.height
+    );
+
+    ctx.strokeStyle =
+        "#8b5a25";
+
+    ctx.lineWidth = 4;
+
+    ctx.strokeRect(
+        x,
+        player.y,
+        player.width,
+        player.height
+    );
+
+    /* Winter hat */
+
+    ctx.fillStyle =
+        "#3d8fd1";
+
+    ctx.fillRect(
+        x - 2,
+        player.y - 8,
+        player.width + 4,
+        10
+    );
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x + player.width / 2,
+        player.y - 8,
+        10,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+    /* Face */
+
+    ctx.fillStyle =
+        "#111";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x + 13,
+        player.y + 20,
+        3,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.arc(
+        x + 29,
+        player.y + 20,
+        3,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+    /* Smile */
+
+    ctx.strokeStyle =
+        "#111";
+
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x + 21,
+        player.y + 24,
+        8,
+        0,
+        Math.PI
+    );
+
+    ctx.stroke();
+}
+
+/* =========================
+   DRAW GOAL
+========================= */
+
+function drawGoal() {
+
+    const x =
+        goal.x - cameraX;
+
+    ctx.fillStyle =
+        "#72a9bd";
+
+    ctx.fillRect(
+        x,
+        goal.y,
+        8,
+        goal.h
+    );
+
+    ctx.fillStyle =
+        "#ffe66d";
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        x + 8,
+        goal.y
+    );
+
+    ctx.lineTo(
+        x + 58,
+        goal.y + 22
+    );
+
+    ctx.lineTo(
+        x + 8,
+        goal.y + 44
+    );
+
+    ctx.closePath();
+
+    ctx.fill();
+
+    ctx.font =
+        "28px Arial";
+
+    ctx.fillText(
+        "🍞",
+        x - 6,
+        goal.y - 10
+    );
+}
+
+/* =========================
+   DRAW
+========================= */
+
+function draw() {
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    drawBackground();
+    drawGaps();
+    drawPlatforms();
+    drawIceHazards();
+    drawCoins();
+    drawEnemies();
+    drawGoal();
+    drawPlayer();
+
+    /* Level banner */
+
+    ctx.fillStyle =
+        "rgba(4,24,40,0.65)";
+
+    ctx.fillRect(
+        15,
+        15,
+        275,
+        45
+    );
+
+    ctx.fillStyle =
+        "#d7f7ff";
+
+    ctx.font =
+        "bold 22px Arial";
+
+    ctx.textAlign =
+        "left";
+
+    ctx.fillText(
+        "❄️ FROSTED FREEZER",
+        28,
+        44
+    );
+}
+
+/* =========================
+   GAME LOOP
+========================= */
+
+function gameLoop() {
+
+    update();
+    draw();
+
+    requestAnimationFrame(
+        gameLoop
+    );
+}
+
+/* =========================
+   NAVIGATION
+========================= */
+
+function goLevel4() {
+
+    window.location.href =
+        "/snake-game/games/bread-quest/level4.html";
+}
+
+function goWorldMap() {
+
+    window.location.href =
+        "/snake-game/games/bread-quest/world-map.html";
+}
+
+function goArcade() {
+
+    window.location.href =
+        "/snake-game/";
+}
+
+/* =========================
+   START GAME
+========================= */
+
+restartGame();
+gameLoop();
+
+</script>
+
+</body>
+</html>
