@@ -1,1 +1,1454 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Bread Quest - Level 3</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #87ceeb;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(#78d5ff 0%, #b9edff 70%, #8ed35f 70%, #65b94a 100%);
+}
+
+#hud {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+
+    padding: 10px 16px;
+    border-radius: 18px;
+
+    background: rgba(20, 20, 30, 0.82);
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+}
+
+.hudBox {
+    padding: 4px 8px;
+    white-space: nowrap;
+}
+
+#message {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+
+    z-index: 20;
+
+    display: none;
+
+    min-width: 280px;
+    max-width: 90%;
+
+    padding: 25px;
+    border-radius: 24px;
+
+    text-align: center;
+
+    background: rgba(20, 20, 30, 0.95);
+    color: white;
+
+    box-shadow: 0 10px 40px rgba(0,0,0,0.45);
+}
+
+#message h1 {
+    margin: 0 0 10px;
+    font-size: 32px;
+}
+
+#message p {
+    margin: 8px 0 18px;
+    font-size: 17px;
+}
+
+.buttonRow {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+button {
+    border: none;
+    border-radius: 14px;
+    padding: 12px 18px;
+
+    font-size: 15px;
+    font-weight: bold;
+
+    cursor: pointer;
+
+    background: #ffcc33;
+    color: #392500;
+
+    box-shadow: 0 4px 0 #c99700;
+}
+
+button:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #c99700;
+}
+
+#mobileControls {
+    position: fixed;
+    bottom: 18px;
+    left: 0;
+    right: 0;
+
+    z-index: 15;
+
+    display: flex;
+    justify-content: space-between;
+
+    padding: 0 18px;
+
+    pointer-events: none;
+}
+
+.controlGroup {
+    display: flex;
+    gap: 10px;
+    pointer-events: auto;
+}
+
+.controlButton {
+    width: 64px;
+    height: 64px;
+
+    border-radius: 18px;
+
+    background: rgba(20,20,30,0.75);
+    color: white;
+
+    font-size: 28px;
+
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+@media (min-width: 800px) {
+    #mobileControls {
+        opacity: 0.65;
+    }
+}
+
+@media (max-width: 600px) {
+    #hud {
+        top: 6px;
+        padding: 7px 9px;
+        gap: 5px;
+        font-size: 12px;
+    }
+
+    .controlButton {
+        width: 58px;
+        height: 58px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="game"></canvas>
+
+<div id="hud">
+    <div class="hudBox">🍞 LEVEL 3</div>
+    <div class="hudBox">⭐ Score: <span id="score">0</span></div>
+    <div class="hudBox">🪙 Coins: <span id="coins">0</span></div>
+    <div class="hudBox">❤️ Lives: <span id="lives">3</span></div>
+</div>
+
+<div id="message">
+    <h1 id="messageTitle">🍞</h1>
+    <p id="messageText"></p>
+
+    <div class="buttonRow">
+        <button onclick="restartGame()">🔄 Restart</button>
+        <button onclick="goToMap()">🗺️ World Map</button>
+        <button onclick="goToArcade()">🏠 Arcade</button>
+    </div>
+</div>
+
+<div id="mobileControls">
+    <div class="controlGroup">
+        <button class="controlButton" id="leftButton">◀</button>
+        <button class="controlButton" id="rightButton">▶</button>
+    </div>
+
+    <div class="controlGroup">
+        <button class="controlButton" id="jumpButton">⬆</button>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let W = window.innerWidth;
+let H = window.innerHeight;
+
+canvas.width = W;
+canvas.height = H;
+
+window.addEventListener("resize", () => {
+    W = window.innerWidth;
+    H = window.innerHeight;
+
+    canvas.width = W;
+    canvas.height = H;
+});
+
+
+// ======================================================
+// GAME SETTINGS
+// ======================================================
+
+const WORLD_WIDTH = 6500;
+
+let cameraX = 0;
+
+let score = 0;
+let coinCount = 0;
+let lives = 3;
+
+let gameRunning = true;
+let levelComplete = false;
+
+const keys = {};
+
+
+// ======================================================
+// PLAYER
+// ======================================================
+
+const player = {
+    x: 120,
+    y: 400,
+
+    width: 42,
+    height: 52,
+
+    vx: 0,
+    vy: 0,
+
+    speed: 6.5,
+    jumpPower: 16,
+
+    grounded: false,
+
+    color: "#f4a62a"
+};
+
+
+// ======================================================
+// WORLD
+// ======================================================
+
+const groundY = 560;
+
+const platforms = [
+
+    {x: 0, y: groundY, w: 800, h: 100},
+    {x: 900, y: groundY, w: 650, h: 100},
+    {x: 1650, y: 500, w: 420, h: 160},
+    {x: 2200, y: groundY, w: 700, h: 100},
+    {x: 3050, y: 480, w: 400, h: 180},
+    {x: 3550, y: groundY, w: 700, h: 100},
+    {x: 4400, y: 520, w: 420, h: 140},
+    {x: 4950, y: groundY, w: 700, h: 100},
+    {x: 5800, y: 460, w: 500, h: 200}
+];
+
+
+// ======================================================
+// COINS
+// ======================================================
+
+const coins = [
+
+    {x: 300, y: 470, collected:false},
+    {x: 430, y: 410, collected:false},
+    {x: 600, y: 470, collected:false},
+
+    {x: 1020, y: 470, collected:false},
+    {x: 1180, y: 420, collected:false},
+    {x: 1400, y: 470, collected:false},
+
+    {x: 1770, y: 410, collected:false},
+    {x: 1900, y: 360, collected:false},
+
+    {x: 2350, y: 470, collected:false},
+    {x: 2500, y: 410, collected:false},
+    {x: 2700, y: 470, collected:false},
+
+    {x: 3160, y: 390, collected:false},
+    {x: 3300, y: 350, collected:false},
+
+    {x: 3700, y: 470, collected:false},
+    {x: 3950, y: 420, collected:false},
+    {x: 4150, y: 470, collected:false},
+
+    {x: 4520, y: 430, collected:false},
+    {x: 4680, y: 390, collected:false},
+
+    {x: 5100, y: 470, collected:false},
+    {x: 5350, y: 420, collected:false},
+    {x: 5550, y: 470, collected:false},
+
+    {x: 5920, y: 370, collected:false},
+    {x: 6100, y: 320, collected:false}
+];
+
+
+// ======================================================
+// ENEMIES
+// ======================================================
+
+const enemies = [
+
+    {
+        x: 650,
+        y: 510,
+        w: 42,
+        h: 42,
+        vx: 1.4,
+        min: 500,
+        max: 750,
+        alive: true
+    },
+
+    {
+        x: 1100,
+        y: 510,
+        w: 42,
+        h: 42,
+        vx: 1.6,
+        min: 950,
+        max: 1450,
+        alive: true
+    },
+
+    {
+        x: 1800,
+        y: 450,
+        w: 42,
+        h: 42,
+        vx: 1.3,
+        min: 1660,
+        max: 2020,
+        alive: true
+    },
+
+    {
+        x: 2600,
+        y: 510,
+        w: 42,
+        h: 42,
+        vx: 1.8,
+        min: 2250,
+        max: 2800,
+        alive: true
+    },
+
+    {
+        x: 3200,
+        y: 430,
+        w: 42,
+        h: 42,
+        vx: 1.5,
+        min: 3060,
+        max: 3400,
+        alive: true
+    },
+
+    {
+        x: 3900,
+        y: 510,
+        w: 42,
+        h: 42,
+        vx: 1.7,
+        min: 3600,
+        max: 4200,
+        alive: true
+    },
+
+    {
+        x: 4550,
+        y: 470,
+        w: 42,
+        h: 42,
+        vx: 1.4,
+        min: 4420,
+        max: 4800,
+        alive: true
+    },
+
+    {
+        x: 5300,
+        y: 510,
+        w: 42,
+        h: 42,
+        vx: 1.8,
+        min: 5000,
+        max: 5550,
+        alive: true
+    }
+];
+
+
+// ======================================================
+// GOAL
+// ======================================================
+
+const goal = {
+    x: 6200,
+    y: 350,
+    w: 50,
+    h: 110
+};
+
+
+// ======================================================
+// INPUT
+// ======================================================
+
+window.addEventListener("keydown", (e) => {
+
+    keys[e.key.toLowerCase()] = true;
+
+    if (
+        e.key === "ArrowUp" ||
+        e.key === "ArrowLeft" ||
+        e.key === "ArrowRight" ||
+        e.key === " "
+    ) {
+        e.preventDefault();
+    }
+});
+
+window.addEventListener("keyup", (e) => {
+    keys[e.key.toLowerCase()] = false;
+});
+
+
+// ======================================================
+// MOBILE CONTROLS
+// ======================================================
+
+function pressKey(key) {
+    keys[key] = true;
+}
+
+function releaseKey(key) {
+    keys[key] = false;
+}
+
+const leftButton = document.getElementById("leftButton");
+const rightButton = document.getElementById("rightButton");
+const jumpButton = document.getElementById("jumpButton");
+
+leftButton.addEventListener("touchstart", e => {
+    e.preventDefault();
+    pressKey("arrowleft");
+});
+
+leftButton.addEventListener("touchend", e => {
+    e.preventDefault();
+    releaseKey("arrowleft");
+});
+
+rightButton.addEventListener("touchstart", e => {
+    e.preventDefault();
+    pressKey("arrowright");
+});
+
+rightButton.addEventListener("touchend", e => {
+    e.preventDefault();
+    releaseKey("arrowright");
+});
+
+jumpButton.addEventListener("touchstart", e => {
+    e.preventDefault();
+    pressKey("arrowup");
+});
+
+jumpButton.addEventListener("touchend", e => {
+    e.preventDefault();
+    releaseKey("arrowup");
+});
+
+
+// Mouse support for desktop testing
+
+leftButton.addEventListener("mousedown", () => pressKey("arrowleft"));
+leftButton.addEventListener("mouseup", () => releaseKey("arrowleft"));
+
+rightButton.addEventListener("mousedown", () => pressKey("arrowright"));
+rightButton.addEventListener("mouseup", () => releaseKey("arrowright"));
+
+jumpButton.addEventListener("mousedown", () => pressKey("arrowup"));
+jumpButton.addEventListener("mouseup", () => releaseKey("arrowup"));
+
+
+// ======================================================
+// COLLISION
+// ======================================================
+
+function rectangleCollision(a, b) {
+
+    return (
+        a.x < b.x + b.w &&
+        a.x + a.width > b.x &&
+        a.y < b.y + b.h &&
+        a.y + a.height > b.y
+    );
+}
+
+
+// ======================================================
+// RESET PLAYER
+// ======================================================
+
+function resetPlayer() {
+
+    player.x = 120;
+    player.y = 300;
+
+    player.vx = 0;
+    player.vy = 0;
+
+    cameraX = 0;
+}
+
+
+// ======================================================
+// LOSE LIFE
+// ======================================================
+
+function loseLife() {
+
+    if (!gameRunning) {
+        return;
+    }
+
+    lives--;
+
+    updateHUD();
+
+    if (lives <= 0) {
+
+        gameRunning = false;
+
+        showMessage(
+            "💀 Game Over!",
+            "The Breadlands got you!"
+        );
+
+        return;
+    }
+
+    resetPlayer();
+}
+
+
+// ======================================================
+// UPDATE PLAYER
+// ======================================================
+
+function updatePlayer() {
+
+    if (!gameRunning) {
+        return;
+    }
+
+    player.vx = 0;
+
+    if (
+        keys["arrowleft"] ||
+        keys["a"]
+    ) {
+        player.vx = -player.speed;
+    }
+
+    if (
+        keys["arrowright"] ||
+        keys["d"]
+    ) {
+        player.vx = player.speed;
+    }
+
+    if (
+        (
+            keys["arrowup"] ||
+            keys["w"] ||
+            keys[" "]
+        ) &&
+        player.grounded
+    ) {
+
+        player.vy = -player.jumpPower;
+
+        player.grounded = false;
+    }
+
+    player.vy += 0.7;
+
+    player.x += player.vx;
+    player.y += player.vy;
+
+    if (player.x < 0) {
+        player.x = 0;
+    }
+
+    if (player.x + player.width > WORLD_WIDTH) {
+        player.x = WORLD_WIDTH - player.width;
+    }
+
+    player.grounded = false;
+
+    // Platform collision
+
+    for (const platform of platforms) {
+
+        if (
+            player.x < platform.x + platform.w &&
+            player.x + player.width > platform.x &&
+            player.y + player.height >= platform.y &&
+            player.y + player.height <= platform.y + 35 &&
+            player.vy >= 0
+        ) {
+
+            player.y = platform.y - player.height;
+
+            player.vy = 0;
+
+            player.grounded = true;
+        }
+    }
+
+    // Falling into gaps
+
+    if (player.y > H + 200) {
+        loseLife();
+    }
+
+    // Camera
+
+    const targetCamera =
+        player.x - W * 0.38;
+
+    cameraX +=
+        (targetCamera - cameraX) * 0.1;
+
+    if (cameraX < 0) {
+        cameraX = 0;
+    }
+
+    const maxCamera =
+        WORLD_WIDTH - W;
+
+    if (cameraX > maxCamera) {
+        cameraX = maxCamera;
+    }
+}
+
+
+// ======================================================
+// UPDATE ENEMIES
+// ======================================================
+
+function updateEnemies() {
+
+    for (const enemy of enemies) {
+
+        if (!enemy.alive) {
+            continue;
+        }
+
+        enemy.x += enemy.vx;
+
+        if (
+            enemy.x <= enemy.min ||
+            enemy.x + enemy.w >= enemy.max
+        ) {
+            enemy.vx *= -1;
+        }
+
+        const enemyBox = {
+            x: enemy.x,
+            y: enemy.y,
+            w: enemy.w,
+            h: enemy.h
+        };
+
+        const playerBox = {
+            x: player.x,
+            y: player.y,
+            width: player.width,
+            height: player.height
+        };
+
+        if (rectangleCollision(playerBox, enemyBox)) {
+
+            // Player jumps on enemy
+
+            if (
+                player.vy > 0 &&
+                player.y + player.height - 10 < enemy.y + 18
+            ) {
+
+                enemy.alive = false;
+
+                player.vy = -10;
+
+                score += 100;
+
+                updateHUD();
+
+            } else {
+
+                loseLife();
+
+            }
+        }
+    }
+}
+
+
+// ======================================================
+// UPDATE COINS
+// ======================================================
+
+function updateCoins() {
+
+    for (const coin of coins) {
+
+        if (coin.collected) {
+            continue;
+        }
+
+        const dx =
+            player.x + player.width / 2 - coin.x;
+
+        const dy =
+            player.y + player.height / 2 - coin.y;
+
+        const distance =
+            Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < 45) {
+
+            coin.collected = true;
+
+            coinCount++;
+
+            score += 25;
+
+            updateHUD();
+        }
+    }
+}
+
+
+// ======================================================
+// CHECK GOAL
+// ======================================================
+
+function checkGoal() {
+
+    if (levelComplete) {
+        return;
+    }
+
+    if (
+        player.x + player.width > goal.x &&
+        player.x < goal.x + goal.w &&
+        player.y + player.height > goal.y &&
+        player.y < goal.y + goal.h
+    ) {
+
+        completeLevel();
+    }
+}
+
+
+// ======================================================
+// COMPLETE LEVEL
+// ======================================================
+
+function completeLevel() {
+
+    levelComplete = true;
+    gameRunning = false;
+
+    score += 500;
+
+    updateHUD();
+
+    // Save Level 3 completion
+
+    localStorage.setItem(
+        "breadQuestCompleted",
+        "3"
+    );
+
+    // Unlock Level 4
+
+    localStorage.setItem(
+        "breadQuestUnlocked",
+        "4"
+    );
+
+    showMessage(
+        "🎉 LEVEL 3 COMPLETE!",
+        "You made it through Breadlands Dash!<br><br>" +
+        "⭐ Score: " + score +
+        "<br>🪙 Coins: " + coinCount
+    );
+}
+
+
+// ======================================================
+// HUD
+// ======================================================
+
+function updateHUD() {
+
+    document.getElementById("score").textContent =
+        score;
+
+    document.getElementById("coins").textContent =
+        coinCount;
+
+    document.getElementById("lives").textContent =
+        lives;
+}
+
+
+// ======================================================
+// MESSAGE
+// ======================================================
+
+function showMessage(title, text) {
+
+    document.getElementById("messageTitle").innerHTML =
+        title;
+
+    document.getElementById("messageText").innerHTML =
+        text;
+
+    document.getElementById("message").style.display =
+        "block";
+}
+
+
+// ======================================================
+// RESTART
+// ======================================================
+
+function restartGame() {
+
+    location.reload();
+}
+
+
+// ======================================================
+// NAVIGATION
+// ======================================================
+
+function goToMap() {
+
+    window.location.href =
+        "world-map.html";
+}
+
+function goToArcade() {
+
+    window.location.href =
+        "../../";
+}
+
+
+// ======================================================
+// DRAW BACKGROUND
+// ======================================================
+
+function drawBackground() {
+
+    // Sky
+
+    const gradient =
+        ctx.createLinearGradient(
+            0,
+            0,
+            0,
+            H
+        );
+
+    gradient.addColorStop(
+        0,
+        "#70d7ff"
+    );
+
+    gradient.addColorStop(
+        0.7,
+        "#c8f3ff"
+    );
+
+    gradient.addColorStop(
+        0.7,
+        "#83cc58"
+    );
+
+    gradient.addColorStop(
+        1,
+        "#55a83d"
+    );
+
+    ctx.fillStyle = gradient;
+
+    ctx.fillRect(
+        0,
+        0,
+        W,
+        H
+    );
+
+    // Clouds
+
+    drawCloud(150 - cameraX * 0.2, 100);
+    drawCloud(600 - cameraX * 0.2, 150);
+    drawCloud(1100 - cameraX * 0.2, 90);
+    drawCloud(1750 - cameraX * 0.2, 130);
+    drawCloud(2500 - cameraX * 0.2, 80);
+    drawCloud(3300 - cameraX * 0.2, 150);
+    drawCloud(4300 - cameraX * 0.2, 90);
+    drawCloud(5200 - cameraX * 0.2, 140);
+    drawCloud(6000 - cameraX * 0.2, 80);
+}
+
+
+// ======================================================
+// CLOUD
+// ======================================================
+
+function drawCloud(x, y) {
+
+    ctx.fillStyle =
+        "rgba(255,255,255,0.85)";
+
+    ctx.beginPath();
+
+    ctx.arc(x, y, 25, 0, Math.PI * 2);
+    ctx.arc(x + 30, y - 12, 35, 0, Math.PI * 2);
+    ctx.arc(x + 65, y, 27, 0, Math.PI * 2);
+
+    ctx.fill();
+}
+
+
+// ======================================================
+// DRAW PLATFORMS
+// ======================================================
+
+function drawPlatforms() {
+
+    for (const platform of platforms) {
+
+        const screenX =
+            platform.x - cameraX;
+
+        ctx.fillStyle =
+            "#7b3f16";
+
+        ctx.fillRect(
+            screenX,
+            platform.y,
+            platform.w,
+            platform.h
+        );
+
+        // Grass top
+
+        ctx.fillStyle =
+            "#4fa832";
+
+        ctx.fillRect(
+            screenX,
+            platform.y,
+            platform.w,
+            18
+        );
+
+        // Small bread-like dots
+
+        ctx.fillStyle =
+            "#a85b22";
+
+        for (
+            let x = screenX + 20;
+            x < screenX + platform.w;
+            x += 55
+        ) {
+
+            ctx.beginPath();
+
+            ctx.arc(
+                x,
+                platform.y + 45,
+                5,
+                0,
+                Math.PI * 2
+            );
+
+            ctx.fill();
+        }
+    }
+}
+
+
+// ======================================================
+// DRAW COINS
+// ======================================================
+
+function drawCoins() {
+
+    for (const coin of coins) {
+
+        if (coin.collected) {
+            continue;
+        }
+
+        const x =
+            coin.x - cameraX;
+
+        ctx.fillStyle =
+            "#ffd633";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            coin.y,
+            13,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+        ctx.strokeStyle =
+            "#d59d00";
+
+        ctx.lineWidth = 3;
+
+        ctx.stroke();
+
+        ctx.fillStyle =
+            "#fff2a3";
+
+        ctx.font =
+            "bold 13px Arial";
+
+        ctx.textAlign =
+            "center";
+
+        ctx.fillText(
+            "$",
+            x,
+            coin.y + 5
+        );
+    }
+}
+
+
+// ======================================================
+// DRAW ENEMIES
+// ======================================================
+
+function drawEnemies() {
+
+    for (const enemy of enemies) {
+
+        if (!enemy.alive) {
+            continue;
+        }
+
+        const x =
+            enemy.x - cameraX;
+
+        ctx.fillStyle =
+            "#8b3a3a";
+
+        ctx.fillRect(
+            x,
+            enemy.y,
+            enemy.w,
+            enemy.h
+        );
+
+        // Eyes
+
+        ctx.fillStyle =
+            "white";
+
+        ctx.fillRect(
+            x + 8,
+            enemy.y + 8,
+            9,
+            9
+        );
+
+        ctx.fillRect(
+            x + 25,
+            enemy.y + 8,
+            9,
+            9
+        );
+
+        ctx.fillStyle =
+            "black";
+
+        ctx.fillRect(
+            x + 11,
+            enemy.y + 11,
+            4,
+            4
+        );
+
+        ctx.fillRect(
+            x + 28,
+            enemy.y + 11,
+            4,
+            4
+        );
+
+        // Feet
+
+        ctx.fillStyle =
+            "#4b2020";
+
+        ctx.fillRect(
+            x + 5,
+            enemy.y + enemy.h - 5,
+            12,
+            7
+        );
+
+        ctx.fillRect(
+            x + 25,
+            enemy.y + enemy.h - 5,
+            12,
+            7
+        );
+    }
+}
+
+
+// ======================================================
+// DRAW PLAYER
+// ======================================================
+
+function drawPlayer() {
+
+    const x =
+        player.x - cameraX;
+
+    const y =
+        player.y;
+
+    // Body
+
+    ctx.fillStyle =
+        player.color;
+
+    ctx.fillRect(
+        x,
+        y,
+        player.width,
+        player.height
+    );
+
+    // Bread top
+
+    ctx.fillStyle =
+        "#ffd36b";
+
+    ctx.fillRect(
+        x + 5,
+        y - 8,
+        player.width - 10,
+        12
+    );
+
+    // Face
+
+    ctx.fillStyle =
+        "#3a220d";
+
+    ctx.fillRect(
+        x + 9,
+        y + 16,
+        5,
+        7
+    );
+
+    ctx.fillRect(
+        x + 28,
+        y + 16,
+        5,
+        7
+    );
+
+    // Smile
+
+    ctx.strokeStyle =
+        "#3a220d";
+
+    ctx.lineWidth = 3;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x + player.width / 2,
+        y + 28,
+        8,
+        0,
+        Math.PI
+    );
+
+    ctx.stroke();
+
+    // Legs
+
+    ctx.fillStyle =
+        "#603b20";
+
+    ctx.fillRect(
+        x + 5,
+        y + player.height - 4,
+        12,
+        8
+    );
+
+    ctx.fillRect(
+        x + 25,
+        y + player.height - 4,
+        12,
+        8
+    );
+}
+
+
+// ======================================================
+// DRAW GOAL
+// ======================================================
+
+function drawGoal() {
+
+    const x =
+        goal.x - cameraX;
+
+    // Pole
+
+    ctx.fillStyle =
+        "#eeeeee";
+
+    ctx.fillRect(
+        x,
+        goal.y,
+        8,
+        goal.h
+    );
+
+    // Flag
+
+    ctx.fillStyle =
+        "#ff3b30";
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        x + 8,
+        goal.y
+    );
+
+    ctx.lineTo(
+        x + 55,
+        goal.y + 22
+    );
+
+    ctx.lineTo(
+        x + 8,
+        goal.y + 45
+    );
+
+    ctx.closePath();
+
+    ctx.fill();
+
+    // Goal star
+
+    ctx.fillStyle =
+        "#ffd633";
+
+    ctx.font =
+        "26px Arial";
+
+    ctx.fillText(
+        "★",
+        x - 3,
+        goal.y - 12
+    );
+}
+
+
+// ======================================================
+// DRAW START SIGN
+// ======================================================
+
+function drawStartSign() {
+
+    if (cameraX > 250) {
+        return;
+    }
+
+    ctx.fillStyle =
+        "#fff8dc";
+
+    ctx.fillRect(
+        70 - cameraX,
+        350,
+        150,
+        65
+    );
+
+    ctx.strokeStyle =
+        "#8b5a2b";
+
+    ctx.lineWidth = 5;
+
+    ctx.strokeRect(
+        70 - cameraX,
+        350,
+        150,
+        65
+    );
+
+    ctx.fillStyle =
+        "#5c3517";
+
+    ctx.font =
+        "bold 18px Arial";
+
+    ctx.textAlign =
+        "center";
+
+    ctx.fillText(
+        "BREADLANDS",
+        145 - cameraX,
+        378
+    );
+
+    ctx.font =
+        "bold 14px Arial";
+
+    ctx.fillText(
+        "DASH!",
+        145 - cameraX,
+        400
+    );
+}
+
+
+// ======================================================
+// DRAW EVERYTHING
+// ======================================================
+
+function draw() {
+
+    ctx.clearRect(
+        0,
+        0,
+        W,
+        H
+    );
+
+    drawBackground();
+
+    drawPlatforms();
+
+    drawStartSign();
+
+    drawCoins();
+
+    drawEnemies();
+
+    drawGoal();
+
+    drawPlayer();
+}
+
+
+// ======================================================
+// GAME LOOP
+// ======================================================
+
+function gameLoop() {
+
+    updatePlayer();
+
+    updateEnemies();
+
+    updateCoins();
+
+    checkGoal();
+
+    draw();
+
+    requestAnimationFrame(gameLoop);
+}
+
+
+// ======================================================
+// START
+// ======================================================
+
+updateHUD();
+
+gameLoop();
+
+</script>
+
+</body>
+</html>
