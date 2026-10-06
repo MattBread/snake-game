@@ -1,1 +1,1302 @@
-Create The Bread Quest Level 2
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>The Bread Quest - Level 2</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #10131c;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+#gameWrapper {
+    width: min(100%, 1000px);
+    padding: 15px;
+    text-align: center;
+}
+
+h1 {
+    margin: 0 0 8px;
+    font-size: 32px;
+}
+
+#info {
+    display: flex;
+    justify-content: space-between;
+    max-width: 900px;
+    margin: 0 auto 10px;
+    padding: 10px 15px;
+    background: #191d2a;
+    border: 1px solid #30374d;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    max-width: 900px;
+    height: auto;
+    margin: auto;
+    background: #27203b;
+    border: 3px solid white;
+    border-radius: 10px;
+    image-rendering: pixelated;
+}
+
+#message {
+    margin-top: 12px;
+    min-height: 28px;
+    font-weight: bold;
+}
+
+button {
+    border: 0;
+    border-radius: 10px;
+    padding: 12px 20px;
+    margin: 5px;
+    background: #252b3d;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #37405a;
+}
+
+#mobileControls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.control {
+    width: 65px;
+    height: 55px;
+    font-size: 24px;
+    touch-action: none;
+    user-select: none;
+}
+</style>
+</head>
+
+<body>
+
+<div id="gameWrapper">
+
+<h1>🍞 The Bread Quest — Level 2</h1>
+
+<div id="info">
+    <span>🪙 Coins: <span id="coinText">0</span></span>
+    <span>⭐ Score: <span id="scoreText">0</span></span>
+    <span>❤️ Lives: <span id="livesText">3</span></span>
+</div>
+
+<canvas id="game" width="900" height="500"></canvas>
+
+<div id="message">
+    Level 2: Toasty Caverns • Reach the flag!
+</div>
+
+<div>
+    <button onclick="restartGame()">🔄 Restart Level</button>
+    <button onclick="location.href='index.html'">⬅ Level 1</button>
+    <button onclick="location.href='../../'">🏠 Arcade</button>
+</div>
+
+<div id="mobileControls">
+    <button class="control" id="leftBtn">◀</button>
+    <button class="control" id="jumpBtn">⬆</button>
+    <button class="control" id="rightBtn">▶</button>
+</div>
+
+</div>
+
+<script>
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const coinText = document.getElementById("coinText");
+const scoreText = document.getElementById("scoreText");
+const livesText = document.getElementById("livesText");
+const message = document.getElementById("message");
+
+const WORLD_WIDTH = 5000;
+
+let keys = {};
+let cameraX = 0;
+
+let score = 0;
+let coins = 0;
+let lives = 3;
+
+let gameOver = false;
+let levelComplete = false;
+
+const gravity = 0.68;
+
+const player = {
+    x: 100,
+    y: 350,
+    width: 38,
+    height: 48,
+    vx: 0,
+    vy: 0,
+    speed: 5,
+    jumpPower: -14,
+    onGround: false,
+    invincible: 0
+};
+
+
+/* =========================
+   LEVEL 2 PLATFORMS
+========================= */
+
+const platforms = [
+
+    {x: 0, y: 450, w: 500, h: 50},
+    {x: 650, y: 450, w: 500, h: 50},
+    {x: 1300, y: 450, w: 500, h: 50},
+    {x: 1950, y: 450, w: 600, h: 50},
+    {x: 2700, y: 450, w: 500, h: 50},
+    {x: 3350, y: 450, w: 550, h: 50},
+    {x: 4050, y: 450, w: 950, h: 50},
+
+    {x: 180, y: 350, w: 130, h: 25},
+    {x: 400, y: 285, w: 120, h: 25},
+
+    {x: 720, y: 350, w: 140, h: 25},
+    {x: 950, y: 280, w: 130, h: 25},
+
+    {x: 1380, y: 350, w: 150, h: 25},
+    {x: 1620, y: 280, w: 140, h: 25},
+
+    {x: 2050, y: 350, w: 140, h: 25},
+    {x: 2280, y: 280, w: 150, h: 25},
+
+    {x: 2800, y: 350, w: 150, h: 25},
+    {x: 3050, y: 275, w: 120, h: 25},
+
+    {x: 3450, y: 350, w: 150, h: 25},
+    {x: 3680, y: 285, w: 140, h: 25},
+
+    {x: 4200, y: 350, w: 150, h: 25},
+    {x: 4450, y: 290, w: 160, h: 25},
+    {x: 4700, y: 350, w: 150, h: 25}
+];
+
+
+/* =========================
+   COINS
+========================= */
+
+const coinsList = [
+
+    {x: 230, y: 310, collected: false},
+    {x: 455, y: 245, collected: false},
+
+    {x: 550, y: 410, collected: false},
+
+    {x: 770, y: 310, collected: false},
+    {x: 1000, y: 240, collected: false},
+
+    {x: 900, y: 410, collected: false},
+
+    {x: 1430, y: 310, collected: false},
+    {x: 1660, y: 240, collected: false},
+
+    {x: 1500, y: 410, collected: false},
+
+    {x: 2100, y: 310, collected: false},
+    {x: 2340, y: 240, collected: false},
+
+    {x: 2200, y: 410, collected: false},
+
+    {x: 2850, y: 310, collected: false},
+    {x: 3090, y: 235, collected: false},
+
+    {x: 2900, y: 410, collected: false},
+
+    {x: 3500, y: 310, collected: false},
+    {x: 3730, y: 245, collected: false},
+
+    {x: 3600, y: 410, collected: false},
+
+    {x: 4250, y: 310, collected: false},
+    {x: 4510, y: 250, collected: false},
+    {x: 4760, y: 310, collected: false},
+
+    {x: 4400, y: 410, collected: false}
+];
+
+
+/* =========================
+   ENEMIES
+========================= */
+
+const enemies = [
+
+    {x: 350, y: 400, w: 38, h: 38, vx: 1.6, alive: true},
+    {x: 800, y: 400, w: 38, h: 38, vx: -1.7, alive: true},
+    {x: 1000, y: 400, w: 38, h: 38, vx: 1.8, alive: true},
+
+    {x: 1450, y: 400, w: 38, h: 38, vx: 1.8, alive: true},
+    {x: 1700, y: 400, w: 38, h: 38, vx: -1.9, alive: true},
+
+    {x: 2100, y: 400, w: 38, h: 38, vx: 1.9, alive: true},
+    {x: 2400, y: 400, w: 38, h: 38, vx: -2, alive: true},
+
+    {x: 2850, y: 400, w: 38, h: 38, vx: 2, alive: true},
+    {x: 3150, y: 400, w: 38, h: 38, vx: -2, alive: true},
+
+    {x: 3500, y: 400, w: 38, h: 38, vx: 2.1, alive: true},
+    {x: 3800, y: 400, w: 38, h: 38, vx: -2.1, alive: true},
+
+    {x: 4300, y: 400, w: 38, h: 38, vx: 2.1, alive: true},
+    {x: 4650, y: 400, w: 38, h: 38, vx: -2.2, alive: true}
+];
+
+
+/* =========================
+   LEVEL 2 GOAL
+========================= */
+
+const goal = {
+    x: 4850,
+    y: 350,
+    w: 45,
+    h: 100
+};
+
+
+/* =========================
+   RESET
+========================= */
+
+function resetPlayer() {
+
+    player.x = 100;
+    player.y = 350;
+    player.vx = 0;
+    player.vy = 0;
+
+}
+
+
+function restartGame() {
+
+    score = 0;
+    coins = 0;
+    lives = 3;
+
+    gameOver = false;
+    levelComplete = false;
+
+    cameraX = 0;
+
+    coinsList.forEach(c => {
+        c.collected = false;
+    });
+
+    enemies.forEach(enemy => {
+        enemy.alive = true;
+    });
+
+    resetPlayer();
+
+    message.textContent =
+        "Level 2: Toasty Caverns • Reach the flag!";
+
+    updateUI();
+
+}
+
+
+/* =========================
+   UI
+========================= */
+
+function updateUI() {
+
+    coinText.textContent = coins;
+    scoreText.textContent = score;
+    livesText.textContent = lives;
+
+}
+
+
+/* =========================
+   COLLISION
+========================= */
+
+function rectsCollide(a, b) {
+
+    return (
+        a.x < b.x + b.w &&
+        a.x + a.width > b.x &&
+        a.y < b.y + b.h &&
+        a.y + a.height > b.y
+    );
+
+}
+
+
+/* =========================
+   JUMP
+========================= */
+
+function jump() {
+
+    if (gameOver || levelComplete) return;
+
+    if (player.onGround) {
+
+        player.vy = player.jumpPower;
+        player.onGround = false;
+
+    }
+
+}
+
+
+/* =========================
+   KEYBOARD
+========================= */
+
+document.addEventListener("keydown", e => {
+
+    keys[e.key.toLowerCase()] = true;
+
+    if (
+        e.key === " " ||
+        e.key === "ArrowUp" ||
+        e.key.toLowerCase() === "w"
+    ) {
+
+        e.preventDefault();
+
+        jump();
+
+    }
+
+});
+
+
+document.addEventListener("keyup", e => {
+
+    keys[e.key.toLowerCase()] = false;
+
+});
+
+
+/* =========================
+   MOBILE CONTROLS
+========================= */
+
+function setupButton(id, key) {
+
+    const button = document.getElementById(id);
+
+    button.addEventListener("pointerdown", e => {
+
+        e.preventDefault();
+
+        keys[key] = true;
+
+        if (key === "jump") {
+            jump();
+        }
+
+    });
+
+    button.addEventListener("pointerup", e => {
+
+        e.preventDefault();
+
+        keys[key] = false;
+
+    });
+
+    button.addEventListener("pointerleave", () => {
+
+        keys[key] = false;
+
+    });
+
+}
+
+
+setupButton("leftBtn", "arrowleft");
+setupButton("rightBtn", "arrowright");
+setupButton("jumpBtn", "jump");
+
+
+/* =========================
+   UPDATE
+========================= */
+
+function update() {
+
+    if (gameOver || levelComplete) return;
+
+
+    if (
+        keys["arrowleft"] ||
+        keys["a"]
+    ) {
+
+        player.vx = -player.speed;
+
+    }
+
+    else if (
+        keys["arrowright"] ||
+        keys["d"]
+    ) {
+
+        player.vx = player.speed;
+
+    }
+
+    else {
+
+        player.vx *= 0.8;
+
+    }
+
+
+    player.vy += gravity;
+
+    player.x += player.vx;
+
+    player.y += player.vy;
+
+
+    if (player.x < 0) {
+        player.x = 0;
+    }
+
+
+    if (
+        player.x >
+        WORLD_WIDTH - player.width
+    ) {
+
+        player.x =
+            WORLD_WIDTH - player.width;
+
+    }
+
+
+    player.onGround = false;
+
+
+    /* PLATFORM COLLISIONS */
+
+    for (const platform of platforms) {
+
+        const playerBottom =
+            player.y + player.height;
+
+        const previousBottom =
+            playerBottom - player.vy;
+
+
+        if (
+            player.x + player.width > platform.x &&
+            player.x < platform.x + platform.w &&
+            previousBottom <= platform.y &&
+            playerBottom >= platform.y &&
+            player.vy >= 0
+        ) {
+
+            player.y =
+                platform.y - player.height;
+
+            player.vy = 0;
+
+            player.onGround = true;
+
+        }
+
+    }
+
+
+    /* COINS */
+
+    for (const coin of coinsList) {
+
+        if (coin.collected) continue;
+
+
+        const coinBox = {
+
+            x: coin.x - 12,
+            y: coin.y - 12,
+            w: 24,
+            h: 24
+
+        };
+
+
+        if (rectsCollide(player, coinBox)) {
+
+            coin.collected = true;
+
+            coins++;
+
+            score += 100;
+
+        }
+
+    }
+
+
+    /* ENEMIES */
+
+    for (const enemy of enemies) {
+
+        if (!enemy.alive) continue;
+
+
+        enemy.x += enemy.vx;
+
+
+        if (
+            enemy.x < 20 ||
+            enemy.x >
+            WORLD_WIDTH - 80
+        ) {
+
+            enemy.vx *= -1;
+
+        }
+
+
+        if (rectsCollide(player, enemy)) {
+
+            if (
+                player.vy > 0 &&
+                player.y + player.height -
+                player.vy <= enemy.y + 10
+            ) {
+
+                enemy.alive = false;
+
+                player.vy = -9;
+
+                score += 250;
+
+            }
+
+            else if (player.invincible <= 0) {
+
+                lives--;
+
+                player.invincible = 120;
+
+                resetPlayer();
+
+
+                if (lives <= 0) {
+
+                    gameOver = true;
+
+                    message.textContent =
+                        "GAME OVER — Press Restart to try again.";
+
+                }
+
+            }
+
+        }
+
+    }
+
+
+    if (player.invincible > 0) {
+        player.invincible--;
+    }
+
+
+    /* FALLING INTO GAPS */
+
+    if (player.y > canvas.height + 100) {
+
+        lives--;
+
+
+        if (lives <= 0) {
+
+            gameOver = true;
+
+            message.textContent =
+                "GAME OVER — Press Restart to try again.";
+
+        }
+
+        else {
+
+            resetPlayer();
+
+        }
+
+    }
+
+
+    /* GOAL */
+
+    if (rectsCollide(player, goal)) {
+
+        levelComplete = true;
+
+        score += 1500;
+
+        message.textContent =
+            "🏆 LEVEL 2 COMPLETE! You conquered the Toasty Caverns!";
+
+    }
+
+
+    /* CAMERA */
+
+    cameraX =
+        player.x - canvas.width / 2;
+
+
+    if (cameraX < 0) {
+        cameraX = 0;
+    }
+
+
+    if (
+        cameraX >
+        WORLD_WIDTH - canvas.width
+    ) {
+
+        cameraX =
+            WORLD_WIDTH - canvas.width;
+
+    }
+
+
+    updateUI();
+
+}
+
+
+/* =========================
+   BACKGROUND
+========================= */
+
+function drawBackground() {
+
+    ctx.fillStyle = "#27203b";
+
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    /* Cave ceiling */
+
+    ctx.fillStyle = "#181425";
+
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        75
+    );
+
+
+    /* Cave rocks */
+
+    for (let i = 0; i < 18; i++) {
+
+        const x =
+            i * 300 -
+            cameraX * 0.25;
+
+        const y =
+            80 +
+            (i % 3) * 55;
+
+
+        ctx.fillStyle =
+            i % 2 === 0
+            ? "#40345c"
+            : "#51446e";
+
+
+        ctx.beginPath();
+
+        ctx.moveTo(x, 0);
+
+        ctx.lineTo(
+            x + 70,
+            y
+        );
+
+        ctx.lineTo(
+            x + 140,
+            0
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
+
+    }
+
+
+    /* Background mushrooms */
+
+    for (let i = 0; i < 20; i++) {
+
+        const x =
+            i * 270 -
+            cameraX * 0.45;
+
+        const y = 390;
+
+
+        ctx.fillStyle = "#d94f70";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            y,
+            20,
+            Math.PI,
+            0
+        );
+
+        ctx.fill();
+
+
+        ctx.fillStyle = "#eee";
+
+        ctx.fillRect(
+            x - 3,
+            y - 1,
+            6,
+            20
+        );
+
+    }
+
+}
+
+
+/* =========================
+   PLATFORMS
+========================= */
+
+function drawPlatforms() {
+
+    for (const platform of platforms) {
+
+        const x =
+            platform.x - cameraX;
+
+
+        if (
+            x + platform.w < 0 ||
+            x > canvas.width
+        ) continue;
+
+
+        ctx.fillStyle = "#68452f";
+
+        ctx.fillRect(
+            x,
+            platform.y,
+            platform.w,
+            platform.h
+        );
+
+
+        ctx.fillStyle = "#9b6b43";
+
+        ctx.fillRect(
+            x,
+            platform.y,
+            platform.w,
+            9
+        );
+
+
+        ctx.strokeStyle = "#422c20";
+
+        for (
+            let brickX = x;
+            brickX < x + platform.w;
+            brickX += 40
+        ) {
+
+            ctx.strokeRect(
+                brickX,
+                platform.y + 10,
+                40,
+                platform.h - 10
+            );
+
+        }
+
+    }
+
+}
+
+
+/* =========================
+   COINS
+========================= */
+
+function drawCoins() {
+
+    for (const coin of coinsList) {
+
+        if (coin.collected) continue;
+
+
+        const x =
+            coin.x - cameraX;
+
+
+        if (
+            x < -30 ||
+            x > canvas.width + 30
+        ) continue;
+
+
+        ctx.fillStyle = "#ffd83d";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            coin.y,
+            12,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+
+        ctx.strokeStyle = "#c99600";
+
+        ctx.lineWidth = 3;
+
+        ctx.stroke();
+
+
+        ctx.fillStyle = "#fff4a3";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x - 4,
+            coin.y - 4,
+            3,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+    }
+
+}
+
+
+/* =========================
+   ENEMIES
+========================= */
+
+function drawEnemies() {
+
+    for (const enemy of enemies) {
+
+        if (!enemy.alive) continue;
+
+
+        const x =
+            enemy.x - cameraX;
+
+
+        if (
+            x < -50 ||
+            x > canvas.width + 50
+        ) continue;
+
+
+        ctx.fillStyle = "#a83279";
+
+        ctx.fillRect(
+            x,
+            enemy.y,
+            enemy.w,
+            enemy.h
+        );
+
+
+        ctx.fillStyle = "white";
+
+        ctx.fillRect(
+            x + 7,
+            enemy.y + 8,
+            9,
+            9
+        );
+
+        ctx.fillRect(
+            x + 22,
+            enemy.y + 8,
+            9,
+            9
+        );
+
+
+        ctx.fillStyle = "#111";
+
+        ctx.fillRect(
+            x + 10,
+            enemy.y + 11,
+            4,
+            4
+        );
+
+        ctx.fillRect(
+            x + 25,
+            enemy.y + 11,
+            4,
+            4
+        );
+
+
+        ctx.fillStyle = "#702252";
+
+        ctx.fillRect(
+            x + 4,
+            enemy.y + 30,
+            30,
+            8
+        );
+
+    }
+
+}
+
+
+/* =========================
+   GOAL
+========================= */
+
+function drawGoal() {
+
+    const x =
+        goal.x - cameraX;
+
+
+    ctx.fillStyle = "#eeeeee";
+
+    ctx.fillRect(
+        x,
+        goal.y,
+        6,
+        goal.h
+    );
+
+
+    ctx.fillStyle = "#ff3b30";
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        x + 6,
+        goal.y
+    );
+
+    ctx.lineTo(
+        x + 48,
+        goal.y + 18
+    );
+
+    ctx.lineTo(
+        x + 6,
+        goal.y + 36
+    );
+
+    ctx.closePath();
+
+    ctx.fill();
+
+}
+
+
+/* =========================
+   PLAYER
+========================= */
+
+function drawPlayer() {
+
+    if (
+        player.invincible > 0 &&
+        Math.floor(
+            player.invincible / 6
+        ) % 2 === 0
+    ) {
+
+        return;
+
+    }
+
+
+    const x =
+        player.x - cameraX;
+
+    const y =
+        player.y;
+
+
+    /* Bread body */
+
+    ctx.fillStyle = "#d79a45";
+
+    ctx.fillRect(
+        x,
+        y,
+        player.width,
+        player.height
+    );
+
+
+    /* Bread center */
+
+    ctx.fillStyle = "#f5c16c";
+
+    ctx.fillRect(
+        x + 5,
+        y + 5,
+        player.width - 10,
+        player.height - 15
+    );
+
+
+    /* Crust */
+
+    ctx.fillStyle = "#b96d28";
+
+    ctx.fillRect(
+        x,
+        y,
+        player.width,
+        8
+    );
+
+
+    /* Scarf */
+
+    ctx.fillStyle = "#e63946";
+
+    ctx.fillRect(
+        x - 4,
+        y + 28,
+        player.width + 8,
+        7
+    );
+
+
+    /* Eyes */
+
+    ctx.fillStyle = "#222";
+
+    ctx.fillRect(
+        x + 9,
+        y + 15,
+        6,
+        6
+    );
+
+    ctx.fillRect(
+        x + 24,
+        y + 15,
+        6,
+        6
+    );
+
+
+    /* Feet */
+
+    ctx.fillStyle = "#333";
+
+    ctx.fillRect(
+        x + 5,
+        y + player.height - 5,
+        12,
+        5
+    );
+
+    ctx.fillRect(
+        x + 22,
+        y + player.height - 5,
+        12,
+        5
+    );
+
+}
+
+
+/* =========================
+   DRAW
+========================= */
+
+function draw() {
+
+    drawBackground();
+
+    drawPlatforms();
+
+    drawCoins();
+
+    drawEnemies();
+
+    drawGoal();
+
+    drawPlayer();
+
+
+    if (gameOver) {
+
+        ctx.fillStyle =
+            "rgba(0,0,0,0.7)";
+
+        ctx.fillRect(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+
+        ctx.fillStyle = "white";
+
+        ctx.textAlign = "center";
+
+        ctx.font =
+            "bold 52px Arial";
+
+        ctx.fillText(
+            "GAME OVER",
+            canvas.width / 2,
+            220
+        );
+
+
+        ctx.font =
+            "24px Arial";
+
+        ctx.fillText(
+            "Click Restart to try again",
+            canvas.width / 2,
+            270
+        );
+
+    }
+
+
+    if (levelComplete) {
+
+        ctx.fillStyle =
+            "rgba(0,0,0,0.7)";
+
+        ctx.fillRect(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+
+        ctx.fillStyle = "white";
+
+        ctx.textAlign = "center";
+
+        ctx.font =
+            "bold 42px Arial";
+
+        ctx.fillText(
+            "🏆 LEVEL 2 COMPLETE!",
+            canvas.width / 2,
+            210
+        );
+
+
+        ctx.font =
+            "24px Arial";
+
+        ctx.fillText(
+            "Score: " + score,
+            canvas.width / 2,
+            260
+        );
+
+
+        ctx.fillText(
+            "You conquered the Toasty Caverns!",
+            canvas.width / 2,
+            300
+        );
+
+    }
+
+}
+
+
+/* =========================
+   GAME LOOP
+========================= */
+
+function gameLoop() {
+
+    update();
+
+    draw();
+
+    requestAnimationFrame(gameLoop);
+
+}
+
+
+updateUI();
+
+gameLoop();
+
+</script>
+
+</body>
+</html>
