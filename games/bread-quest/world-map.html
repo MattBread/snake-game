@@ -92,9 +92,20 @@ header p {
     top: -20px;
 }
 
-.cloud1 { left: 8%; top: 12%; }
-.cloud2 { left: 55%; top: 8%; }
-.cloud3 { right: 8%; top: 25%; }
+.cloud1 {
+    left: 8%;
+    top: 12%;
+}
+
+.cloud2 {
+    left: 55%;
+    top: 8%;
+}
+
+.cloud3 {
+    right: 8%;
+    top: 25%;
+}
 
 .path {
     position: absolute;
@@ -157,16 +168,55 @@ header p {
     text-shadow: 0 2px 3px black;
 }
 
-.level1 { left: 10%; top: 68%; }
-.level2 { left: 25%; top: 50%; }
-.level3 { left: 40%; top: 65%; }
-.level4 { left: 55%; top: 48%; }
-.level5 { left: 68%; top: 65%; }
-.level6 { left: 78%; top: 45%; }
-.level7 { left: 85%; top: 68%; }
-.level8 { left: 62%; top: 82%; }
-.level9 { left: 42%; top: 84%; }
-.level10 { left: 22%; top: 82%; }
+.level1 {
+    left: 10%;
+    top: 68%;
+}
+
+.level2 {
+    left: 25%;
+    top: 50%;
+}
+
+.level3 {
+    left: 40%;
+    top: 65%;
+}
+
+.level4 {
+    left: 55%;
+    top: 48%;
+}
+
+.level5 {
+    left: 68%;
+    top: 65%;
+}
+
+.level6 {
+    left: 78%;
+    top: 45%;
+}
+
+.level7 {
+    left: 85%;
+    top: 68%;
+}
+
+.level8 {
+    left: 62%;
+    top: 82%;
+}
+
+.level9 {
+    left: 42%;
+    top: 84%;
+}
+
+.level10 {
+    left: 22%;
+    top: 82%;
+}
 
 .bottomButtons {
     display: flex;
@@ -229,9 +279,22 @@ header p {
 </header>
 
 <div class="stats">
-    <div class="stat">⭐ Stars: <span id="stars">0</span></div>
-    <div class="stat">🏆 Completed: <span id="completed">0</span>/10</div>
-    <div class="stat">🔓 Unlocked: <span id="unlocked">3</span>/10</div>
+
+    <div class="stat">
+        ⭐ Stars:
+        <span id="stars">0</span>
+    </div>
+
+    <div class="stat">
+        🏆 Completed:
+        <span id="completed">0</span>/10
+    </div>
+
+    <div class="stat">
+        🔓 Unlocked:
+        <span id="unlocked">3</span>/10
+    </div>
+
 </div>
 
 <div class="map">
@@ -296,11 +359,19 @@ header p {
 
 <div class="bottomButtons">
 
-    <button onclick="window.location.href='index.html'">
+    <button onclick="openLevel(1)">
         🍞 Level 1
     </button>
 
-    <button onclick="window.location.href='../../'">
+    <button onclick="openLevel(2)">
+        🍞 Level 2
+    </button>
+
+    <button onclick="openLevel(3)">
+        🥖 Level 3
+    </button>
+
+    <button onclick="window.location.href='/snake-game/'">
         🏠 Back to Arcade
     </button>
 
@@ -308,18 +379,19 @@ header p {
 
 <script>
 
-let completed =
-    Number(localStorage.getItem("breadQuestCompleted") || 1);
+let completed = Number(
+    localStorage.getItem("breadQuestCompleted") || 1
+);
 
-let unlocked =
-    Number(localStorage.getItem("breadQuestUnlocked") || 2);
+let unlocked = Number(
+    localStorage.getItem("breadQuestUnlocked") || 3
+);
 
-
-// Make sure Level 3 is recognized if it was completed.
-
-if (completed >= 3) {
-    unlocked = Math.max(unlocked, 3);
-}
+/*
+    Level 3 is available because Level 2
+    has been completed.
+*/
+unlocked = Math.max(unlocked, 3);
 
 
 // ------------------------------------------------------
@@ -359,31 +431,27 @@ function updateMap() {
 
         if (levelNumber <= completed) {
 
-            if (levelNumber === 1) {
-                label.textContent = "✅ Complete";
-            }
-
-            if (levelNumber === 2) {
-                label.textContent = "✅ Complete";
-            }
-
-            if (levelNumber === 3) {
-                label.textContent = "✅ Complete";
-            }
+            label.textContent = "✅ Complete";
 
         } else if (levelNumber > unlocked) {
 
             label.textContent = "🔒 Locked";
 
+        } else if (levelNumber === 1) {
+
+            label.textContent = "🌾 Start";
+
+        } else if (levelNumber === 2) {
+
+            label.textContent = "🍞 Toasty Trail";
+
+        } else if (levelNumber === 3) {
+
+            label.textContent = "🥖 Breadlands Dash";
+
         } else {
 
-            if (levelNumber === 3) {
-                label.textContent =
-                    "🥖 Breadlands Dash";
-            } else {
-                label.textContent =
-                    "▶ Play";
-            }
+            label.textContent = "▶ Play";
         }
     });
 }
@@ -408,7 +476,7 @@ function openLevel(level) {
     if (level === 1) {
 
         window.location.href =
-            "index.html";
+            "/snake-game/games/bread-quest/index.html";
 
         return;
     }
@@ -416,7 +484,7 @@ function openLevel(level) {
     if (level === 2) {
 
         window.location.href =
-            "level2.html";
+            "/snake-game/games/bread-quest/level2.html";
 
         return;
     }
@@ -424,7 +492,7 @@ function openLevel(level) {
     if (level === 3) {
 
         window.location.href =
-            "level3.html";
+            "/snake-game/games/bread-quest/level3.html";
 
         return;
     }
@@ -435,6 +503,10 @@ function openLevel(level) {
     );
 }
 
+
+// ------------------------------------------------------
+// START MAP
+// ------------------------------------------------------
 
 updateMap();
 
