@@ -1,569 +1,193 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Racing - MattBread Arcade</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-* {
-    box-sizing: border-box;
-}
+    <title>MattBread Arcade</title>
 
-body {
-    margin: 0;
-    background: #08080d;
-    color: white;
-    font-family: Arial, Helvetica, sans-serif;
-    text-align: center;
-}
+    <link rel="icon" type="image/png" href="ChatGPT%20Image%20Oct%202,%202026,%2005_50_43%20PM.png">
 
-header {
-    padding: 20px 10px 10px;
-}
+    <style>
+        * {
+            box-sizing: border-box;
+        }
 
-h1 {
-    margin: 0;
-    font-size: 38px;
-}
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #0b0b0f;
+            color: white;
+        }
 
-.stats {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 25px;
-    margin: 12px 0;
-    font-size: 18px;
-}
+        header {
+            text-align: center;
+            padding: 60px 20px 35px;
+        }
 
-#game {
-    display: block;
-    width: 500px;
-    max-width: 94vw;
-    height: auto;
-    margin: 10px auto;
-    background: #222;
-    border: 3px solid #444;
-    border-radius: 12px;
-}
+        h1 {
+            margin: 0;
+            font-size: 52px;
+        }
 
-.message {
-    min-height: 28px;
-    font-weight: bold;
-}
+        header p {
+            color: #aaa;
+            font-size: 18px;
+            margin-top: 12px;
+        }
 
-.buttons {
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-    margin: 14px 0;
-}
+        .games {
+            max-width: 1100px;
+            margin: 20px auto 70px;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 22px;
+        }
 
-button {
-    background: #171722;
-    color: white;
-    border: 1px solid #555;
-    border-radius: 10px;
-    padding: 12px 20px;
-    font-size: 16px;
-    cursor: pointer;
-}
+        .game-card {
+            display: block;
+            text-decoration: none;
+            color: white;
+            background: #15151c;
+            border: 1px solid #292933;
+            border-radius: 18px;
+            padding: 28px;
+            transition: 0.2s;
+        }
 
-button:hover {
-    background: #292938;
-}
+        .game-card:hover {
+            transform: translateY(-5px);
+            border-color: #666;
+            background: #1b1b24;
+        }
 
-.mobile-controls {
-    display: flex;
-    justify-content: center;
-    gap: 25px;
-    margin: 15px 0;
-}
+        .game-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
 
-.mobile-controls button {
-    width: 85px;
-    height: 60px;
-    font-size: 25px;
-}
+        .game-card h3 {
+            font-size: 25px;
+            margin: 0 0 10px;
+        }
 
-.back {
-    display: inline-block;
-    margin: 18px;
-    color: #aaa;
-    text-decoration: none;
-}
+        .game-card p {
+            color: #aaa;
+            line-height: 1.5;
+            min-height: 48px;
+        }
 
-.back:hover {
-    color: white;
-}
-</style>
+        .play {
+            margin-top: 22px;
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        .coming {
+            opacity: 0.55;
+        }
+
+        footer {
+            text-align: center;
+            color: #666;
+            padding: 30px;
+        }
+    </style>
 </head>
 
 <body>
 
-<header>
-    <h1>🏎️ Racing</h1>
-
-    <div class="stats">
-        <div>Score: <span id="score">0</span></div>
-        <div>Best: <span id="best">0</span></div>
-        <div>Lives: <span id="lives">3</span></div>
-        <div>Level: <span id="level">1</span></div>
-    </div>
-</header>
-
-<canvas id="game" width="500" height="700"></canvas>
-
-<div class="message" id="message">
-    Use ← → or A/D to steer
-</div>
-
-<div class="buttons">
-    <button onclick="restartGame()">Restart</button>
-    <button onclick="togglePause()">Pause</button>
-</div>
-
-<div class="mobile-controls">
-    <button id="leftButton">⬅️</button>
-    <button id="rightButton">➡️</button>
-</div>
-
-<a class="back" href="../../index.html">← Back to MattBread Arcade</a>
-
-<script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-
-const scoreElement = document.getElementById("score");
-const bestElement = document.getElementById("best");
-const livesElement = document.getElementById("lives");
-const levelElement = document.getElementById("level");
-const messageElement = document.getElementById("message");
-
-const ROAD_LEFT = 70;
-const ROAD_RIGHT = 430;
-const ROAD_WIDTH = ROAD_RIGHT - ROAD_LEFT;
-
-let score = 0;
-let bestScore = Number(localStorage.getItem("mattbreadRacingBest") || 0);
-let lives = 3;
-let level = 1;
-
-let paused = false;
-let gameOver = false;
-
-let roadOffset = 0;
-let enemyTimer = 0;
-
-const keys = {
-    left: false,
-    right: false
-};
-
-const player = {
-    x: 225,
-    y: 590,
-    width: 50,
-    height: 85,
-    speed: 6
-};
-
-let enemies = [];
-
-bestElement.textContent = bestScore;
-
-function drawRoad() {
-    ctx.fillStyle = "#176b2c";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = "#333";
-    ctx.fillRect(
-        ROAD_LEFT,
-        0,
-        ROAD_WIDTH,
-        canvas.height
-    );
-
-    ctx.fillStyle = "#ddd";
-
-    ctx.fillRect(
-        ROAD_LEFT,
-        0,
-        6,
-        canvas.height
-    );
-
-    ctx.fillRect(
-        ROAD_RIGHT - 6,
-        0,
-        6,
-        canvas.height
-    );
-
-    roadOffset += 6 + level * 0.5;
-
-    if (roadOffset > 80) {
-        roadOffset = 0;
-    }
-
-    ctx.fillStyle = "#eee";
-
-    for (let y = -80; y < canvas.height; y += 80) {
-        const lineY = y + roadOffset;
-
-        ctx.fillRect(
-            185,
-            lineY,
-            7,
-            42
-        );
-
-        ctx.fillRect(
-            308,
-            lineY,
-            7,
-            42
-        );
-    }
-}
-
-function drawCar(car, playerCar = false) {
-    ctx.save();
-
-    if (playerCar) {
-        ctx.fillStyle = "#00e5ff";
-    } else {
-        ctx.fillStyle = car.color;
-    }
-
-    ctx.fillRect(
-        car.x,
-        car.y,
-        car.width,
-        car.height
-    );
-
-    ctx.fillStyle = "#111";
-
-    ctx.fillRect(
-        car.x + 8,
-        car.y + 12,
-        car.width - 16,
-        22
-    );
-
-    ctx.fillStyle = "#9deaff";
-
-    ctx.fillRect(
-        car.x + 12,
-        car.y + 16,
-        car.width - 24,
-        14
-    );
-
-    ctx.fillStyle = "#111";
-
-    ctx.fillRect(
-        car.x - 5,
-        car.y + 12,
-        8,
-        22
-    );
-
-    ctx.fillRect(
-        car.x + car.width - 3,
-        car.y + 12,
-        8,
-        22
-    );
-
-    ctx.fillRect(
-        car.x - 5,
-        car.y + car.height - 34,
-        8,
-        22
-    );
-
-    ctx.fillRect(
-        car.x + car.width - 3,
-        car.y + car.height - 34,
-        8,
-        22
-    );
-
-    ctx.restore();
-}
-
-function spawnEnemy() {
-    const lanes = [105, 168, 228, 291, 351];
-
-    const lane =
-        lanes[Math.floor(Math.random() * lanes.length)];
-
-    const colors = [
-        "#ff4444",
-        "#ff8800",
-        "#cc44ff",
-        "#ffff33",
-        "#44ff66"
-    ];
-
-    enemies.push({
-        x: lane,
-        y: -100,
-        width: 50,
-        height: 85,
-        speed: 3 + level * 0.45,
-        color: colors[
-            Math.floor(Math.random() * colors.length)
-        ]
-    });
-}
-
-function updatePlayer() {
-    if (keys.left) {
-        player.x -= player.speed;
-    }
-
-    if (keys.right) {
-        player.x += player.speed;
-    }
-
-    if (player.x < ROAD_LEFT + 10) {
-        player.x = ROAD_LEFT + 10;
-    }
-
-    if (player.x + player.width > ROAD_RIGHT - 10) {
-        player.x = ROAD_RIGHT - 10 - player.width;
-    }
-}
-
-function updateEnemies() {
-    for (let i = enemies.length - 1; i >= 0; i--) {
-
-        const enemy = enemies[i];
-
-        enemy.y += enemy.speed;
-
-        if (enemy.y > canvas.height + 100) {
-            enemies.splice(i, 1);
-
-            score += 10;
-
-            if (score > bestScore) {
-                bestScore = score;
-
-                localStorage.setItem(
-                    "mattbreadRacingBest",
-                    bestScore
-                );
-            }
-
-            scoreElement.textContent = score;
-            bestElement.textContent = bestScore;
-
-            level = Math.floor(score / 100) + 1;
-            levelElement.textContent = level;
-        }
-    }
-}
-
-function collision(a, b) {
-    const padding = 7;
-
-    return (
-        a.x + padding < b.x + b.width - padding &&
-        a.x + a.width - padding > b.x + padding &&
-        a.y + padding < b.y + b.height - padding &&
-        a.y + a.height - padding > b.y + padding
-    );
-}
-
-function checkCollisions() {
-    for (let i = enemies.length - 1; i >= 0; i--) {
-
-        if (collision(player, enemies[i])) {
-
-            enemies.splice(i, 1);
-
-            lives--;
-
-            livesElement.textContent = lives;
-
-            player.x = 225;
-
-            if (lives <= 0) {
-                gameOver = true;
-                messageElement.textContent =
-                    "GAME OVER — Press Restart";
-            } else {
-                messageElement.textContent =
-                    "CRASH! Watch out!";
-            }
-
-            break;
-        }
-    }
-}
-
-function update() {
-    if (paused || gameOver) {
-        return;
-    }
-
-    updatePlayer();
-    updateEnemies();
-    checkCollisions();
-
-    enemyTimer++;
-
-    const spawnRate = Math.max(
-        35,
-        90 - level * 5
-    );
-
-    if (enemyTimer >= spawnRate) {
-        spawnEnemy();
-        enemyTimer = 0;
-    }
-}
-
-function draw() {
-    ctx.clearRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
-
-    drawRoad();
-
-    drawCar(player, true);
-
-    enemies.forEach(enemy => {
-        drawCar(enemy, false);
-    });
-}
-
-function gameLoop() {
-    update();
-    draw();
-
-    requestAnimationFrame(gameLoop);
-}
-
-function restartGame() {
-    score = 0;
-    lives = 3;
-    level = 1;
-
-    paused = false;
-    gameOver = false;
-
-    enemies = [];
-    enemyTimer = 0;
-    roadOffset = 0;
-
-    player.x = 225;
-
-    scoreElement.textContent = score;
-    livesElement.textContent = lives;
-    levelElement.textContent = level;
-    bestElement.textContent = bestScore;
-
-    messageElement.textContent =
-        "Use ← → or A/D to steer";
-}
-
-function togglePause() {
-    if (gameOver) {
-        return;
-    }
-
-    paused = !paused;
-
-    messageElement.textContent =
-        paused ? "PAUSED" : "Use ← → or A/D to steer";
-}
-
-document.addEventListener("keydown", function(event) {
-
-    if (
-        event.key === "ArrowLeft" ||
-        event.key.toLowerCase() === "a"
-    ) {
-        keys.left = true;
-        event.preventDefault();
-    }
-
-    if (
-        event.key === "ArrowRight" ||
-        event.key.toLowerCase() === "d"
-    ) {
-        keys.right = true;
-        event.preventDefault();
-    }
-
-    if (event.key.toLowerCase() === "p") {
-        togglePause();
-    }
-});
-
-document.addEventListener("keyup", function(event) {
-
-    if (
-        event.key === "ArrowLeft" ||
-        event.key.toLowerCase() === "a"
-    ) {
-        keys.left = false;
-    }
-
-    if (
-        event.key === "ArrowRight" ||
-        event.key.toLowerCase() === "d"
-    ) {
-        keys.right = false;
-    }
-});
-
-function setupMobileButton(button, direction) {
-
-    button.addEventListener("touchstart", function(event) {
-        event.preventDefault();
-        keys[direction] = true;
-    });
-
-    button.addEventListener("touchend", function(event) {
-        event.preventDefault();
-        keys[direction] = false;
-    });
-
-    button.addEventListener("mousedown", function() {
-        keys[direction] = true;
-    });
-
-    button.addEventListener("mouseup", function() {
-        keys[direction] = false;
-    });
-
-    button.addEventListener("mouseleave", function() {
-        keys[direction] = false;
-    });
-}
-
-setupMobileButton(
-    document.getElementById("leftButton"),
-    "left"
-);
-
-setupMobileButton(
-    document.getElementById("rightButton"),
-    "right"
-);
-
-restartGame();
-gameLoop();
-</script>
+    <header>
+        <h1>🎮 MattBread Arcade</h1>
+        <p>Classic games. Simple fun. Play anytime.</p>
+    </header>
+
+    <main class="games">
+
+        <a class="game-card" href="games/snake/">
+            <div class="game-icon">🐍</div>
+            <h3>Snake</h3>
+            <p>Eat the food, grow longer and try to beat your best score.</p>
+            <div class="play">PLAY →</div>
+        </a>
+
+        <a class="game-card" href="games/pong/">
+            <div class="game-icon">🏓</div>
+            <h3>Pong</h3>
+            <p>Classic paddle action. Keep the ball away and score points.</p>
+            <div class="play">PLAY →</div>
+        </a>
+
+        <a class="game-card" href="games/breakout/">
+            <div class="game-icon">🧱</div>
+            <h3>Breakout</h3>
+            <p>Break the bricks, keep the ball alive and chase a high score.</p>
+            <div class="play">PLAY →</div>
+        </a>
+
+        <a class="game-card" href="games/tetris/">
+            <div class="game-icon">🧩</div>
+            <h3>Tetris</h3>
+            <p>Stack blocks, clear lines and chase the highest score.</p>
+            <div class="play">PLAY →</div>
+        </a>
+
+        <a class="game-card" href="games/flappy/">
+            <div class="game-icon">☁️</div>
+            <h3>Sky Hopper</h3>
+            <p>Dodge the pipes, stay in the sky and chase your highest score.</p>
+            <div class="play">PLAY →</div>
+        </a>
+
+        <a class="game-card" href="games/memory/">
+            <div class="game-icon">🧠</div>
+            <h3>Memory Match</h3>
+            <p>Match the cards, test your memory and chase your best score.</p>
+            <div class="play">PLAY →</div>
+        </a>
+
+        <a class="game-card" href="games/space-shooter/">
+            <div class="game-icon">🚀</div>
+            <h3>Space Shooter</h3>
+            <p>Blast enemies, survive the attack and chase your highest score.</p>
+            <div class="play">PLAY →</div>
+        </a>
+
+        <a class="game-card" href="games/frogger/">
+            <div class="game-icon">🐸</div>
+            <h3>Frogger</h3>
+            <p>Cross the road, avoid traffic and reach the other side.</p>
+            <div class="play">PLAY →</div>
+        </a>
+
+        <a class="game-card" href="games/space-invaders/">
+            <div class="game-icon">👾</div>
+            <h3>Space Invaders</h3>
+            <p>Defeat the invading aliens, dodge their attacks and chase your highest score.</p>
+            <div class="play">PLAY →</div>
+        </a>
+
+        <!-- RACING -->
+        <a class="game-card" href="games/racing/">
+            <div class="game-icon">🏎️</div>
+            <h3>Racing</h3>
+            <p>Dodge enemy cars, survive the traffic and chase your highest score.</p>
+            <div class="play">PLAY →</div>
+        </a>
+
+        <div class="game-card coming">
+            <div class="game-icon">🎯</div>
+            <h3>More Games</h3>
+            <p>More arcade games are on the way.</p>
+            <div class="play">COMING SOON</div>
+        </div>
+
+    </main>
+
+    <footer>
+        © 2026 MattBread Arcade
+    </footer>
 
 </body>
 </html>
