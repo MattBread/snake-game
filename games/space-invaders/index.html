@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Space Invaders - MattBread Arcade</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #050509;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    text-align: center;
+    overflow-x: hidden;
+}
+
+header {
+    padding: 20px 10px 10px;
+}
+
+h1 {
+    margin: 0;
+    font-size: 38px;
+}
+
+.stats {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin: 12px 0;
+    font-size: 18px;
+}
+
+#game {
+    display: block;
+    margin: 10px auto;
+    background: #090914;
+    border: 2px solid #444;
+    border-radius: 12px;
+    max-width: 95vw;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 15px auto;
+}
+
+button {
+    border: 1px solid #555;
+    background: #171722;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #252535;
+}
+
+.mobile-controls {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    margin-top: 10px;
+}
+
+.mobile-controls button {
+    width: 75px;
+    height: 55px;
+    font-size: 25px;
+}
+
+#message {
+    min-height: 28px;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.back {
+    display: inline-block;
+    margin: 20px;
+    color: #aaa;
+    text-decoration: none;
+}
+
+.back:hover {
+    color: white;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>👾 Space Invaders</h1>
+
+    <div class="stats">
+        <div>Score: <span id="score">0</span></div>
+        <div>Lives: <span id="lives">3</span></div>
+        <div>Level: <span id="level">1</span></div>
+    </div>
+</header>
+
+<canvas id="game" width="800" height="600"></canvas>
+
+<div id="message">Use ← → to move and SPACE to shoot</div>
+
+<div class="controls">
+    <button onclick="restartGame()">Restart</button>
+    <button onclick="togglePause()">Pause</button>
+</div>
+
+<div class="mobile-controls">
+    <button id="leftBtn">⬅️</button>
+    <button id="shootBtn">🔥</button>
+    <button id="rightBtn">➡️</button>
+</div>
+
+<a class="back" href="../../index.html">← Back to MattBread Arcade</a>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const scoreEl = document.getElementById("score");
+const livesEl = document.getElementById("lives");
+const levelEl = document.getElementById("level");
+const messageEl = document.getElementById("message");
+
+let score = 0;
+let lives = 3;
+let level = 1;
+let paused = false;
+let gameOver = false;
+
+const player = {
+    x: canvas.width / 2 - 25,
+    y: canvas.height - 55,
+    width: 50,
+    height: 25,
+    speed: 7
+};
+
+let bullets = [];
+let enemyBullets = [];
+let enemies = [];
+
+let keys = {
+    left: false,
+    right: false
+};
+
+let enemyDirection = 1;
+let enemySpeed = 0.7;
+let lastShot = 0;
+let enemyShotTimer = 0;
+
+function createEnemies() {
+    enemies = [];
+
+    const rows = 4;
+    const cols = 10;
+
+    for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+            enemies.push({
+                x: 100 + col * 60,
+                y: 70 + row * 45,
+                width: 34,
+                height: 24,
+                alive: true,
+                row: row
+            });
+        }
+    }
+}
+
+function drawPlayer() {
+    ctx.fillStyle = "#00ff88";
+
+    ctx.fillRect(
+        player.x,
+        player.y + 8,
+        player.width,
+        player.height - 8
+    );
+
+    ctx.fillRect(
+        player.x + 18,
+        player.y,
+        14,
+        10
+    );
+}
+
+function drawEnemies() {
+    enemies.forEach(enemy => {
+        if (!enemy.alive) return;
+
+        if (enemy.row === 0) {
+            ctx.fillStyle = "#ff4dff";
+        } else if (enemy.row === 1) {
+            ctx.fillStyle = "#00ffff";
+        } else {
+            ctx.fillStyle = "#ffff00";
+        }
+
+        ctx.fillRect(
+            enemy.x,
+            enemy.y,
+            enemy.width,
+            enemy.height
+        );
+
+        ctx.fillStyle = "#050509";
+
+        ctx.fillRect(enemy.x + 7, enemy.y + 7, 5, 5);
+        ctx.fillRect(enemy.x + 22, enemy.y + 7, 5, 5);
+    });
+}
+
+function drawBullets() {
+    ctx.fillStyle = "#ffffff";
+
+    bullets.forEach(bullet => {
+        ctx.fillRect(
+            bullet.x,
+            bullet.y,
+            bullet.width,
+            bullet.height
+        );
+    });
+
+    ctx.fillStyle = "#ff5555";
+
+    enemyBullets.forEach(bullet => {
+        ctx.fillRect(
+            bullet.x,
+            bullet.y,
+            bullet.width,
+            bullet.height
+        );
+    });
+}
+
+function shoot() {
+    if (paused || gameOver) return;
+
+    const now = Date.now();
+
+    if (now - lastShot < 300) return;
+
+    bullets.push({
+        x: player.x + player.width / 2 - 2,
+        y: player.y - 10,
+        width: 4,
+        height: 12,
+        speed: 9
+    });
+
+    lastShot = now;
+}
+
+function enemyShoot() {
+    const aliveEnemies = enemies.filter(enemy => enemy.alive);
+
+    if (aliveEnemies.length === 0) return;
+
+    const enemy =
+        aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+
+    enemyBullets.push({
+        x: enemy.x + enemy.width / 2 - 2,
+        y: enemy.y + enemy.height,
+        width: 4,
+        height: 10,
+        speed: 4 + level * 0.4
+    });
+}
+
+function updatePlayer() {
+    if (keys.left) {
+        player.x -= player.speed;
+    }
+
+    if (keys.right) {
+        player.x += player.speed;
+    }
+
+    if (player.x < 0) {
+        player.x = 0;
+    }
+
+    if (player.x + player.width > canvas.width) {
+        player.x = canvas.width - player.width;
+    }
+}
+
+function updateBullets() {
+    bullets.forEach(bullet => {
+        bullet.y -= bullet.speed;
+    });
+
+    bullets = bullets.filter(
+        bullet => bullet.y + bullet.height > 0
+    );
+
+    enemyBullets.forEach(bullet => {
+        bullet.y += bullet.speed;
+    });
+
+    enemyBullets = enemyBullets.filter(
+        bullet => bullet.y < canvas.height
+    );
+}
+
+function updateEnemies() {
+    let hitEdge = false;
+
+    enemies.forEach(enemy => {
+        if (!enemy.alive) return;
+
+        enemy.x += enemyDirection * enemySpeed;
+
+        if (enemy.x <= 10 ||
+            enemy.x + enemy.width >= canvas.width - 10) {
+            hitEdge = true;
+        }
+    });
+
+    if (hitEdge) {
+        enemyDirection *= -1;
+
+        enemies.forEach(enemy => {
+            enemy.y += 18;
+        });
+    }
+}
+
+function checkCollisions() {
+
+    bullets.forEach(bullet => {
+
+        enemies.forEach(enemy => {
+
+            if (!enemy.alive) return;
+
+            if (
+                bullet.x < enemy.x + enemy.width &&
+                bullet.x + bullet.width > enemy.x &&
+                bullet.y < enemy.y + enemy.height &&
+                bullet.y + bullet.height > enemy.y
+            ) {
+
+                enemy.alive = false;
+                bullet.y = -100;
+
+                score += 10;
+                scoreEl.textContent = score;
+            }
+        });
+    });
+
+    enemyBullets.forEach(bullet => {
+
+        if (
+            bullet.x < player.x + player.width &&
+            bullet.x + bullet.width > player.x &&
+            bullet.y < player.y + player.height &&
+            bullet.y + bullet.height > player.y
+        ) {
+
+            bullet.y = canvas.height + 100;
+
+            loseLife();
+        }
+    });
+
+    enemies.forEach(enemy => {
+
+        if (!enemy.alive) return;
+
+        if (
+            enemy.y + enemy.height >= player.y &&
+            enemy.x < player.x + player.width &&
+            enemy.x + enemy.width > player.x
+        ) {
+            loseLife();
+        }
+    });
+}
+
+function loseLife() {
+
+    if (gameOver) return;
+
+    lives--;
+    livesEl.textContent = lives;
+
+    if (lives <= 0) {
+        gameOver = true;
+        messageEl.textContent = "GAME OVER — Press Restart";
+        return;
+    }
+
+    player.x = canvas.width / 2 - 25;
+}
+
+function checkLevel() {
+
+    const remaining = enemies.filter(enemy => enemy.alive).length;
+
+    if (remaining === 0) {
+
+        level++;
+
+        levelEl.textContent = level;
+
+        enemySpeed += 0.25;
+
+        createEnemies();
+
+        messageEl.textContent = "Level " + level + "!";
+    }
+}
+
+function draw() {
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    drawPlayer();
+    drawEnemies();
+    drawBullets();
+}
+
+function update() {
+
+    if (paused || gameOver) return;
+
+    updatePlayer();
+    updateBullets();
+    updateEnemies();
+    checkCollisions();
+    checkLevel();
+
+    enemyShotTimer++;
+
+    if (enemyShotTimer > Math.max(35, 100 - level * 5)) {
+        enemyShoot();
+        enemyShotTimer = 0;
+    }
+}
+
+function gameLoop() {
+
+    update();
+    draw();
+
+    requestAnimationFrame(gameLoop);
+}
+
+function restartGame() {
+
+    score = 0;
+    lives = 3;
+    level = 1;
+    paused = false;
+    gameOver = false;
+
+    enemyDirection = 1;
+    enemySpeed = 0.7;
+    bullets = [];
+    enemyBullets = [];
+    enemyShotTimer = 0;
+
+    player.x = canvas.width / 2 - 25;
+
+    scoreEl.textContent = score;
+    livesEl.textContent = lives;
+    levelEl.textContent = level;
+
+    messageEl.textContent =
+        "Use ← → to move and SPACE to shoot";
+
+    createEnemies();
+}
+
+function togglePause() {
+
+    if (gameOver) return;
+
+    paused = !paused;
+
+    messageEl.textContent =
+        paused ? "PAUSED" : "Use ← → to move and SPACE to shoot";
+}
+
+document.addEventListener("keydown", event => {
+
+    if (event.key === "ArrowLeft" || event.key.toLowerCase() === "a") {
+        keys.left = true;
+    }
+
+    if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") {
+        keys.right = true;
+    }
+
+    if (event.code === "Space") {
+        event.preventDefault();
+        shoot();
+    }
+
+    if (event.key.toLowerCase() === "p") {
+        togglePause();
+    }
+});
+
+document.addEventListener("keyup", event => {
+
+    if (event.key === "ArrowLeft" || event.key.toLowerCase() === "a") {
+        keys.left = false;
+    }
+
+    if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") {
+        keys.right = false;
+    }
+});
+
+function holdButton(button, direction) {
+
+    button.addEventListener("touchstart", event => {
+        event.preventDefault();
+        keys[direction] = true;
+    });
+
+    button.addEventListener("touchend", event => {
+        event.preventDefault();
+        keys[direction] = false;
+    });
+
+    button.addEventListener("mousedown", () => {
+        keys[direction] = true;
+    });
+
+    button.addEventListener("mouseup", () => {
+        keys[direction] = false;
+    });
+
+    button.addEventListener("mouseleave", () => {
+        keys[direction] = false;
+    });
+}
+
+holdButton(
+    document.getElementById("leftBtn"),
+    "left"
+);
+
+holdButton(
+    document.getElementById("rightBtn"),
+    "right"
+);
+
+document.getElementById("shootBtn").addEventListener("touchstart", event => {
+    event.preventDefault();
+    shoot();
+});
+
+document.getElementById("shootBtn").addEventListener("mousedown", () => {
+    shoot();
+});
+
+createEnemies();
+gameLoop();
+</script>
+
+</body>
+</html>
