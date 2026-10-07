@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Racing - MattBread Arcade</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #08080d;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    text-align: center;
+}
+
+header {
+    padding: 20px 10px 10px;
+}
+
+h1 {
+    margin: 0;
+    font-size: 38px;
+}
+
+.stats {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 25px;
+    margin: 12px 0;
+    font-size: 18px;
+}
+
+#game {
+    display: block;
+    width: 500px;
+    max-width: 94vw;
+    height: auto;
+    margin: 10px auto;
+    background: #222;
+    border: 3px solid #444;
+    border-radius: 12px;
+}
+
+.message {
+    min-height: 28px;
+    font-weight: bold;
+}
+
+.buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 14px 0;
+}
+
+button {
+    background: #171722;
+    color: white;
+    border: 1px solid #555;
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #292938;
+}
+
+.mobile-controls {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    margin: 15px 0;
+}
+
+.mobile-controls button {
+    width: 85px;
+    height: 60px;
+    font-size: 25px;
+}
+
+.back {
+    display: inline-block;
+    margin: 18px;
+    color: #aaa;
+    text-decoration: none;
+}
+
+.back:hover {
+    color: white;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>🏎️ Racing</h1>
+
+    <div class="stats">
+        <div>Score: <span id="score">0</span></div>
+        <div>Best: <span id="best">0</span></div>
+        <div>Lives: <span id="lives">3</span></div>
+        <div>Level: <span id="level">1</span></div>
+    </div>
+</header>
+
+<canvas id="game" width="500" height="700"></canvas>
+
+<div class="message" id="message">
+    Use ← → or A/D to steer
+</div>
+
+<div class="buttons">
+    <button onclick="restartGame()">Restart</button>
+    <button onclick="togglePause()">Pause</button>
+</div>
+
+<div class="mobile-controls">
+    <button id="leftButton">⬅️</button>
+    <button id="rightButton">➡️</button>
+</div>
+
+<a class="back" href="../../index.html">← Back to MattBread Arcade</a>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const scoreElement = document.getElementById("score");
+const bestElement = document.getElementById("best");
+const livesElement = document.getElementById("lives");
+const levelElement = document.getElementById("level");
+const messageElement = document.getElementById("message");
+
+const ROAD_LEFT = 70;
+const ROAD_RIGHT = 430;
+const ROAD_WIDTH = ROAD_RIGHT - ROAD_LEFT;
+
+let score = 0;
+let bestScore = Number(localStorage.getItem("mattbreadRacingBest") || 0);
+let lives = 3;
+let level = 1;
+
+let paused = false;
+let gameOver = false;
+
+let roadOffset = 0;
+let enemyTimer = 0;
+
+const keys = {
+    left: false,
+    right: false
+};
+
+const player = {
+    x: 225,
+    y: 590,
+    width: 50,
+    height: 85,
+    speed: 6
+};
+
+let enemies = [];
+
+bestElement.textContent = bestScore;
+
+function drawRoad() {
+    ctx.fillStyle = "#176b2c";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#333";
+    ctx.fillRect(
+        ROAD_LEFT,
+        0,
+        ROAD_WIDTH,
+        canvas.height
+    );
+
+    ctx.fillStyle = "#ddd";
+
+    ctx.fillRect(
+        ROAD_LEFT,
+        0,
+        6,
+        canvas.height
+    );
+
+    ctx.fillRect(
+        ROAD_RIGHT - 6,
+        0,
+        6,
+        canvas.height
+    );
+
+    roadOffset += 6 + level * 0.5;
+
+    if (roadOffset > 80) {
+        roadOffset = 0;
+    }
+
+    ctx.fillStyle = "#eee";
+
+    for (let y = -80; y < canvas.height; y += 80) {
+        const lineY = y + roadOffset;
+
+        ctx.fillRect(
+            185,
+            lineY,
+            7,
+            42
+        );
+
+        ctx.fillRect(
+            308,
+            lineY,
+            7,
+            42
+        );
+    }
+}
+
+function drawCar(car, playerCar = false) {
+    ctx.save();
+
+    if (playerCar) {
+        ctx.fillStyle = "#00e5ff";
+    } else {
+        ctx.fillStyle = car.color;
+    }
+
+    ctx.fillRect(
+        car.x,
+        car.y,
+        car.width,
+        car.height
+    );
+
+    ctx.fillStyle = "#111";
+
+    ctx.fillRect(
+        car.x + 8,
+        car.y + 12,
+        car.width - 16,
+        22
+    );
+
+    ctx.fillStyle = "#9deaff";
+
+    ctx.fillRect(
+        car.x + 12,
+        car.y + 16,
+        car.width - 24,
+        14
+    );
+
+    ctx.fillStyle = "#111";
+
+    ctx.fillRect(
+        car.x - 5,
+        car.y + 12,
+        8,
+        22
+    );
+
+    ctx.fillRect(
+        car.x + car.width - 3,
+        car.y + 12,
+        8,
+        22
+    );
+
+    ctx.fillRect(
+        car.x - 5,
+        car.y + car.height - 34,
+        8,
+        22
+    );
+
+    ctx.fillRect(
+        car.x + car.width - 3,
+        car.y + car.height - 34,
+        8,
+        22
+    );
+
+    ctx.restore();
+}
+
+function spawnEnemy() {
+    const lanes = [105, 168, 228, 291, 351];
+
+    const lane =
+        lanes[Math.floor(Math.random() * lanes.length)];
+
+    const colors = [
+        "#ff4444",
+        "#ff8800",
+        "#cc44ff",
+        "#ffff33",
+        "#44ff66"
+    ];
+
+    enemies.push({
+        x: lane,
+        y: -100,
+        width: 50,
+        height: 85,
+        speed: 3 + level * 0.45,
+        color: colors[
+            Math.floor(Math.random() * colors.length)
+        ]
+    });
+}
+
+function updatePlayer() {
+    if (keys.left) {
+        player.x -= player.speed;
+    }
+
+    if (keys.right) {
+        player.x += player.speed;
+    }
+
+    if (player.x < ROAD_LEFT + 10) {
+        player.x = ROAD_LEFT + 10;
+    }
+
+    if (player.x + player.width > ROAD_RIGHT - 10) {
+        player.x = ROAD_RIGHT - 10 - player.width;
+    }
+}
+
+function updateEnemies() {
+    for (let i = enemies.length - 1; i >= 0; i--) {
+
+        const enemy = enemies[i];
+
+        enemy.y += enemy.speed;
+
+        if (enemy.y > canvas.height + 100) {
+            enemies.splice(i, 1);
+
+            score += 10;
+
+            if (score > bestScore) {
+                bestScore = score;
+
+                localStorage.setItem(
+                    "mattbreadRacingBest",
+                    bestScore
+                );
+            }
+
+            scoreElement.textContent = score;
+            bestElement.textContent = bestScore;
+
+            level = Math.floor(score / 100) + 1;
+            levelElement.textContent = level;
+        }
+    }
+}
+
+function collision(a, b) {
+    const padding = 7;
+
+    return (
+        a.x + padding < b.x + b.width - padding &&
+        a.x + a.width - padding > b.x + padding &&
+        a.y + padding < b.y + b.height - padding &&
+        a.y + a.height - padding > b.y + padding
+    );
+}
+
+function checkCollisions() {
+    for (let i = enemies.length - 1; i >= 0; i--) {
+
+        if (collision(player, enemies[i])) {
+
+            enemies.splice(i, 1);
+
+            lives--;
+
+            livesElement.textContent = lives;
+
+            player.x = 225;
+
+            if (lives <= 0) {
+                gameOver = true;
+                messageElement.textContent =
+                    "GAME OVER — Press Restart";
+            } else {
+                messageElement.textContent =
+                    "CRASH! Watch out!";
+            }
+
+            break;
+        }
+    }
+}
+
+function update() {
+    if (paused || gameOver) {
+        return;
+    }
+
+    updatePlayer();
+    updateEnemies();
+    checkCollisions();
+
+    enemyTimer++;
+
+    const spawnRate = Math.max(
+        35,
+        90 - level * 5
+    );
+
+    if (enemyTimer >= spawnRate) {
+        spawnEnemy();
+        enemyTimer = 0;
+    }
+}
+
+function draw() {
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    drawRoad();
+
+    drawCar(player, true);
+
+    enemies.forEach(enemy => {
+        drawCar(enemy, false);
+    });
+}
+
+function gameLoop() {
+    update();
+    draw();
+
+    requestAnimationFrame(gameLoop);
+}
+
+function restartGame() {
+    score = 0;
+    lives = 3;
+    level = 1;
+
+    paused = false;
+    gameOver = false;
+
+    enemies = [];
+    enemyTimer = 0;
+    roadOffset = 0;
+
+    player.x = 225;
+
+    scoreElement.textContent = score;
+    livesElement.textContent = lives;
+    levelElement.textContent = level;
+    bestElement.textContent = bestScore;
+
+    messageElement.textContent =
+        "Use ← → or A/D to steer";
+}
+
+function togglePause() {
+    if (gameOver) {
+        return;
+    }
+
+    paused = !paused;
+
+    messageElement.textContent =
+        paused ? "PAUSED" : "Use ← → or A/D to steer";
+}
+
+document.addEventListener("keydown", function(event) {
+
+    if (
+        event.key === "ArrowLeft" ||
+        event.key.toLowerCase() === "a"
+    ) {
+        keys.left = true;
+        event.preventDefault();
+    }
+
+    if (
+        event.key === "ArrowRight" ||
+        event.key.toLowerCase() === "d"
+    ) {
+        keys.right = true;
+        event.preventDefault();
+    }
+
+    if (event.key.toLowerCase() === "p") {
+        togglePause();
+    }
+});
+
+document.addEventListener("keyup", function(event) {
+
+    if (
+        event.key === "ArrowLeft" ||
+        event.key.toLowerCase() === "a"
+    ) {
+        keys.left = false;
+    }
+
+    if (
+        event.key === "ArrowRight" ||
+        event.key.toLowerCase() === "d"
+    ) {
+        keys.right = false;
+    }
+});
+
+function setupMobileButton(button, direction) {
+
+    button.addEventListener("touchstart", function(event) {
+        event.preventDefault();
+        keys[direction] = true;
+    });
+
+    button.addEventListener("touchend", function(event) {
+        event.preventDefault();
+        keys[direction] = false;
+    });
+
+    button.addEventListener("mousedown", function() {
+        keys[direction] = true;
+    });
+
+    button.addEventListener("mouseup", function() {
+        keys[direction] = false;
+    });
+
+    button.addEventListener("mouseleave", function() {
+        keys[direction] = false;
+    });
+}
+
+setupMobileButton(
+    document.getElementById("leftButton"),
+    "left"
+);
+
+setupMobileButton(
+    document.getElementById("rightButton"),
+    "right"
+);
+
+restartGame();
+gameLoop();
+</script>
+
+</body>
+</html>
