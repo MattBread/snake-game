@@ -1,225 +1,367 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Racing - MattBread Arcade</title>
 
-    <title>MattBread Arcade</title>
+<style>
+* {
+    box-sizing: border-box;
+}
 
-    <link rel="icon" type="image/png" href="ChatGPT%20Image%20Oct%202,%202026,%2005_50_43%20PM.png">
+body {
+    margin: 0;
+    background: #08080d;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    text-align: center;
+    overflow: hidden;
+}
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+h1 {
+    margin: 18px 0 5px;
+    font-size: 38px;
+}
 
-        body {
-            margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
-            background: #0b0b0f;
-            color: white;
-        }
+#score {
+    font-size: 20px;
+    margin-bottom: 10px;
+}
 
-        header {
-            text-align: center;
-            padding: 60px 20px 35px;
-        }
+#game {
+    position: relative;
+    width: 360px;
+    height: 620px;
+    margin: 0 auto;
+    background: #222;
+    border: 4px solid #555;
+    overflow: hidden;
+}
 
-        h1 {
-            margin: 0;
-            font-size: 52px;
-        }
+.road {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(
+            to right,
+            #555 0%,
+            #555 8%,
+            #222 8%,
+            #222 92%,
+            #555 92%,
+            #555 100%
+        );
+}
 
-        header p {
-            color: #aaa;
-            font-size: 18px;
-            margin-top: 12px;
-        }
+.lane-line {
+    position: absolute;
+    width: 8px;
+    height: 80px;
+    background: white;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0.8;
+}
 
-        .games {
-            max-width: 1100px;
-            margin: 20px auto 70px;
-            padding: 20px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 22px;
-        }
+.car {
+    position: absolute;
+    width: 48px;
+    height: 82px;
+    border-radius: 10px;
+    z-index: 5;
+}
 
-        .game-card {
-            display: block;
-            text-decoration: none;
-            color: white;
-            background: #15151c;
-            border: 1px solid #292933;
-            border-radius: 18px;
-            padding: 28px;
-            transition: 0.2s;
-        }
+.player {
+    background: #18a0ff;
+    bottom: 30px;
+    left: 156px;
+    box-shadow: 0 0 12px #18a0ff;
+}
 
-        .game-card:hover {
-            transform: translateY(-5px);
-            border-color: #666;
-            background: #1b1b24;
-        }
+.enemy {
+    background: #ff3030;
+    box-shadow: 0 0 12px #ff3030;
+}
 
-        .game-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-        }
+.window {
+    position: absolute;
+    width: 30px;
+    height: 25px;
+    left: 9px;
+    top: 10px;
+    background: #111;
+    border-radius: 5px;
+}
 
-        .game-card h3 {
-            font-size: 25px;
-            margin: 0 0 10px;
-        }
+.wheel {
+    position: absolute;
+    width: 8px;
+    height: 18px;
+    background: #050505;
+    top: 18px;
+    border-radius: 3px;
+}
 
-        .game-card p {
-            color: #aaa;
-            line-height: 1.5;
-            min-height: 48px;
-        }
+.wheel.left {
+    left: -5px;
+}
 
-        .play {
-            margin-top: 22px;
-            font-weight: bold;
-            font-size: 15px;
-        }
+.wheel.right {
+    right: -5px;
+}
 
-        .coming {
-            opacity: 0.55;
-        }
+.wheel.bottom {
+    top: 48px;
+}
 
-        footer {
-            text-align: center;
-            color: #666;
-            padding: 30px;
-        }
-    </style>
+#gameOver {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.82);
+    display: none;
+    z-index: 20;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+#gameOver h2 {
+    font-size: 42px;
+    margin: 10px;
+}
+
+button {
+    border: 0;
+    border-radius: 10px;
+    padding: 13px 24px;
+    margin: 7px;
+    font-size: 17px;
+    font-weight: bold;
+    cursor: pointer;
+    background: #fff;
+    color: #111;
+}
+
+button:hover {
+    transform: scale(1.05);
+}
+
+.controls {
+    margin: 12px auto;
+}
+
+.controls button {
+    width: 75px;
+    height: 52px;
+    padding: 0;
+    font-size: 24px;
+}
+
+#back {
+    display: inline-block;
+    color: white;
+    text-decoration: none;
+    margin-top: 5px;
+    font-weight: bold;
+}
+</style>
 </head>
 
 <body>
 
-    <header>
-        <h1>🎮 MattBread Arcade</h1>
-        <p>Classic games. Simple fun. Play anytime.</p>
-    </header>
+<h1>🏎️ Racing</h1>
+<div id="score">Score: 0 | Best: 0</div>
 
-    <main class="games">
+<div id="game">
+    <div class="road"></div>
 
-        <!-- SNAKE -->
-        <a class="game-card" href="games/snake/">
-            <div class="game-icon">🐍</div>
-            <h3>Snake</h3>
-            <p>
-                Eat the food, grow longer and try to beat your best score.
-            </p>
-            <div class="play">PLAY →</div>
-        </a>
+    <div class="lane-line" style="top:0;"></div>
+    <div class="lane-line" style="top:160px;"></div>
+    <div class="lane-line" style="top:320px;"></div>
+    <div class="lane-line" style="top:480px;"></div>
 
-        <!-- PONG -->
-        <a class="game-card" href="games/pong/">
-            <div class="game-icon">🏓</div>
-            <h3>Pong</h3>
-            <p>
-                Classic paddle action. Keep the ball away and score points.
-            </p>
-            <div class="play">PLAY →</div>
-        </a>
+    <div id="player" class="car player">
+        <div class="window"></div>
+        <div class="wheel left"></div>
+        <div class="wheel right"></div>
+        <div class="wheel left bottom"></div>
+        <div class="wheel right bottom"></div>
+    </div>
 
-        <!-- BREAKOUT -->
-        <a class="game-card" href="games/breakout/">
-            <div class="game-icon">🧱</div>
-            <h3>Breakout</h3>
-            <p>
-                Break the bricks, keep the ball alive and chase a high score.
-            </p>
-            <div class="play">PLAY →</div>
-        </a>
+    <div id="gameOver">
+        <h2>GAME OVER</h2>
+        <p id="finalScore"></p>
+        <button onclick="restart()">Restart</button>
+    </div>
+</div>
 
-        <!-- TETRIS -->
-        <a class="game-card" href="games/tetris/">
-            <div class="game-icon">🧩</div>
-            <h3>Tetris</h3>
-            <p>
-                Stack blocks, clear lines and chase the highest score.
-            </p>
-            <div class="play">PLAY →</div>
-        </a>
+<div class="controls">
+    <button onclick="moveLeft()">⬅️</button>
+    <button onclick="moveRight()">➡️</button>
+</div>
 
-        <!-- SKY HOPPER -->
-        <a class="game-card" href="games/flappy/">
-            <div class="game-icon">☁️</div>
-            <h3>Sky Hopper</h3>
-            <p>
-                Dodge the pipes, stay in the sky and chase your highest score.
-            </p>
-            <div class="play">PLAY →</div>
-        </a>
+<a id="back" href="../../index.html">← Back to Arcade</a>
 
-        <!-- MEMORY MATCH -->
-        <a class="game-card" href="games/memory/">
-            <div class="game-icon">🧠</div>
-            <h3>Memory Match</h3>
-            <p>
-                Match the cards, test your memory and chase your best score.
-            </p>
-            <div class="play">PLAY →</div>
-        </a>
+<script>
+const game = document.getElementById("game");
+const player = document.getElementById("player");
+const scoreText = document.getElementById("score");
+const gameOverScreen = document.getElementById("gameOver");
+const finalScore = document.getElementById("finalScore");
 
-        <!-- SPACE SHOOTER -->
-        <a class="game-card" href="games/space-shooter/">
-            <div class="game-icon">🚀</div>
-            <h3>Space Shooter</h3>
-            <p>
-                Blast enemies, survive the attack and chase your highest score.
-            </p>
-            <div class="play">PLAY →</div>
-        </a>
+let playerX = 156;
+let score = 0;
+let best = Number(localStorage.getItem("racingBest")) || 0;
+let speed = 4;
+let running = true;
+let enemies = [];
 
-        <!-- FROGGER -->
-        <a class="game-card" href="games/frogger/">
-            <div class="game-icon">🐸</div>
-            <h3>Frogger</h3>
-            <p>
-                Cross the road, avoid traffic and reach the other side.
-            </p>
-            <div class="play">PLAY →</div>
-        </a>
+const lanes = [70, 156, 242];
 
-        <!-- SPACE INVADERS -->
-        <a class="game-card" href="games/space-invaders/">
-            <div class="game-icon">👾</div>
-            <h3>Space Invaders</h3>
-            <p>
-                Defeat the invading aliens, dodge their attacks and chase your highest score.
-            </p>
-            <div class="play">PLAY →</div>
-        </a>
+function updateScore() {
+    scoreText.textContent = `Score: ${score} | Best: ${best}`;
+}
 
-        <!-- RACING -->
-        <a class="game-card" href="games/racing/">
-            <div class="game-icon">🏎️</div>
-            <h3>Racing</h3>
-            <p>
-                Dodge enemy cars, survive the traffic and chase your highest score.
-            </p>
-            <div class="play">PLAY →</div>
-        </a>
+function moveLeft() {
+    if (!running) return;
 
-        <!-- MORE GAMES -->
-        <div class="game-card coming">
-            <div class="game-icon">🎯</div>
-            <h3>More Games</h3>
-            <p>
-                More arcade games are on the way.
-            </p>
-            <div class="play">COMING SOON</div>
-        </div>
+    const index = lanes.indexOf(playerX);
 
-    </main>
+    if (index > 0) {
+        playerX = lanes[index - 1];
+        player.style.left = playerX + "px";
+    }
+}
 
-    <footer>
-        © 2026 MattBread Arcade
-    </footer>
+function moveRight() {
+    if (!running) return;
+
+    const index = lanes.indexOf(playerX);
+
+    if (index < lanes.length - 1) {
+        playerX = lanes[index + 1];
+        player.style.left = playerX + "px";
+    }
+}
+
+document.addEventListener("keydown", function(e) {
+    if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") {
+        moveLeft();
+    }
+
+    if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") {
+        moveRight();
+    }
+});
+
+function createEnemy() {
+    if (!running) return;
+
+    const enemy = document.createElement("div");
+    enemy.className = "car enemy";
+
+    const lane = lanes[Math.floor(Math.random() * lanes.length)];
+
+    enemy.style.left = lane + "px";
+    enemy.style.top = "-100px";
+
+    enemy.innerHTML = `
+        <div class="window"></div>
+        <div class="wheel left"></div>
+        <div class="wheel right"></div>
+        <div class="wheel left bottom"></div>
+        <div class="wheel right bottom"></div>
+    `;
+
+    game.appendChild(enemy);
+
+    enemies.push({
+        element: enemy,
+        x: lane,
+        y: -100
+    });
+}
+
+function collision(a, b) {
+    return !(
+        a.right < b.left ||
+        a.left > b.right ||
+        a.bottom < b.top ||
+        a.top > b.bottom
+    );
+}
+
+function gameLoop() {
+    if (!running) return;
+
+    enemies.forEach((enemy, index) => {
+        enemy.y += speed;
+        enemy.element.style.top = enemy.y + "px";
+
+        const playerRect = player.getBoundingClientRect();
+        const enemyRect = enemy.element.getBoundingClientRect();
+
+        if (collision(playerRect, enemyRect)) {
+            endGame();
+        }
+
+        if (enemy.y > 650) {
+            enemy.element.remove();
+            enemies.splice(index, 1);
+
+            score++;
+
+            if (score > best) {
+                best = score;
+                localStorage.setItem("racingBest", best);
+            }
+
+            if (score % 10 === 0) {
+                speed += 0.5;
+            }
+
+            updateScore();
+        }
+    });
+
+    requestAnimationFrame(gameLoop);
+}
+
+function endGame() {
+    running = false;
+
+    finalScore.textContent = `Score: ${score} | Best: ${best}`;
+    gameOverScreen.style.display = "flex";
+}
+
+function restart() {
+    enemies.forEach(enemy => enemy.element.remove());
+    enemies = [];
+
+    playerX = 156;
+    player.style.left = playerX + "px";
+
+    score = 0;
+    speed = 4;
+    running = true;
+
+    gameOverScreen.style.display = "none";
+
+    updateScore();
+    requestAnimationFrame(gameLoop);
+}
+
+updateScore();
+
+setInterval(() => {
+    if (running && enemies.length < 4) {
+        createEnemy();
+    }
+}, 1100);
+
+requestAnimationFrame(gameLoop);
+</script>
 
 </body>
 </html>
