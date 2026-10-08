@@ -1,751 +1,295 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Dungeon Escape - Dark Realm</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dungeon Escape — Dark Realm</title>
 
 <style>
-*{
-    box-sizing:border-box;
-    margin:0;
-    padding:0;
-}
-
-html,body{
-    width:100%;
-    height:100%;
-    overflow:hidden;
-    background:#050608;
-    font-family:Arial,Helvetica,sans-serif;
-}
-
-#game{
-    position:fixed;
-    inset:0;
-}
-
-canvas{
-    display:block;
-    width:100%;
-    height:100%;
-}
-
-#hud{
-    position:fixed;
-    inset:0;
-    pointer-events:none;
-    color:white;
-}
-
-#topbar{
-    position:absolute;
-    top:20px;
-    left:20px;
-    display:flex;
-    gap:15px;
-    align-items:center;
-}
-
-.panel{
-    background:rgba(5,7,12,.78);
-    border:1px solid rgba(255,255,255,.16);
-    border-radius:12px;
-    padding:10px 14px;
-    backdrop-filter:blur(8px);
-    box-shadow:0 8px 30px rgba(0,0,0,.4);
-}
-
-#healthBox{
-    width:220px;
-}
-
-#healthLabel{
-    font-size:12px;
-    margin-bottom:6px;
-    color:#ddd;
-    letter-spacing:1px;
-}
-
-#healthOuter{
-    width:100%;
-    height:14px;
-    background:#210708;
-    border-radius:8px;
-    overflow:hidden;
-}
-
-#health{
-    height:100%;
-    width:100%;
-    background:linear-gradient(90deg,#7b0808,#ff3b26);
-    transition:width .2s;
-}
-
-#stats{
-    font-size:13px;
-    line-height:1.7;
-}
-
-#boss{
-    position:absolute;
-    top:20px;
-    left:50%;
-    transform:translateX(-50%);
-    width:360px;
-    display:none;
-    text-align:center;
-}
-
-#bossName{
-    font-size:14px;
-    font-weight:bold;
-    letter-spacing:2px;
-    margin-bottom:7px;
-}
-
-#bossOuter{
-    height:14px;
-    background:#17030a;
-    border:1px solid rgba(255,255,255,.2);
-    border-radius:8px;
-    overflow:hidden;
-}
-
-#bossHealth{
-    width:100%;
-    height:100%;
-    background:linear-gradient(90deg,#7d0028,#ff164f);
-}
-
-#message{
-    position:absolute;
-    bottom:35px;
-    left:50%;
-    transform:translateX(-50%);
-    padding:12px 20px;
-    border-radius:10px;
-    background:rgba(0,0,0,.65);
-    border:1px solid rgba(255,255,255,.12);
-    font-size:14px;
-    opacity:0;
-    transition:opacity .3s;
-}
-
-#crosshair{
-    position:absolute;
-    left:50%;
-    top:50%;
-    width:18px;
-    height:18px;
-    transform:translate(-50%,-50%);
-    opacity:.7;
-}
-
-#crosshair:before,
-#crosshair:after{
-    content:"";
-    position:absolute;
-    background:white;
-    box-shadow:0 0 5px #fff;
-}
-
-#crosshair:before{
-    width:2px;
-    height:18px;
-    left:8px;
-    top:0;
-}
-
-#crosshair:after{
-    width:18px;
-    height:2px;
-    left:0;
-    top:8px;
-}
-
-#help{
-    position:absolute;
-    right:20px;
-    bottom:20px;
-    font-size:12px;
-    color:#bbb;
-    text-align:right;
-    line-height:1.8;
-}
-
-#start{
-    position:fixed;
-    inset:0;
-    z-index:20;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    background:
-      radial-gradient(circle at center,rgba(70,35,20,.25),rgba(0,0,0,.94)),
-      #050608;
-    color:white;
-}
-
-.startBox{
-    width:min(560px,90%);
-    padding:42px;
-    text-align:center;
-    border:1px solid rgba(255,255,255,.15);
-    border-radius:20px;
-    background:rgba(10,12,17,.9);
-    box-shadow:0 30px 80px rgba(0,0,0,.75);
-}
-
-.startBox h1{
-    font-size:42px;
-    letter-spacing:5px;
-    margin-bottom:10px;
-    text-shadow:0 0 25px rgba(255,80,30,.4);
-}
-
-.startBox p{
-    color:#aaa;
-    margin:10px 0;
-}
-
-#startButton{
-    margin-top:25px;
-    border:0;
-    border-radius:10px;
-    padding:15px 35px;
-    font-size:16px;
-    font-weight:bold;
-    cursor:pointer;
-    color:white;
-    background:linear-gradient(135deg,#8e1710,#e0471d);
-    box-shadow:0 10px 30px rgba(180,40,10,.3);
-}
-
-#startButton:hover{
-    transform:translateY(-2px);
-}
-
-#damage{
-    position:fixed;
-    inset:0;
-    pointer-events:none;
-    background:rgba(180,0,0,.35);
-    opacity:0;
-    z-index:10;
-}
-
-#gameOver{
-    position:fixed;
-    inset:0;
-    display:none;
-    z-index:30;
-    align-items:center;
-    justify-content:center;
-    background:rgba(0,0,0,.82);
-    color:white;
-    text-align:center;
-}
-
-.gameOverBox{
-    padding:40px;
-    border-radius:18px;
-    background:#0c0d11;
-    border:1px solid rgba(255,255,255,.15);
-}
-
-.gameOverBox h2{
-    font-size:38px;
-    margin-bottom:12px;
-}
-
-#restart{
-    margin-top:20px;
-    padding:13px 28px;
-    border:0;
-    border-radius:9px;
-    background:#b42b18;
-    color:white;
-    font-weight:bold;
-    cursor:pointer;
-}
-
-@media(max-width:700px){
-    #topbar{
-        top:10px;
-        left:10px;
-    }
-
-    #healthBox{
-        width:160px;
-    }
-
-    #stats{
-        display:none;
-    }
-
-    #help{
-        right:10px;
-        bottom:10px;
-    }
-
-    #boss{
-        width:230px;
-    }
-
-    .startBox h1{
-        font-size:30px;
-    }
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#050505;font-family:Arial,Helvetica,sans-serif}
+#game,canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+#hud{position:fixed;inset:0;color:#eee;pointer-events:none}
+.panel{background:rgba(8,8,10,.78);border:1px solid #ffffff2c;border-radius:8px;padding:12px 15px;backdrop-filter:blur(8px);box-shadow:0 8px 28px #0008}
+#topbar{position:absolute;top:18px;left:18px;display:flex;gap:12px;align-items:start}
+#healthBox{width:220px}
+.smallLabel{font-size:11px;letter-spacing:2px;color:#c8c0b6;margin-bottom:7px}
+#healthOuter,#bossOuter{height:13px;background:#200c0b;border:1px solid #ffffff26;overflow:hidden}
+#health,#bossHealth{height:100%;width:100%;transition:width .18s}
+#health{background:linear-gradient(90deg,#650c0b,#e43d22)}
+#bossHealth{background:linear-gradient(90deg,#680016,#ff244f)}
+#stats{font-size:12px;line-height:1.8;letter-spacing:1px}
+#boss{display:none;position:absolute;top:20px;left:50%;transform:translateX(-50%);width:min(360px,60vw);text-align:center}
+#bossName{font-size:12px;letter-spacing:3px;color:#e5c9c4;margin-bottom:7px}
+#crosshair{position:absolute;top:50%;left:50%;width:12px;height:12px;transform:translate(-50%,-50%);opacity:.55}
+#crosshair:before,#crosshair:after{content:"";position:absolute;background:#fff;box-shadow:0 0 5px #fff}
+#crosshair:before{left:5px;top:0;width:1px;height:12px}
+#crosshair:after{left:0;top:5px;width:12px;height:1px}
+#message{position:absolute;bottom:42px;left:50%;transform:translateX(-50%);background:#050505bb;border:1px solid #b59a7444;padding:12px 22px;letter-spacing:2px;font-size:12px;opacity:0;transition:opacity .2s;white-space:nowrap}
+#help{position:absolute;right:18px;bottom:18px;text-align:right;color:#c6bdb0;font-size:11px;line-height:1.9;text-shadow:0 2px 5px #000}
+#damage{position:fixed;inset:0;pointer-events:none;background:#bd101b;opacity:0;z-index:10;transition:opacity .1s}
+#vignette{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 38%,#0005 72%,#000c 100%),linear-gradient(#0005,transparent 23%,transparent 72%,#0008);z-index:2}
+#start,#gameOver{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;color:white;text-align:center;background:radial-gradient(ellipse at center,#39251d55,#030304 75%)}
+#gameOver{display:none;z-index:30;background:#000d}
+.startBox,.gameOverBox{width:min(560px,90vw);padding:42px 30px;background:linear-gradient(145deg,#171512f5,#070708f5);border:1px solid #c9a87555;box-shadow:0 25px 100px #000;border-radius:5px}
+.startBox h1{font-family:Georgia,serif;font-size:clamp(30px,6vw,48px);letter-spacing:5px;text-shadow:0 0 28px #e65c243d;margin-bottom:12px}
+.startBox p{color:#bcb3a6;line-height:1.8;font-size:14px}
+.eyebrow{color:#c49a62!important;letter-spacing:4px;font-size:10px!important;margin-bottom:18px}
+button{margin-top:26px;padding:14px 27px;border:1px solid #d5a56b;background:linear-gradient(135deg,#5a2118,#9d3820);color:white;font-weight:bold;letter-spacing:2px;cursor:pointer}
+button:hover{filter:brightness(1.3)}
+.gameOverBox h2{font:36px Georgia,serif;letter-spacing:3px;margin-bottom:12px}
+.gameOverBox p{color:#bbb}
+@media(max-width:650px){
+ #topbar{top:8px;left:8px;gap:6px}
+ #healthBox{width:155px}
+ .panel{padding:9px}
+ #stats{display:none}
+ #help{right:8px;bottom:8px;font-size:10px}
+ #boss{top:12px}
+ #message{bottom:65px}
+ .startBox{padding:32px 20px}
 }
 </style>
 </head>
 
 <body>
-
 <div id="game"></div>
 
 <div id="hud">
-
-    <div id="topbar">
-
-        <div class="panel" id="healthBox">
-            <div id="healthLabel">VITALITY</div>
-            <div id="healthOuter">
-                <div id="health"></div>
-            </div>
-        </div>
-
-        <div class="panel" id="stats">
-            <div>LEVEL: <span id="level">1</span></div>
-            <div>SOULS: <span id="souls">0</span></div>
-        </div>
-
+  <div id="topbar">
+    <div class="panel" id="healthBox">
+      <div class="smallLabel">VITALITY</div>
+      <div id="healthOuter"><div id="health"></div></div>
     </div>
-
-    <div id="boss">
-        <div id="bossName">DUNGEON BOSS</div>
-        <div id="bossOuter">
-            <div id="bossHealth"></div>
-        </div>
+    <div class="panel" id="stats">
+      LEVEL: <span id="level">1</span><br>
+      SOULS: <span id="souls">0</span>
     </div>
-
-    <div id="crosshair"></div>
-
-    <div id="message"></div>
-
-    <div id="help">
-        WASD / ARROWS — Move<br>
-        MOUSE — Look around<br>
-        SPACE — Attack
-    </div>
-
+  </div>
+  <div id="boss">
+    <div id="bossName">THE DUNGEON WARDEN</div>
+    <div id="bossOuter"><div id="bossHealth"></div></div>
+  </div>
+  <div id="crosshair"></div>
+  <div id="message"></div>
+  <div id="help">WASD / ARROWS — MOVE<br>MOUSE — LOOK AROUND<br>SPACE / CLICK — ATTACK<br>ESC — RELEASE MOUSE</div>
 </div>
-
 <div id="damage"></div>
+<div id="vignette"></div>
 
 <div id="start">
-    <div class="startBox">
-        <h1>DUNGEON ESCAPE</h1>
-        <p>A forgotten fortress lies beneath the earth.</p>
-        <p>Fight your way through the darkness.</p>
-        <button id="startButton">ENTER THE DUNGEON</button>
-    </div>
+  <div class="startBox">
+    <p class="eyebrow">A DARK FANTASY SURVIVAL EXPERIENCE</p>
+    <h1>DUNGEON ESCAPE</h1>
+    <p>A forgotten fortress lies buried beneath the earth.</p>
+    <p>Its halls are crawling with the dead. Find your way through.</p>
+    <button id="startButton">ENTER THE DUNGEON</button>
+  </div>
 </div>
 
 <div id="gameOver">
-    <div class="gameOverBox">
-        <h2>YOU DIED</h2>
-        <p>The dungeon has claimed another warrior.</p>
-        <button id="restart">RETURN TO DUNGEON</button>
-    </div>
+  <div class="gameOverBox">
+    <h2>YOU DIED</h2>
+    <p>The dungeon has claimed another warrior.</p>
+    <button id="restart">RETURN TO DUNGEON</button>
+  </div>
 </div>
 
 <script type="module">
-
-import * as THREE from
-"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
-
-
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
 /* =========================================================
-   SCENE
+   SCENE AND RENDERER
 ========================================================= */
-
 const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x100e10);
+scene.fog = new THREE.FogExp2(0x171116, 0.019);
 
-scene.background = new THREE.Color(0x050608);
+const camera = new THREE.PerspectiveCamera(63, innerWidth/innerHeight, .1, 250);
+camera.position.set(0,4,8);
 
-scene.fog = new THREE.FogExp2(
-    0x090a0d,
-    0.035
-);
-
-/* =========================================================
-   CAMERA
-========================================================= */
-
-const camera = new THREE.PerspectiveCamera(
-    62,
-    innerWidth / innerHeight,
-    0.1,
-    500
-);
-
-camera.position.set(0,4,7);
-
-/* =========================================================
-   RENDERER
-========================================================= */
-
-const renderer = new THREE.WebGLRenderer({
-    antialias:true,
-    powerPreference:"high-performance"
-});
-
+const renderer = new THREE.WebGLRenderer({antialias:true, powerPreference:"high-performance"});
 renderer.setSize(innerWidth,innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.15;
-
+renderer.toneMappingExposure = 1.28;
 document.getElementById("game").appendChild(renderer.domElement);
+
+/* =========================================================
+   PROCEDURAL STONE TEXTURES
+   Generated locally; no separate image downloads required.
+========================================================= */
+function stoneTexture(baseColor, mortarColor, seed=1, blockW=128, blockH=90){
+  const canvas=document.createElement("canvas");
+  canvas.width=512; canvas.height=512;
+  const ctx=canvas.getContext("2d");
+  let s=seed>>>0;
+  const rand=()=>{s=(1664525*s+1013904223)>>>0;return s/4294967296};
+  ctx.fillStyle=mortarColor;
+  ctx.fillRect(0,0,512,512);
+  const base=new THREE.Color(baseColor);
+
+  for(let row=-1;row<Math.ceil(512/blockH)+1;row++){
+    const offset=row%2? -blockW/2:0;
+    for(let col=-1;col<Math.ceil(512/blockW)+1;col++){
+      const x=col*blockW+offset+3, y=row*blockH+3;
+      const w=blockW-6-rand()*5, h=blockH-6-rand()*5;
+      const shade=(rand()-.5)*.17;
+      const c=base.clone().multiplyScalar(1+shade);
+      ctx.fillStyle="#"+c.getHexString();
+      ctx.fillRect(x,y,w,h);
+
+      // Rough mottling across the stone face.
+      for(let i=0;i<55;i++){
+        const px=x+rand()*w, py=y+rand()*h, r=1+rand()*5;
+        ctx.fillStyle=rand()>.5?"rgba(0,0,0,.09)":"rgba(230,210,180,.055)";
+        ctx.beginPath();
+        ctx.ellipse(px,py,r*1.8,r,rand()*3.14,0,Math.PI*2);
+        ctx.fill();
+      }
+
+      // Fine cracks in some blocks.
+      if(rand()>.56){
+        let px=x+rand()*w*.7, py=y+rand()*h*.4;
+        ctx.strokeStyle="rgba(10,8,7,.52)";
+        ctx.lineWidth=.8;
+        ctx.beginPath();ctx.moveTo(px,py);
+        for(let i=0;i<4;i++){px+=(rand()-.5)*13;py+=4+rand()*8;ctx.lineTo(px,py)}
+        ctx.stroke();
+      }
+
+      // Worn highlights along selected edges.
+      ctx.strokeStyle="rgba(220,203,178,.09)";
+      ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(x+4,y+2);ctx.lineTo(x+w-5,y+2);ctx.stroke();
+    }
+  }
+
+  const texture=new THREE.CanvasTexture(canvas);
+  texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
+  texture.colorSpace=THREE.SRGBColorSpace;
+  texture.anisotropy=Math.min(renderer.capabilities.getMaxAnisotropy(),8);
+  return texture;
+}
+
+const floorTex=stoneTexture("#454039","#191715",21,88,70);
+floorTex.repeat.set(9,9);
+const wallTex=stoneTexture("#62594d","#28231f",44,128,94);
+wallTex.repeat.set(2.2,1.6);
+const trimTex=stoneTexture("#776956","#332b24",77,105,80);
+trimTex.repeat.set(1.4,1.4);
+
+const floorMat=new THREE.MeshStandardMaterial({map:floorTex,color:0xc0b5a8,roughness:.98});
+const wallMat=new THREE.MeshStandardMaterial({map:wallTex,color:0xc6bbae,roughness:.96});
+const trimMat=new THREE.MeshStandardMaterial({map:trimTex,color:0xc8bba8,roughness:.93});
+const darkMat=new THREE.MeshStandardMaterial({color:0x211b19,roughness:.98});
+const woodMat=new THREE.MeshStandardMaterial({color:0x392318,roughness:.88});
+const metalMat=new THREE.MeshStandardMaterial({color:0x73777e,metalness:.78,roughness:.32});
 
 /* =========================================================
    LIGHTING
 ========================================================= */
+scene.add(new THREE.HemisphereLight(0x9ba5c1,0x21130c,.72));
 
-const ambient = new THREE.HemisphereLight(
-    0x6b7180,
-    0x120b08,
-    0.55
-);
-
-scene.add(ambient);
-
-const moon = new THREE.DirectionalLight(
-    0x8fa8ff,
-    0.8
-);
-
-moon.position.set(-20,35,10);
-moon.castShadow = true;
-
+const moon=new THREE.DirectionalLight(0xa4b4ff,1.15);
+moon.position.set(-18,32,14);
+moon.castShadow=true;
 moon.shadow.mapSize.set(2048,2048);
-
+moon.shadow.camera.left=-45;
+moon.shadow.camera.right=45;
+moon.shadow.camera.top=45;
+moon.shadow.camera.bottom=-45;
 scene.add(moon);
 
 /* =========================================================
-   MATERIALS
+   DUNGEON ARCHITECTURE
 ========================================================= */
-
-const floorMat = new THREE.MeshStandardMaterial({
-    color:0x292725,
-    roughness:.95,
-    metalness:.02
-});
-
-const wallMat = new THREE.MeshStandardMaterial({
-    color:0x363331,
-    roughness:.88,
-    metalness:.05
-});
-
-const darkWallMat = new THREE.MeshStandardMaterial({
-    color:0x1d1b1b,
-    roughness:.95
-});
-
-const woodMat = new THREE.MeshStandardMaterial({
-    color:0x332019,
-    roughness:.85
-});
-
-const metalMat = new THREE.MeshStandardMaterial({
-    color:0x45484d,
-    roughness:.4,
-    metalness:.7
-});
-
-/* =========================================================
-   DUNGEON
-========================================================= */
-
-const dungeon = new THREE.Group();
+const dungeon=new THREE.Group();
 scene.add(dungeon);
 
-/* floor */
-
-const floor = new THREE.Mesh(
-    new THREE.BoxGeometry(80,.5,80),
-    floorMat
-);
-
-floor.position.y=-.25;
-floor.receiveShadow=true;
-
-dungeon.add(floor);
-
-/* ceiling */
-
-const ceiling = new THREE.Mesh(
-    new THREE.BoxGeometry(80,.5,80),
-    darkWallMat
-);
-
-ceiling.position.y=12;
-ceiling.receiveShadow=true;
-
-dungeon.add(ceiling);
-
-/* =========================================================
-   WALL CREATOR
-========================================================= */
-
-function wall(x,z,w,d,h=12){
-
-    const mesh = new THREE.Mesh(
-        new THREE.BoxGeometry(w,h,d),
-        wallMat
-    );
-
-    mesh.position.set(x,h/2,z);
-
-    mesh.castShadow=true;
-    mesh.receiveShadow=true;
-
-    dungeon.add(mesh);
-
-    return mesh;
+function block(x,y,z,w,h,d,material,cast=true,receive=true){
+  const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);
+  mesh.position.set(x,y,z);
+  mesh.castShadow=cast;
+  mesh.receiveShadow=receive;
+  dungeon.add(mesh);
+  return mesh;
 }
 
-/* =========================================================
-   MAIN OUTER WALLS
-========================================================= */
+// Broad stone floor and ceiling.
+block(0,-.3,0,80,.6,80,floorMat,false,true);
+block(0,12,0,80,.5,80,darkMat,true,true);
 
+// Outer fortress walls.
+function wall(x,z,w,d,h=12,mat=wallMat){
+  return block(x,h/2,z,w,h,d,mat,true,true);
+}
 wall(0,-40,80,2);
 wall(0,40,80,2);
 wall(-40,0,2,80);
 wall(40,0,2,80);
 
-/* =========================================================
-   LARGE CENTRAL HALL
-========================================================= */
-
+// Central hall partitions and adjoining chambers.
 wall(-15,-20,2,30);
 wall(15,-20,2,30);
-
 wall(-15,20,2,30);
 wall(15,20,2,30);
-
-/* =========================================================
-   SIDE ROOMS
-========================================================= */
-
 wall(-30,-5,20,2);
 wall(-30,15,20,2);
-
 wall(30,-5,20,2);
 wall(30,15,20,2);
-
 wall(-30,28,20,2);
 wall(30,28,20,2);
-
-/* =========================================================
-   INNER ROOMS
-========================================================= */
-
 wall(-10,5,10,2);
 wall(10,5,10,2);
-
 wall(-10,-8,10,2);
 wall(10,-8,10,2);
-
 wall(-25,-25,18,2);
 wall(25,-25,18,2);
 
-/* =========================================================
-   PILLARS
-========================================================= */
+// Raised stone courses around the perimeter add architectural depth.
+for(const z of [-35,-25,-15,-5,5,15,25,35]){
+  block(0,8.6,z,78,.28,.3,trimMat);
+  block(0,1.1,z,78,.24,.3,trimMat);
+}
+for(const x of [-35,-25,-15,-5,5,15,25,35]){
+  block(x,8.6,0,.3,.28,78,trimMat);
+  block(x,1.1,0,.3,.24,78,trimMat);
+}
 
+// Massive square pillars with carved-looking bands and bases.
 function pillar(x,z){
-
-    const group=new THREE.Group();
-
-    const base=new THREE.Mesh(
-        new THREE.BoxGeometry(2.5,.8,2.5),
-        stoneMaterial()
-    );
-
-    base.position.y=.4;
-
-    const body=new THREE.Mesh(
-        new THREE.BoxGeometry(1.6,9,1.6),
-        wallMat
-    );
-
-    body.position.y=5;
-
-    const top=new THREE.Mesh(
-        new THREE.BoxGeometry(2.5,.8,2.5),
-        stoneMaterial()
-    );
-
-    top.position.y=9.6;
-
-    group.add(base,body,top);
-
-    group.position.set(x,0,z);
-
-    group.traverse(o=>{
-        if(o.isMesh){
-            o.castShadow=true;
-            o.receiveShadow=true;
-        }
-    });
-
-    dungeon.add(group);
+  block(x,.45,z,2.8,.9,2.8,trimMat);
+  block(x,5,z,1.65,8.2,1.65,wallMat);
+  block(x,9.35,z,2.45,.7,2.45,trimMat);
+  block(x,1.2,z,2.1,.22,2.1,darkMat);
+  block(x,8.7,z,2.05,.22,2.05,darkMat);
 }
-
-function stoneMaterial(){
-
-    return new THREE.MeshStandardMaterial({
-        color:0x46423e,
-        roughness:.9
-    });
-
-}
-
 [
-[-12,-28],
-[12,-28],
-[-12,28],
-[12,28],
-[-25,0],
-[25,0],
-[-5,15],
-[5,15],
-[-5,-15],
-[5,-15]
+ [-12,-28],[12,-28],[-12,28],[12,28],
+ [-25,0],[25,0],[-5,15],[5,15],[-5,-15],[5,-15]
 ].forEach(p=>pillar(p[0],p[1]));
 
-/* =========================================================
-   TORCHES
-========================================================= */
-
-const torchLights=[];
-
-function torch(x,z){
-
-    const group=new THREE.Group();
-
-    const handle=new THREE.Mesh(
-        new THREE.CylinderGeometry(.12,.15,2,8),
-        woodMat
-    );
-
-    handle.position.y=3;
-
-    group.add(handle);
-
-    const fire=new THREE.Mesh(
-        new THREE.SphereGeometry(.35,10,10),
-        new THREE.MeshBasicMaterial({
-            color:0xff5418
-        })
-    );
-
-    fire.scale.set(.7,1.3,.7);
-    fire.position.y=4.2;
-
-    group.add(fire);
-
-    const light=new THREE.PointLight(
-        0xff5a20,
-        3,
-        12,
-        2
-    );
-
-    light.position.y=4.2;
-
-    light.castShadow=true;
-
-    group.add(light);
-
-    group.position.set(x,0,z);
-
-    scene.add(group);
-
-    torchLights.push({
-        light,
-        fire
-    });
-}
-
-/* place lots of torches */
-
-[
-[-14,-34],
-[14,-34],
-[-14,34],
-[14,34],
-[-33,-3],
-[-33,20],
-[33,-3],
-[33,20],
-[-8,0],
-[8,0],
-[-8,23],
-[8,23],
-[-8,-23],
-[8,-23]
-].forEach(p=>torch(p[0],p[1]));
-
-/* =========================================================
-   ARCHWAYS
-========================================================= */
-
+// Heavy doorway frames.
 function arch(x,z,rot=0){
-
-    const group=new THREE.Group();
-
-    const side1=new THREE.Mesh(
-        new THREE.BoxGeometry(1.5,7,2),
-        stoneMaterial()
-    );
-
-    side1.position.set(-2.5,3.5,0);
-
-    const side2=side1.clone();
-
-    side2.position.x=2.5;
-
-    const top=new THREE.Mesh(
-        new THREE.BoxGeometry(6.5,2,2),
-        stoneMaterial()
-    );
-
-    top.position.y=7;
-
-    group.add(side1,side2,top);
-
-    group.position.set(x,0,z);
-    group.rotation.y=rot;
-
-    group.traverse(o=>{
-        if(o.isMesh){
-            o.castShadow=true;
-            o.receiveShadow=true;
-        }
-    });
-
-    dungeon.add(group);
+  const g=new THREE.Group();
+  const a=block(0,0,0,1,1,1,trimMat);
+  dungeon.remove(a);
+  function part(px,py,pz,w,h,d,mat=trimMat){
+    const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
+    m.position.set(px,py,pz);m.castShadow=true;m.receiveShadow=true;g.add(m);
+  }
+  part(-2.5,3.5,0,1.5,7,2);
+  part(2.5,3.5,0,1.5,7,2);
+  part(0,7,0,6.5,2,2);
+  part(-2.5,0,0,1.8,.5,2.3,darkMat);
+  part(2.5,0,0,1.8,.5,2.3,darkMat);
+  g.position.set(x,0,z);g.rotation.y=rot;dungeon.add(g);
 }
-
 arch(0,-20);
 arch(0,20);
 arch(-15,-3,Math.PI/2);
@@ -753,757 +297,343 @@ arch(15,-3,Math.PI/2);
 arch(-15,17,Math.PI/2);
 arch(15,17,Math.PI/2);
 
-/* =========================================================
-   PLAYER
-========================================================= */
-
-const player=new THREE.Group();
-
-player.position.set(0,0,30);
-
-scene.add(player);
-
-/* body */
-
-const body=new THREE.Mesh(
-    new THREE.CapsuleGeometry(.65,1.5,8,16),
-    new THREE.MeshStandardMaterial({
-        color:0x20252d,
-        roughness:.7
-    })
-);
-
-body.position.y=1.6;
-body.castShadow=true;
-
-player.add(body);
-
-/* armor */
-
-const armor=new THREE.Mesh(
-    new THREE.BoxGeometry(1.2,1.5,.7),
-    new THREE.MeshStandardMaterial({
-        color:0x303641,
-        metalness:.5,
-        roughness:.45
-    })
-);
-
-armor.position.y=1.8;
-armor.castShadow=true;
-
-player.add(armor);
-
-/* head */
-
-const head=new THREE.Mesh(
-    new THREE.SphereGeometry(.48,16,16),
-    new THREE.MeshStandardMaterial({
-        color:0x9a6b50,
-        roughness:.8
-    })
-);
-
-head.position.y=3.05;
-head.castShadow=true;
-
-player.add(head);
-
-/* helmet */
-
-const helmet=new THREE.Mesh(
-    new THREE.SphereGeometry(.54,16,12,0,Math.PI*2,0,Math.PI/2),
-    new THREE.MeshStandardMaterial({
-        color:0x15191f,
-        metalness:.75,
-        roughness:.3
-    })
-);
-
-helmet.position.y=3.18;
-
-helmet.castShadow=true;
-
-player.add(helmet);
-
-/* shoulders */
-
-const shoulderMat=new THREE.MeshStandardMaterial({
-    color:0x424b57,
-    metalness:.6,
-    roughness:.4
-});
-
-const shoulderL=new THREE.Mesh(
-    new THREE.SphereGeometry(.38,12,12),
-    shoulderMat
-);
-
-shoulderL.position.set(-.75,2.25,0);
-
-player.add(shoulderL);
-
-const shoulderR=shoulderL.clone();
-
-shoulderR.position.x=.75;
-
-player.add(shoulderR);
-
-/* =========================================================
-   SWORD
-========================================================= */
-
-const sword=new THREE.Group();
-
-const blade=new THREE.Mesh(
-    new THREE.BoxGeometry(.13,2.7,.28),
-    new THREE.MeshStandardMaterial({
-        color:0xbfc5cf,
-        metalness:.9,
-        roughness:.18
-    })
-);
-
-blade.position.y=1.5;
-
-sword.add(blade);
-
-const guard=new THREE.Mesh(
-    new THREE.BoxGeometry(1.1,.16,.18),
-    metalMat
-);
-
-guard.position.y=.15;
-
-sword.add(guard);
-
-const grip=new THREE.Mesh(
-    new THREE.CylinderGeometry(.12,.12,.8,8),
-    woodMat
-);
-
-grip.position.y=-.25;
-
-sword.add(grip);
-
-sword.rotation.z=-.3;
-sword.position.set(.95,1.8,-.1);
-
-player.add(sword);
-
-/* =========================================================
-   ENEMIES
-========================================================= */
-
-const enemies=[];
-
-function createEnemy(x,z,boss=false){
-
-    const enemy=new THREE.Group();
-
-    enemy.position.set(x,0,z);
-
-    const enemyMat=new THREE.MeshStandardMaterial({
-        color:boss?0x351018:0x29252a,
-        roughness:.8,
-        metalness:.15
-    });
-
-    const chest=new THREE.Mesh(
-        new THREE.BoxGeometry(
-            boss?1.5:1.05,
-            boss?2.2:1.6,
-            boss?1:0.75
-        ),
-        enemyMat
-    );
-
-    chest.position.y=boss?1.7:1.35;
-    chest.castShadow=true;
-
-    enemy.add(chest);
-
-    const head=new THREE.Mesh(
-        new THREE.SphereGeometry(
-            boss?.65:.45,
-            16,
-            16
-        ),
-        new THREE.MeshStandardMaterial({
-            color:boss?0x5b1718:0x56403a,
-            roughness:.9
-        })
-    );
-
-    head.position.y=boss?3.35:2.55;
-    head.castShadow=true;
-
-    enemy.add(head);
-
-    /* eyes */
-
-    const eyeMat=new THREE.MeshBasicMaterial({
-        color:0xff1d19
-    });
-
-    const eye1=new THREE.Mesh(
-        new THREE.SphereGeometry(.07,8,8),
-        eyeMat
-    );
-
-    const eye2=eye1.clone();
-
-    eye1.position.set(-.18,boss?3.43:2.62,-.39);
-    eye2.position.set(.18,boss?3.43:2.62,-.39);
-
-    enemy.add(eye1,eye2);
-
-    /* weapon */
-
-    const weapon=new THREE.Mesh(
-        new THREE.BoxGeometry(.12,boss?2.7:2,.18),
-        new THREE.MeshStandardMaterial({
-            color:0x969ba2,
-            metalness:.9,
-            roughness:.2
-        })
-    );
-
-    weapon.position.set(
-        boss?1.15:.8,
-        boss?1.6:1.4,
-        -.15
-    );
-
-    weapon.rotation.z=-.45;
-
-    weapon.castShadow=true;
-
-    enemy.add(weapon);
-
-    scene.add(enemy);
-
-    enemies.push({
-        mesh:enemy,
-        health:boss?160:45,
-        maxHealth:boss?160:45,
-        boss,
-        alive:true,
-        attackTimer:0
-    });
-
-    if(boss){
-
-        document.getElementById("boss").style.display="block";
-
-    }
+// Small floor debris to make the halls feel worn.
+for(let i=0;i<95;i++){
+  const x=(Math.random()-.5)*68,z=(Math.random()-.5)*68;
+  const rock=new THREE.Mesh(
+    new THREE.DodecahedronGeometry(.12+Math.random()*.25,0),
+    i%3===0?trimMat:darkMat
+  );
+  rock.position.set(x,.02,z);
+  rock.scale.y=.25+Math.random()*.35;
+  rock.rotation.set(Math.random(),Math.random(),Math.random());
+  rock.receiveShadow=true;
+  dungeon.add(rock);
 }
 
-/* enemies */
+/* =========================================================
+   TORCHES AND WARM FLICKERING LIGHT
+========================================================= */
+const torchLights=[];
+function torch(x,z,rot=0){
+  const g=new THREE.Group();
+  const handle=new THREE.Mesh(new THREE.CylinderGeometry(.11,.15,1.8,8),woodMat);
+  handle.position.y=3.1;handle.castShadow=true;g.add(handle);
 
+  const bracket=new THREE.Mesh(new THREE.BoxGeometry(.65,.13,.13),metalMat);
+  bracket.position.set(0,2.65,.22);g.add(bracket);
+
+  const flameMat=new THREE.MeshBasicMaterial({color:0xff6a23});
+  const flame=new THREE.Mesh(new THREE.SphereGeometry(.27,12,10),flameMat);
+  flame.position.y=4.15;flame.scale.set(.75,1.5,.75);g.add(flame);
+
+  const glow=new THREE.PointLight(0xff742c,4.2,15,2);
+  glow.position.y=4.15;g.add(glow);
+  g.position.set(x,0,z);g.rotation.y=rot;scene.add(g);
+  torchLights.push({glow,flame,seed:Math.random()*10});
+}
+[
+ [-14,-34],[14,-34],[-14,34],[14,34],
+ [-33,-3],[-33,20],[33,-3],[33,20],
+ [-8,0],[8,0],[-8,23],[8,23],[-8,-23],[8,-23]
+].forEach(p=>torch(p[0],p[1]));
+
+// Brazier at the far end of the main hall.
+function brazier(x,z){
+  const base=new THREE.Mesh(new THREE.CylinderGeometry(.7,.95,.8,8),trimMat);
+  base.position.set(x,.4,z);base.castShadow=true;scene.add(base);
+  const bowl=new THREE.Mesh(new THREE.CylinderGeometry(.85,.65,.35,8),metalMat);
+  bowl.position.set(x,.95,z);scene.add(bowl);
+  const flame=new THREE.Mesh(new THREE.ConeGeometry(.42,1.5,9),new THREE.MeshBasicMaterial({color:0xff5218}));
+  flame.position.set(x,1.9,z);scene.add(flame);
+  const light=new THREE.PointLight(0xff4b18,5,19,2);
+  light.position.set(x,2,z);scene.add(light);
+  torchLights.push({glow:light,flame,seed:Math.random()*10});
+}
+brazier(0,-33);
+
+/* =========================================================
+   PLAYER MODEL
+========================================================= */
+const player=new THREE.Group();
+player.position.set(0,0,30);
+scene.add(player);
+
+const armorMat=new THREE.MeshStandardMaterial({color:0x303945,metalness:.55,roughness:.4});
+const darkArmor=new THREE.MeshStandardMaterial({color:0x171b21,metalness:.7,roughness:.32});
+const skinMat=new THREE.MeshStandardMaterial({color:0x87634e,roughness:.85});
+
+function playerPart(geometry,material,x,y,z){
+  const m=new THREE.Mesh(geometry,material);
+  m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;player.add(m);return m;
+}
+playerPart(new THREE.CapsuleGeometry(.48,.95,6,12),armorMat,0,1.45,0);
+playerPart(new THREE.BoxGeometry(1.15,1.2,.65),armorMat,0,1.75,0);
+playerPart(new THREE.SphereGeometry(.38,16,12),skinMat,0,2.72,0);
+playerPart(new THREE.SphereGeometry(.44,16,12,0,Math.PI*2,0,Math.PI/2),darkArmor,0,2.86,0);
+playerPart(new THREE.SphereGeometry(.35,12,8),darkArmor,-.67,2.05,0);
+playerPart(new THREE.SphereGeometry(.35,12,8),darkArmor,.67,2.05,0);
+
+// Back cape.
+const cape=playerPart(new THREE.BoxGeometry(.92,1.35,.12),new THREE.MeshStandardMaterial({color:0x251516,roughness:1}),0,1.4,.42);
+cape.rotation.x=-.12;
+
+// Sword group.
+const sword=new THREE.Group();
+player.add(sword);
+const blade=new THREE.Mesh(new THREE.BoxGeometry(.12,2.25,.22),new THREE.MeshStandardMaterial({color:0xc8cdd3,metalness:.92,roughness:.18}));
+blade.position.y=1.28;blade.castShadow=true;sword.add(blade);
+const edge=new THREE.Mesh(new THREE.BoxGeometry(.035,2.05,.235),new THREE.MeshBasicMaterial({color:0xffffff}));
+edge.position.set(-.04,1.28,0);sword.add(edge);
+const guard=new THREE.Mesh(new THREE.BoxGeometry(.8,.13,.16),metalMat);
+guard.position.y=.12;sword.add(guard);
+const grip=new THREE.Mesh(new THREE.CylinderGeometry(.09,.1,.55,8),woodMat);
+grip.position.y=-.18;sword.add(grip);
+sword.position.set(.82,1.35,-.18);
+sword.rotation.z=-.4;
+
+/* =========================================================
+   ENEMIES AND BOSS
+========================================================= */
+const enemies=[];
+function createEnemy(x,z,boss=false){
+  const enemy=new THREE.Group();
+  enemy.position.set(x,0,z);
+  const flesh=new THREE.MeshStandardMaterial({color:boss?0x48151b:0x34282b,roughness:.9});
+  const armor=new THREE.MeshStandardMaterial({color:boss?0x261116:0x29272a,metalness:.3,roughness:.7});
+  function part(geo,mat,px,py,pz){
+    const m=new THREE.Mesh(geo,mat);m.position.set(px,py,pz);m.castShadow=true;m.receiveShadow=true;enemy.add(m);return m;
+  }
+  part(new THREE.BoxGeometry(boss?1.65:1.05,boss?2.3:1.65,boss?1.05:.72),armor,0,boss?1.65:1.3,0);
+  part(new THREE.SphereGeometry(boss?.63:.42,16,12),flesh,0,boss?3:2.45,0);
+  part(new THREE.BoxGeometry(boss?1.9:1.25,.25,.85),armor,0,boss?2.35:1.85,0);
+  const eyesMat=new THREE.MeshBasicMaterial({color:0xff2118});
+  part(new THREE.SphereGeometry(.075,8,8),eyesMat,-.16,boss?3.08:2.5,-.36);
+  part(new THREE.SphereGeometry(.075,8,8),eyesMat,.16,boss?3.08:2.5,-.36);
+  const weapon=new THREE.Mesh(new THREE.BoxGeometry(.16,boss?2.8:1.9,.2),metalMat);
+  weapon.position.set(boss?1.12:.78,boss?1.6:1.3,-.1);
+  weapon.rotation.z=-.38;weapon.castShadow=true;enemy.add(weapon);
+
+  // Boss has heavier horns and a broad silhouette.
+  if(boss){
+    for(const side of [-1,1]){
+      const horn=new THREE.Mesh(new THREE.ConeGeometry(.17,.8,7),darkArmor);
+      horn.position.set(side*.43,3.65,0);horn.rotation.z=side*-.35;horn.castShadow=true;enemy.add(horn);
+    }
+    const bossGlow=new THREE.PointLight(0x9d0e20,1.6,5);
+    bossGlow.position.y=2;enemy.add(bossGlow);
+  }
+  scene.add(enemy);
+  enemies.push({mesh:enemy,health:boss?160:45,maxHealth:boss?160:45,boss,alive:true,attackTimer:0});
+  if(boss)document.getElementById("boss").style.display="block";
+}
 createEnemy(-7,-10);
 createEnemy(7,-10);
 createEnemy(-26,8);
 createEnemy(26,8);
 createEnemy(-7,25);
 createEnemy(7,25);
-
 createEnemy(0,-32,true);
 
 /* =========================================================
-   GAME VARIABLES
+   GAME STATE AND INPUT
 ========================================================= */
-
-let health=100;
-let level=1;
-let souls=0;
-
-let attacking=false;
-let attackCooldown=0;
-
+let health=100,souls=0,attackCooldown=0,started=false,gameEnded=false;
+let cameraYaw=0,elapsed=0,messageTimer=0;
 const keys={};
-
-let cameraYaw=0;
-
-let started=false;
-
-/* =========================================================
-   INPUT
-========================================================= */
+const messageEl=document.getElementById("message");
 
 addEventListener("keydown",e=>{
-
-    keys[e.key.toLowerCase()]=true;
-
-    if(e.code==="Space"){
-        e.preventDefault();
-        attack();
-    }
-
+  keys[e.key.toLowerCase()]=true;
+  if(e.code==="Space"){e.preventDefault();attack()}
 });
-
-addEventListener("keyup",e=>{
-    keys[e.key.toLowerCase()]=false;
-});
-
+addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 renderer.domElement.addEventListener("click",()=>{
-
-    if(started){
-        renderer.domElement.requestPointerLock();
-    }
-
+  if(!started||gameEnded)return;
+  if(document.pointerLockElement!==renderer.domElement)renderer.domElement.requestPointerLock();
+  else attack();
 });
-
 document.addEventListener("mousemove",e=>{
-
-    if(document.pointerLockElement===renderer.domElement){
-
-        cameraYaw-=e.movementX*.0025;
-
-    }
-
+  if(document.pointerLockElement===renderer.domElement)cameraYaw-=e.movementX*.0025;
 });
-
-/* =========================================================
-   START
-========================================================= */
-
 document.getElementById("startButton").onclick=()=>{
-
-    started=true;
-
-    document.getElementById("start").style.display="none";
-
-    renderer.domElement.requestPointerLock();
-
+  started=true;
+  document.getElementById("start").style.display="none";
+  renderer.domElement.requestPointerLock?.();
 };
+document.getElementById("restart").onclick=()=>location.reload();
+
+function showMessage(text){
+  messageEl.textContent=text;
+  messageEl.style.opacity="1";
+  messageTimer=1.8;
+}
 
 /* =========================================================
-   RESTART
+   COMBAT
 ========================================================= */
-
-document.getElementById("restart").onclick=()=>{
-
-    location.reload();
-
-};
-
-/* =========================================================
-   ATTACK
-========================================================= */
-
 function attack(){
+  if(!started||gameEnded||attackCooldown>0||health<=0)return;
+  attackCooldown=.55;
+  const original=sword.rotation.z;
+  sword.rotation.z=-1.65;
+  setTimeout(()=>{sword.rotation.z=original},190);
 
-    if(!started || attackCooldown>0 || health<=0) return;
-
-    attackCooldown=.55;
-
-    attacking=true;
-
-    const startRot=sword.rotation.z;
-
-    sword.rotation.z=-1.3;
-
-    setTimeout(()=>{
-
-        sword.rotation.z=startRot;
-        attacking=false;
-
-    },220);
-
-    let nearest=null;
-    let nearestDistance=3.8;
-
-    enemies.forEach(enemy=>{
-
-        if(!enemy.alive)return;
-
-        const d=player.position.distanceTo(enemy.mesh.position);
-
-        if(d<nearestDistance){
-
-            nearest=enemy;
-            nearestDistance=d;
-
-        }
-
-    });
-
-    if(nearest){
-
-        nearest.health-=35;
-
-        showMessage(
-            nearest.boss
-            ?"CRITICAL HIT!"
-            :"Enemy struck!"
-        );
-
-        if(nearest.health<=0){
-
-            killEnemy(nearest);
-
-        }
-
-    }
-
+  let nearest=null,nearestDistance=4.2;
+  for(const enemy of enemies){
+    if(!enemy.alive)continue;
+    const d=player.position.distanceTo(enemy.mesh.position);
+    if(d<nearestDistance){nearest=enemy;nearestDistance=d}
+  }
+  if(!nearest){showMessage("YOUR SWORD CUTS THROUGH THE AIR");return}
+  nearest.health-=nearest.boss?28:35;
+  showMessage(nearest.boss?"THE WARDEN STAGGERS":"ENEMY STRUCK");
+  if(nearest.health<=0)killEnemy(nearest);
 }
-
-/* =========================================================
-   ENEMY DEATH
-========================================================= */
-
 function killEnemy(enemy){
-
-    enemy.alive=false;
-
-    souls+=enemy.boss?100:20;
-
-    document.getElementById("souls").textContent=souls;
-
-    if(enemy.boss){
-
-        document.getElementById("boss").style.display="none";
-
-        showMessage("THE BOSS HAS FALLEN");
-
-    }else{
-
-        showMessage("ENEMY DEFEATED");
-
-    }
-
-    let t=0;
-
-    const fade=setInterval(()=>{
-
-        t+=.05;
-
-        enemy.mesh.scale.multiplyScalar(.94);
-
-        enemy.mesh.position.y-=.02;
-
-        if(t>1){
-
-            clearInterval(fade);
-            scene.remove(enemy.mesh);
-
-        }
-
-    },30);
-
+  enemy.alive=false;
+  souls+=enemy.boss?100:20;
+  document.getElementById("souls").textContent=souls;
+  if(enemy.boss){
+    document.getElementById("boss").style.display="none";
+    showMessage("THE WARDEN HAS FALLEN");
+  }else showMessage("ENEMY DEFEATED");
+  const mesh=enemy.mesh;
+  const fade=setInterval(()=>{
+    mesh.scale.multiplyScalar(.94);
+    mesh.position.y-=.025;
+    if(mesh.scale.x<.15){clearInterval(fade);scene.remove(mesh)}
+  },30);
 }
-
-/* =========================================================
-   PLAYER DAMAGE
-========================================================= */
-
 function hurt(amount){
-
-    health-=amount;
-
-    health=Math.max(0,health);
-
-    document.getElementById("health").style.width=
-        health+"%";
-
-    const damage=document.getElementById("damage");
-
-    damage.style.opacity=".7";
-
-    setTimeout(()=>{
-        damage.style.opacity="0";
-    },120);
-
-    if(health<=0){
-
-        gameOver();
-
-    }
-
+  if(gameEnded)return;
+  health=Math.max(0,health-amount);
+  document.getElementById("health").style.width=health+"%";
+  const flash=document.getElementById("damage");
+  flash.style.opacity=".48";
+  setTimeout(()=>flash.style.opacity="0",130);
+  if(health<=0)gameOver();
 }
-
-/* =========================================================
-   GAME OVER
-========================================================= */
-
 function gameOver(){
-
-    document.exitPointerLock();
-
-    document.getElementById("gameOver").style.display="flex";
-
+  gameEnded=true;
+  document.exitPointerLock?.();
+  document.getElementById("gameOver").style.display="flex";
 }
 
 /* =========================================================
    ENEMY AI
 ========================================================= */
-
 function updateEnemies(dt){
+  for(const enemy of enemies){
+    if(!enemy.alive)continue;
+    const dx=player.position.x-enemy.mesh.position.x;
+    const dz=player.position.z-enemy.mesh.position.z;
+    const distance=Math.hypot(dx,dz);
 
-    enemies.forEach(enemy=>{
-
-        if(!enemy.alive)return;
-
-        const target=player.position;
-
-        const dx=target.x-enemy.mesh.position.x;
-        const dz=target.z-enemy.mesh.position.z;
-
-        const distance=Math.sqrt(dx*dx+dz*dz);
-
-        if(distance<25 && distance>2.4){
-
-            const speed=enemy.boss?1.15:.8;
-
-            enemy.mesh.position.x+=(dx/distance)*speed*dt;
-            enemy.mesh.position.z+=(dz/distance)*speed*dt;
-
-        }
-
-        if(distance<=2.5){
-
-            enemy.attackTimer-=dt;
-
-            if(enemy.attackTimer<=0){
-
-                enemy.attackTimer=1.3;
-
-                hurt(enemy.boss?15:7);
-
-            }
-
-        }
-
-        enemy.mesh.lookAt(
-            player.position.x,
-            enemy.mesh.position.y+1.4,
-            player.position.z
-        );
-
-        if(enemy.boss){
-
-            const pct=Math.max(
-                0,
-                enemy.health/enemy.maxHealth*100
-            );
-
-            document.getElementById("bossHealth")
-                .style.width=pct+"%";
-
-        }
-
-    });
-
+    if(distance<27&&distance>2.5){
+      const speed=enemy.boss?1.25:.9;
+      enemy.mesh.position.x+=(dx/distance)*speed*dt;
+      enemy.mesh.position.z+=(dz/distance)*speed*dt;
+    }
+    if(distance<=2.7){
+      enemy.attackTimer-=dt;
+      if(enemy.attackTimer<=0){
+        enemy.attackTimer=enemy.boss?1.05:1.35;
+        hurt(enemy.boss?14:7);
+      }
+    }
+    enemy.mesh.lookAt(player.position.x,enemy.mesh.position.y+1.5,player.position.z);
+    if(enemy.boss){
+      document.getElementById("bossHealth").style.width=
+        Math.max(0,enemy.health/enemy.maxHealth*100)+"%";
+    }
+  }
 }
 
 /* =========================================================
    PLAYER MOVEMENT
 ========================================================= */
-
 function movePlayer(dt){
+  if(!started||gameEnded)return;
+  let forward=0,sideways=0;
+  if(keys.w||keys.arrowup)forward++;
+  if(keys.s||keys.arrowdown)forward--;
+  if(keys.a||keys.arrowleft)sideways--;
+  if(keys.d||keys.arrowright)sideways++;
+  if(!forward&&!sideways)return;
+  const length=Math.hypot(forward,sideways);
+  forward/=length;sideways/=length;
+  const speed=5;
+  const sin=Math.sin(cameraYaw),cos=Math.cos(cameraYaw);
+  player.position.x+=(sideways*cos+forward*sin)*speed*dt;
+  player.position.z+=(sideways*sin-forward*cos)*speed*dt;
 
-    if(!started)return;
+  // Keep the player inside the fortress.
+  player.position.x=THREE.MathUtils.clamp(player.position.x,-36,36);
+  player.position.z=THREE.MathUtils.clamp(player.position.z,-36,36);
 
-    let forward=0;
-    let sideways=0;
-
-    if(keys["w"]||keys["arrowup"])forward+=1;
-    if(keys["s"]||keys["arrowdown"])forward-=1;
-    if(keys["a"]||keys["arrowleft"])sideways-=1;
-    if(keys["d"]||keys["arrowright"])sideways+=1;
-
-    if(!forward&&!sideways)return;
-
-    const length=Math.sqrt(
-        forward*forward+
-        sideways*sideways
-    );
-
-    forward/=length;
-    sideways/=length;
-
-    const speed=5;
-
-    const sin=Math.sin(cameraYaw);
-    const cos=Math.cos(cameraYaw);
-
-    const dx=
-        (sideways*cos+forward*sin)*
-        speed*dt;
-
-    const dz=
-        (sideways*sin-forward*cos)*
-        speed*dt;
-
-    player.position.x+=dx;
-    player.position.z+=dz;
-
-    /* dungeon boundaries */
-
-    player.position.x=
-        THREE.MathUtils.clamp(
-            player.position.x,
-            -36,
-            36
-        );
-
-    player.position.z=
-        THREE.MathUtils.clamp(
-            player.position.z,
-            -36,
-            36
-        );
-
+  // Turn the warrior in the direction of travel.
+  player.rotation.y=Math.atan2(
+    (sideways*cos+forward*sin),
+    -(sideways*sin-forward*cos)
+  );
 }
 
 /* =========================================================
-   THIRD PERSON CAMERA
+   CINEMATIC OVER-THE-SHOULDER CAMERA
 ========================================================= */
-
+const cameraTarget=new THREE.Vector3();
+const desiredCamera=new THREE.Vector3();
 function updateCamera(){
-
-    const distance=7;
-    const height=4.5;
-
-    const target=new THREE.Vector3(
-        player.position.x,
-        player.position.y+2.0,
-        player.position.z
-    );
-
-    const camX=
-        player.position.x-
-        Math.sin(cameraYaw)*distance;
-
-    const camZ=
-        player.position.z-
-        Math.cos(cameraYaw)*distance;
-
-    camera.position.lerp(
-        new THREE.Vector3(
-            camX,
-            height,
-            camZ
-        ),
-        .12
-    );
-
-    camera.lookAt(target);
-
+  const distance=6.3,height=4.1;
+  cameraTarget.set(player.position.x,player.position.y+2.15,player.position.z);
+  desiredCamera.set(
+    player.position.x-Math.sin(cameraYaw)*distance,
+    height,
+    player.position.z-Math.cos(cameraYaw)*distance
+  );
+  camera.position.lerp(desiredCamera,.12);
+  camera.lookAt(cameraTarget);
 }
 
 /* =========================================================
-   TORCH FLICKER
+   TORCH ANIMATION
 ========================================================= */
-
-let elapsed=0;
-
 function updateTorches(){
-
-    torchLights.forEach((t,i)=>{
-
-        const flicker=
-            Math.sin(elapsed*8+i*4)*.35+
-            Math.sin(elapsed*17+i)*.18;
-
-        t.light.intensity=3+flicker;
-
-        const s=
-            1+
-            Math.sin(elapsed*12+i)*.12;
-
-        t.fire.scale.set(
-            .7*s,
-            1.3/s,
-            .7*s
-        );
-
-    });
-
+  for(const t of torchLights){
+    const flicker=Math.sin(elapsed*8+t.seed)*.42+Math.sin(elapsed*17+t.seed)*.2;
+    t.glow.intensity=4.2+flicker;
+    const s=1+Math.sin(elapsed*12+t.seed)*.12;
+    t.flame.scale.set(.75*s,1.5/s,.75*s);
+  }
 }
 
 /* =========================================================
-   MESSAGE
+   MAIN LOOP
 ========================================================= */
-
-let messageTimer=0;
-
-function showMessage(text){
-
-    const el=document.getElementById("message");
-
-    el.textContent=text;
-    el.style.opacity="1";
-
-    messageTimer=2;
-
-}
-
-/* =========================================================
-   ANIMATION
-========================================================= */
-
 const clock=new THREE.Clock();
-
 function animate(){
-
-    requestAnimationFrame(animate);
-
-    const dt=Math.min(
-        clock.getDelta(),
-        .05
-    );
-
-    elapsed+=dt;
-
-    if(attackCooldown>0){
-        attackCooldown-=dt;
-    }
-
-    if(messageTimer>0){
-
-        messageTimer-=dt;
-
-        if(messageTimer<=0){
-
-            document.getElementById("message")
-                .style.opacity="0";
-
-        }
-
-    }
-
-    movePlayer(dt);
-    updateEnemies(dt);
-    updateCamera();
-    updateTorches();
-
-    renderer.render(scene,camera);
-
+  requestAnimationFrame(animate);
+  const dt=Math.min(clock.getDelta(),.05);
+  elapsed+=dt;
+  if(attackCooldown>0)attackCooldown-=dt;
+  if(messageTimer>0){
+    messageTimer-=dt;
+    if(messageTimer<=0)messageEl.style.opacity="0";
+  }
+  movePlayer(dt);
+  updateEnemies(dt);
+  updateCamera();
+  updateTorches();
+  renderer.render(scene,camera);
 }
-
 animate();
 
-/* =========================================================
-   RESIZE
-========================================================= */
-
 addEventListener("resize",()=>{
-
-    camera.aspect=
-        innerWidth/innerHeight;
-
-    camera.updateProjectionMatrix();
-
-    renderer.setSize(
-        innerWidth,
-        innerHeight
-    );
-
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
 });
-
 </script>
-
 </body>
 </html>
