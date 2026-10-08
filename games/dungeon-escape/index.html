@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dungeon Escape - MattBread Arcade</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #08070d;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    text-align: center;
+}
+
+h1 {
+    margin: 12px 0 5px;
+    font-size: 34px;
+}
+
+#hud {
+    width: 600px;
+    max-width: 94vw;
+    margin: 0 auto 8px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 17px;
+    font-weight: bold;
+}
+
+#game {
+    position: relative;
+    width: 600px;
+    height: 600px;
+    max-width: 94vw;
+    max-height: 94vw;
+    margin: auto;
+    background: #15121d;
+    border: 4px solid #5c4a75;
+    overflow: hidden;
+    box-shadow: 0 0 25px rgba(130, 70, 200, 0.35);
+}
+
+.floor {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(rgba(255,255,255,0.025) 2px, transparent 2px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 2px, transparent 2px);
+    background-size: 40px 40px;
+}
+
+.wall {
+    position: absolute;
+    background: #33283f;
+    border: 2px solid #574469;
+}
+
+#player {
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    background: #35a7ff;
+    border-radius: 50%;
+    box-shadow: 0 0 15px #35a7ff;
+    z-index: 10;
+}
+
+.player-eye {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    background: white;
+    border-radius: 50%;
+    top: 7px;
+    right: 6px;
+}
+
+.enemy {
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    background: #e53935;
+    border-radius: 7px;
+    box-shadow: 0 0 12px rgba(255, 40, 40, 0.65);
+    z-index: 8;
+}
+
+.enemy::before,
+.enemy::after {
+    content: "";
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    background: white;
+    border-radius: 50%;
+    top: 7px;
+}
+
+.enemy::before {
+    left: 6px;
+}
+
+.enemy::after {
+    right: 6px;
+}
+
+.coin {
+    position: absolute;
+    width: 17px;
+    height: 17px;
+    background: gold;
+    border-radius: 50%;
+    box-shadow: 0 0 12px gold;
+    z-index: 5;
+}
+
+.exit {
+    position: absolute;
+    width: 45px;
+    height: 45px;
+    border: 4px solid #54ff78;
+    background: rgba(50,255,100,0.12);
+    box-shadow: 0 0 18px #54ff78;
+    z-index: 4;
+}
+
+.power {
+    position: absolute;
+    width: 21px;
+    height: 21px;
+    background: #b35cff;
+    transform: rotate(45deg);
+    box-shadow: 0 0 15px #b35cff;
+    z-index: 5;
+}
+
+#message {
+    position: absolute;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 25px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 0 0 10px black;
+    pointer-events: none;
+    z-index: 30;
+}
+
+#gameOver {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    z-index: 50;
+}
+
+#gameOver h2 {
+    font-size: 42px;
+    margin: 5px;
+}
+
+#gameOver p {
+    font-size: 20px;
+}
+
+button {
+    border: 0;
+    border-radius: 9px;
+    padding: 12px 22px;
+    margin: 5px;
+    font-size: 17px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    transform: scale(1.05);
+}
+
+.controls {
+    margin: 10px auto;
+}
+
+.controls button {
+    width: 65px;
+    height: 48px;
+    padding: 0;
+    font-size: 22px;
+    background: #292333;
+    color: white;
+    border: 1px solid #62527a;
+}
+
+#attack {
+    background: #8e2cff;
+}
+
+#back {
+    display: inline-block;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    margin: 3px;
+}
+
+#instructions {
+    font-size: 14px;
+    color: #aaa;
+    margin: 5px;
+}
+
+@media (max-width: 650px) {
+    h1 {
+        font-size: 27px;
+    }
+
+    #game {
+        width: 94vw;
+        height: 94vw;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<h1>⚔️ Dungeon Escape</h1>
+
+<div id="hud">
+    <span id="health">❤️ 3</span>
+    <span id="level">Level: 1</span>
+    <span id="score">Score: 0</span>
+</div>
+
+<div id="game">
+
+    <div class="floor"></div>
+
+    <div class="wall" style="left:100px;top:80px;width:180px;height:25px;"></div>
+    <div class="wall" style="left:390px;top:80px;width:25px;height:180px;"></div>
+    <div class="wall" style="left:90px;top:250px;width:25px;height:190px;"></div>
+    <div class="wall" style="left:190px;top:200px;width:150px;height:25px;"></div>
+    <div class="wall" style="left:270px;top:350px;width:25px;height:150px;"></div>
+    <div class="wall" style="left:420px;top:400px;width:100px;height:25px;"></div>
+
+    <div id="exit" class="exit" style="left:535px;top:525px;"></div>
+
+    <div id="player">
+        <div class="player-eye"></div>
+    </div>
+
+    <div id="message"></div>
+
+    <div id="gameOver">
+        <h2 id="gameOverTitle">GAME OVER</h2>
+        <p id="finalScore"></p>
+        <button onclick="restart()">Restart</button>
+    </div>
+
+</div>
+
+<div class="controls">
+    <button onclick="move(0,-1)">⬆️</button><br>
+    <button onclick="move(-1,0)">⬅️</button>
+    <button id="attack" onclick="attack()">⚔️</button>
+    <button onclick="move(1,0)">➡️</button><br>
+    <button onclick="move(0,1)">⬇️</button>
+</div>
+
+<div id="instructions">
+    Arrow Keys / WASD = Move &nbsp; | &nbsp; Space = Attack
+</div>
+
+<a id="back" href="../../index.html">← Back to Arcade</a>
+
+<script>
+
+const game = document.getElementById("game");
+const player = document.getElementById("player");
+const healthText = document.getElementById("health");
+const levelText = document.getElementById("level");
+const scoreText = document.getElementById("score");
+const message = document.getElementById("message");
+const gameOverScreen = document.getElementById("gameOver");
+const finalScore = document.getElementById("finalScore");
+const exit = document.getElementById("exit");
+
+const GAME_SIZE = 600;
+const PLAYER_SIZE = 28;
+
+let px = 25;
+let py = 525;
+
+let health = 3;
+let score = 0;
+let level = 1;
+
+let enemies = [];
+let coins = [];
+let powers = [];
+
+let running = true;
+let invincible = false;
+let attackCooldown = false;
+
+let best = Number(localStorage.getItem("dungeonBest")) || 0;
+
+const walls = [
+    {x:100,y:80,w:180,h:25},
+    {x:390,y:80,w:25,h:180},
+    {x:90,y:250,w:25,h:190},
+    {x:190,y:200,w:150,h:25},
+    {x:270,y:350,w:25,h:150},
+    {x:420,y:400,w:100,h:25}
+];
+
+function updateHUD() {
+    healthText.textContent = "❤️ " + health;
+    levelText.textContent = "Level: " + level;
+    scoreText.textContent = "Score: " + score;
+}
+
+function rectsOverlap(a,b) {
+    return (
+        a.x < b.x + b.w &&
+        a.x + a.w > b.x &&
+        a.y < b.y + b.h &&
+        a.y + a.h > b.y
+    );
+}
+
+function hitsWall(x,y) {
+
+    const playerRect = {
+        x:x,
+        y:y,
+        w:PLAYER_SIZE,
+        h:PLAYER_SIZE
+    };
+
+    for (const wall of walls) {
+        if (rectsOverlap(playerRect, wall)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function move(dx,dy) {
+
+    if (!running) return;
+
+    const speed = 7;
+
+    let nx = px + dx * speed;
+    let ny = py + dy * speed;
+
+    nx = Math.max(0, Math.min(GAME_SIZE - PLAYER_SIZE, nx));
+    ny = Math.max(0, Math.min(GAME_SIZE - PLAYER_SIZE, ny));
+
+    if (!hitsWall(nx, py)) {
+        px = nx;
+    }
+
+    if (!hitsWall(px, ny)) {
+        py = ny;
+    }
+
+    player.style.left = px + "px";
+    player.style.top = py + "px";
+
+    checkCoins();
+    checkPower();
+    checkExit();
+}
+
+document.addEventListener("keydown", function(e) {
+
+    if (!running) return;
+
+    if (
+        e.key === "ArrowUp" ||
+        e.key.toLowerCase() === "w"
+    ) {
+        move(0,-1);
+    }
+
+    if (
+        e.key === "ArrowDown" ||
+        e.key.toLowerCase() === "s"
+    ) {
+        move(0,1);
+    }
+
+    if (
+        e.key === "ArrowLeft" ||
+        e.key.toLowerCase() === "a"
+    ) {
+        move(-1,0);
+    }
+
+    if (
+        e.key === "ArrowRight" ||
+        e.key.toLowerCase() === "d"
+    ) {
+        move(1,0);
+    }
+
+    if (e.code === "Space") {
+        e.preventDefault();
+        attack();
+    }
+});
+
+function spawnEnemy() {
+
+    let x;
+    let y;
+
+    do {
+        x = Math.random() * 540;
+        y = Math.random() * 540;
+    } while (
+        Math.hypot(x-px,y-py) < 180 ||
+        hitsWall(x,y)
+    );
+
+    const enemy = document.createElement("div");
+
+    enemy.className = "enemy";
+
+    enemy.style.left = x + "px";
+    enemy.style.top = y + "px";
+
+    game.appendChild(enemy);
+
+    enemies.push({
+        element:enemy,
+        x:x,
+        y:y,
+        speed:0.8 + level * 0.12,
+        alive:true
+    });
+}
+
+function spawnCoin() {
+
+    let x;
+    let y;
+
+    do {
+        x = 25 + Math.random() * 530;
+        y = 25 + Math.random() * 530;
+    } while (hitsWall(x,y));
+
+    const coin = document.createElement("div");
+
+    coin.className = "coin";
+
+    coin.style.left = x + "px";
+    coin.style.top = y + "px";
+
+    game.appendChild(coin);
+
+    coins.push({
+        element:coin,
+        x:x,
+        y:y
+    });
+}
+
+function spawnPower() {
+
+    let x;
+    let y;
+
+    do {
+        x = 25 + Math.random() * 530;
+        y = 25 + Math.random() * 530;
+    } while (hitsWall(x,y));
+
+    const power = document.createElement("div");
+
+    power.className = "power";
+
+    power.style.left = x + "px";
+    power.style.top = y + "px";
+
+    game.appendChild(power);
+
+    powers.push({
+        element:power,
+        x:x,
+        y:y
+    });
+}
+
+function checkCoins() {
+
+    coins.forEach((coin,index) => {
+
+        if (
+            Math.hypot(
+                px - coin.x,
+                py - coin.y
+            ) < 30
+        ) {
+
+            coin.element.remove();
+
+            coins.splice(index,1);
+
+            score += 25;
+
+            updateHUD();
+        }
+
+    });
+}
+
+function checkPower() {
+
+    powers.forEach((power,index) => {
+
+        if (
+            Math.hypot(
+                px - power.x,
+                py - power.y
+            ) < 30
+        ) {
+
+            power.element.remove();
+
+            powers.splice(index,1);
+
+            health = Math.min(5,health + 1);
+
+            score += 50;
+
+            showMessage("💜 HEALTH UP!");
+
+            updateHUD();
+        }
+
+    });
+}
+
+function checkExit() {
+
+    if (
+        px > 510 &&
+        py > 500
+    ) {
+
+        if (enemies.length === 0) {
+
+            nextLevel();
+
+        } else {
+
+            showMessage("Defeat all enemies!");
+
+        }
+
+    }
+}
+
+function attack() {
+
+    if (!running || attackCooldown) return;
+
+    attackCooldown = true;
+
+    const range = 75;
+
+    enemies.forEach((enemy,index) => {
+
+        const distance = Math.hypot(
+            px - enemy.x,
+            py - enemy.y
+        );
+
+        if (distance < range) {
+
+            enemy.element.remove();
+
+            enemies.splice(index,1);
+
+            score += 100;
+
+            updateHUD();
+
+            showMessage("⚔️ ENEMY DEFEATED!");
+        }
+
+    });
+
+    setTimeout(() => {
+        attackCooldown = false;
+    },350);
+}
+
+function enemyAI() {
+
+    if (!running) return;
+
+    enemies.forEach(enemy => {
+
+        const dx = px - enemy.x;
+        const dy = py - enemy.y;
+
+        const distance = Math.hypot(dx,dy);
+
+        if (distance > 1) {
+
+            let nx =
+                enemy.x +
+                (dx / distance) *
+                enemy.speed;
+
+            let ny =
+                enemy.y +
+                (dy / distance) *
+                enemy.speed;
+
+            if (!hitsWall(nx,enemy.y)) {
+                enemy.x = nx;
+            }
+
+            if (!hitsWall(enemy.x,ny)) {
+                enemy.y = ny;
+            }
+        }
+
+        enemy.element.style.left =
+            enemy.x + "px";
+
+        enemy.element.style.top =
+            enemy.y + "px";
+
+        if (distance < 30 && !invincible) {
+
+            takeDamage();
+        }
+
+    });
+}
+
+function takeDamage() {
+
+    invincible = true;
+
+    health--;
+
+    updateHUD();
+
+    if (health <= 0) {
+
+        endGame();
+
+        return;
+    }
+
+    showMessage("💥 HIT!");
+
+    setTimeout(() => {
+        invincible = false;
+    },1000);
+}
+
+function nextLevel() {
+
+    level++;
+
+    score += 250;
+
+    px = 25;
+    py = 525;
+
+    player.style.left = px + "px";
+    player.style.top = py + "px";
+
+    clearObjects();
+
+    const enemyCount =
+        Math.min(12, 2 + level);
+
+    for (let i=0;i<enemyCount;i++) {
+        spawnEnemy();
+    }
+
+    for (let i=0;i<2;i++) {
+        spawnCoin();
+    }
+
+    if (level % 2 === 0) {
+        spawnPower();
+    }
+
+    showMessage("LEVEL " + level);
+
+    updateHUD();
+}
+
+function clearObjects() {
+
+    enemies.forEach(enemy =>
+        enemy.element.remove()
+    );
+
+    coins.forEach(coin =>
+        coin.element.remove()
+    );
+
+    powers.forEach(power =>
+        power.element.remove()
+    );
+
+    enemies = [];
+    coins = [];
+    powers = [];
+}
+
+function showMessage(text) {
+
+    message.textContent = text;
+
+    setTimeout(() => {
+
+        if (message.textContent === text) {
+            message.textContent = "";
+        }
+
+    },900);
+}
+
+function endGame() {
+
+    running = false;
+
+    if (score > best) {
+
+        best = score;
+
+        localStorage.setItem(
+            "dungeonBest",
+            best
+        );
+    }
+
+    finalScore.textContent =
+        "Score: " +
+        score +
+        " | Best: " +
+        best +
+        " | Level: " +
+        level;
+
+    gameOverScreen.style.display = "flex";
+}
+
+function restart() {
+
+    clearObjects();
+
+    px = 25;
+    py = 525;
+
+    health = 3;
+    score = 0;
+    level = 1;
+
+    running = true;
+    invincible = false;
+
+    player.style.left = px + "px";
+    player.style.top = py + "px";
+
+    gameOverScreen.style.display = "none";
+
+    for (let i=0;i<3;i++) {
+        spawnEnemy();
+    }
+
+    for (let i=0;i<3;i++) {
+        spawnCoin();
+    }
+
+    updateHUD();
+}
+
+function gameLoop() {
+
+    enemyAI();
+
+    checkCoins();
+    checkPower();
+    checkExit();
+
+    requestAnimationFrame(gameLoop);
+}
+
+player.style.left = px + "px";
+player.style.top = py + "px";
+
+for (let i=0;i<3;i++) {
+    spawnEnemy();
+}
+
+for (let i=0;i<3;i++) {
+    spawnCoin();
+}
+
+updateHUD();
+
+requestAnimationFrame(gameLoop);
+
+</script>
+
+</body>
+</html>
