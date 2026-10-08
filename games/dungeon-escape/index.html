@@ -12,221 +12,548 @@
 
 body {
     margin: 0;
-    background: #08070d;
-    color: white;
-    font-family: Arial, Helvetica, sans-serif;
+    background:
+        radial-gradient(circle at center, #17131a 0%, #050508 75%);
+    color: #eee;
+    font-family: Georgia, "Times New Roman", serif;
     text-align: center;
 }
 
 h1 {
-    margin: 12px 0 5px;
+    margin: 10px 0 3px;
+    color: #d8c5a0;
     font-size: 34px;
+    text-shadow: 0 0 12px #000;
 }
 
 #hud {
-    width: 600px;
-    max-width: 94vw;
-    margin: 0 auto 8px;
+    width: 700px;
+    max-width: 95vw;
+    margin: 0 auto 7px;
     display: flex;
     justify-content: space-between;
-    font-size: 17px;
+    align-items: center;
+    font-size: 16px;
     font-weight: bold;
+    color: #ddd;
+}
+
+#bossHud {
+    display: none;
+    width: 700px;
+    max-width: 95vw;
+    margin: 0 auto 7px;
+}
+
+#bossName {
+    color: #d84a4a;
+    font-weight: bold;
+    margin-bottom: 3px;
+}
+
+#bossBar {
+    width: 100%;
+    height: 15px;
+    background: #160708;
+    border: 2px solid #702020;
+}
+
+#bossHealth {
+    width: 100%;
+    height: 100%;
+    background: #b51f2b;
 }
 
 #game {
     position: relative;
-    width: 600px;
+    width: 700px;
     height: 600px;
-    max-width: 94vw;
-    max-height: 94vw;
+    max-width: 95vw;
+    max-height: 81vw;
     margin: auto;
-    background: #15121d;
-    border: 4px solid #5c4a75;
     overflow: hidden;
-    box-shadow: 0 0 25px rgba(130, 70, 200, 0.35);
+
+    background:
+        radial-gradient(circle at 50% 50%, #29232a 0%, #161319 52%, #08070a 100%);
+
+    border: 5px solid #463d3a;
+    box-shadow:
+        inset 0 0 80px #000,
+        0 0 30px rgba(0,0,0,.9);
 }
+
+/* Stone floor */
 
 .floor {
     position: absolute;
     inset: 0;
+
     background:
-        linear-gradient(rgba(255,255,255,0.025) 2px, transparent 2px),
-        linear-gradient(90deg, rgba(255,255,255,0.025) 2px, transparent 2px);
-    background-size: 40px 40px;
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+
+    background-size: 48px 48px;
 }
+
+/* Dungeon walls */
 
 .wall {
     position: absolute;
-    background: #33283f;
-    border: 2px solid #574469;
+
+    background:
+        linear-gradient(
+            #3b3537,
+            #211e21
+        );
+
+    border: 3px solid #51494a;
+
+    box-shadow:
+        inset 0 0 10px #000,
+        0 4px 7px #000;
 }
 
-#player {
+/* Torches */
+
+.torch {
     position: absolute;
-    width: 28px;
-    height: 28px;
-    background: #35a7ff;
-    border-radius: 50%;
-    box-shadow: 0 0 15px #35a7ff;
-    z-index: 10;
+    width: 18px;
+    height: 35px;
+    background: #4b3020;
+    border-radius: 5px;
+    z-index: 3;
 }
 
-.player-eye {
-    position: absolute;
-    width: 5px;
-    height: 5px;
-    background: white;
-    border-radius: 50%;
-    top: 7px;
-    right: 6px;
-}
-
-.enemy {
-    position: absolute;
-    width: 28px;
-    height: 28px;
-    background: #e53935;
-    border-radius: 7px;
-    box-shadow: 0 0 12px rgba(255, 40, 40, 0.65);
-    z-index: 8;
-}
-
-.enemy::before,
-.enemy::after {
+.torch::before {
     content: "";
     position: absolute;
-    width: 5px;
-    height: 5px;
-    background: white;
+    width: 20px;
+    height: 25px;
+    left: -1px;
+    top: -18px;
     border-radius: 50%;
-    top: 7px;
+    background: #ff9d28;
+    box-shadow:
+        0 0 12px #ff7a00,
+        0 0 28px #ff5a00;
 }
 
-.enemy::before {
-    left: 6px;
-}
+/* Player */
 
-.enemy::after {
-    right: 6px;
-}
-
-.coin {
+.player {
     position: absolute;
-    width: 17px;
-    height: 17px;
-    background: gold;
+    width: 34px;
+    height: 46px;
+    z-index: 15;
+}
+
+.player .head {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    left: 7px;
+    top: 0;
     border-radius: 50%;
-    box-shadow: 0 0 12px gold;
-    z-index: 5;
+    background: #b88965;
+    border: 2px solid #674b3b;
 }
 
-.exit {
+.player .body {
     position: absolute;
-    width: 45px;
-    height: 45px;
-    border: 4px solid #54ff78;
-    background: rgba(50,255,100,0.12);
-    box-shadow: 0 0 18px #54ff78;
+    width: 30px;
+    height: 25px;
+    left: 2px;
+    top: 17px;
+    background: #303d4a;
+    border: 2px solid #17202a;
+    border-radius: 7px 7px 3px 3px;
+}
+
+.player .helmet {
+    position: absolute;
+    width: 24px;
+    height: 9px;
+    left: 5px;
+    top: 0;
+    background: #171b20;
+    border-radius: 8px 8px 2px 2px;
+    z-index: 2;
+}
+
+.player .eye {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: #e8d6b2;
+    left: 18px;
+    top: 9px;
     z-index: 4;
 }
 
-.power {
+.player .leg {
+    position: absolute;
+    width: 8px;
+    height: 12px;
+    background: #191b20;
+    top: 39px;
+}
+
+.player .leg.left {
+    left: 6px;
+}
+
+.player .leg.right {
+    right: 6px;
+}
+
+/* Enemies */
+
+.enemy {
+    position: absolute;
+    width: 34px;
+    height: 45px;
+    z-index: 12;
+}
+
+.enemy .head {
     position: absolute;
     width: 21px;
     height: 21px;
-    background: #b35cff;
-    transform: rotate(45deg);
-    box-shadow: 0 0 15px #b35cff;
+    left: 6px;
+    top: 0;
+    border-radius: 50%;
+    background: #75655d;
+    border: 2px solid #332b29;
+}
+
+.enemy .body {
+    position: absolute;
+    width: 30px;
+    height: 24px;
+    left: 2px;
+    top: 18px;
+    background: #572d2d;
+    border: 2px solid #291515;
+    border-radius: 7px;
+}
+
+.enemy .eye {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    background: #ff3030;
+    border-radius: 50%;
+    top: 8px;
+    left: 9px;
+    box-shadow: 8px 0 0 #ff3030;
+    z-index: 4;
+}
+
+.enemy .leg {
+    position: absolute;
+    width: 8px;
+    height: 12px;
+    background: #1b1414;
+    top: 39px;
+}
+
+.enemy .leg.left {
+    left: 6px;
+}
+
+.enemy .leg.right {
+    right: 6px;
+}
+
+/* Archer enemy */
+
+.enemy.archer .body {
+    background: #31513a;
+}
+
+.enemy.archer .head {
+    background: #8e725d;
+}
+
+/* Knight enemy */
+
+.enemy.knight .body {
+    background: #424852;
+}
+
+.enemy.knight .head {
+    background: #5c514b;
+}
+
+/* Boss */
+
+.boss {
+    position: absolute;
+    width: 70px;
+    height: 88px;
+    z-index: 18;
+}
+
+.boss .head {
+    position: absolute;
+    width: 43px;
+    height: 43px;
+    left: 14px;
+    top: 0;
+    border-radius: 50%;
+    background: #4c3434;
+    border: 4px solid #201315;
+}
+
+.boss .body {
+    position: absolute;
+    width: 62px;
+    height: 48px;
+    left: 4px;
+    top: 35px;
+    background: #43191f;
+    border: 4px solid #211014;
+    border-radius: 12px;
+}
+
+.boss .eye {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #ff3030;
+    border-radius: 50%;
+    top: 15px;
+    left: 18px;
+    box-shadow: 16px 0 0 #ff3030;
+    z-index: 5;
+    box-shadow:
+        0 0 7px #ff0000,
+        16px 0 7px #ff0000;
+}
+
+.boss .horn {
+    position: absolute;
+    width: 13px;
+    height: 23px;
+    background: #c3b9a5;
+    top: -12px;
+    z-index: 1;
+}
+
+.boss .horn.left {
+    left: 10px;
+    transform: rotate(-28deg);
+}
+
+.boss .horn.right {
+    right: 10px;
+    transform: rotate(28deg);
+}
+
+.boss .leg {
+    position: absolute;
+    width: 14px;
+    height: 20px;
+    background: #171012;
+    top: 72px;
+}
+
+.boss .leg.left {
+    left: 13px;
+}
+
+.boss .leg.right {
+    right: 13px;
+}
+
+/* Sword */
+
+.sword {
+    position: absolute;
+    width: 7px;
+    height: 42px;
+    background: #d9dce0;
+    border: 1px solid #777;
+    z-index: 25;
+    transform: rotate(42deg);
+    transform-origin: bottom center;
+    display: none;
+}
+
+.sword::after {
+    content: "";
+    position: absolute;
+    width: 17px;
+    height: 5px;
+    background: #a37a3d;
+    left: -6px;
+    bottom: 1px;
+}
+
+/* Coins */
+
+.coin {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #c89b32;
+    border: 2px solid #f2d16a;
+    box-shadow: 0 0 10px #c89b32;
     z-index: 5;
 }
 
+/* Potions */
+
+.potion {
+    position: absolute;
+    width: 18px;
+    height: 23px;
+    background: #8d2525;
+    border: 2px solid #d98a8a;
+    border-radius: 5px 5px 8px 8px;
+    z-index: 5;
+}
+
+.potion::before {
+    content: "";
+    position: absolute;
+    width: 8px;
+    height: 6px;
+    left: 3px;
+    top: -7px;
+    background: #8c765a;
+}
+
+/* Exit */
+
+.exit {
+    position: absolute;
+    width: 48px;
+    height: 58px;
+    right: 18px;
+    bottom: 15px;
+    background: #15100d;
+    border: 4px solid #80653e;
+    box-shadow: 0 0 12px #80653e;
+    z-index: 4;
+}
+
+.exit::before {
+    content: "EXIT";
+    position: absolute;
+    font-size: 9px;
+    color: #d8b56b;
+    left: 9px;
+    top: -18px;
+}
+
+/* Message */
+
 #message {
     position: absolute;
-    top: 45%;
     left: 50%;
+    top: 45%;
     transform: translate(-50%, -50%);
-    font-size: 25px;
+    color: #e5d1aa;
+    font-size: 27px;
     font-weight: bold;
-    color: white;
-    text-shadow: 0 0 10px black;
+    text-shadow: 0 3px 10px #000;
     pointer-events: none;
-    z-index: 30;
+    z-index: 40;
+    white-space: nowrap;
 }
+
+/* Damage flash */
+
+#damageFlash {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,0,0,.25);
+    display: none;
+    z-index: 35;
+    pointer-events: none;
+}
+
+/* Game over */
 
 #gameOver {
     position: absolute;
     inset: 0;
-    background: rgba(0,0,0,0.85);
+    background: rgba(0,0,0,.9);
     display: none;
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    z-index: 50;
+    z-index: 100;
 }
 
 #gameOver h2 {
-    font-size: 42px;
+    color: #d8c5a0;
+    font-size: 43px;
     margin: 5px;
 }
 
 #gameOver p {
-    font-size: 20px;
+    font-size: 18px;
+    color: #bbb;
 }
 
 button {
-    border: 0;
-    border-radius: 9px;
-    padding: 12px 22px;
-    margin: 5px;
-    font-size: 17px;
+    border: 2px solid #665541;
+    border-radius: 7px;
+    padding: 11px 20px;
+    margin: 4px;
+    font-size: 16px;
     font-weight: bold;
     cursor: pointer;
+    background: #27231f;
+    color: #eee;
 }
 
 button:hover {
-    transform: scale(1.05);
+    background: #40382f;
 }
 
 .controls {
-    margin: 10px auto;
+    margin: 9px auto;
 }
 
 .controls button {
-    width: 65px;
-    height: 48px;
+    width: 62px;
+    height: 45px;
     padding: 0;
-    font-size: 22px;
-    background: #292333;
-    color: white;
-    border: 1px solid #62527a;
+    background: #211e20;
+    color: #ddd;
 }
 
 #attack {
-    background: #8e2cff;
+    background: #572020;
+    border-color: #9a4444;
 }
 
 #back {
     display: inline-block;
-    color: white;
+    color: #ddd;
     text-decoration: none;
     font-weight: bold;
-    margin: 3px;
+    margin-top: 2px;
 }
 
 #instructions {
-    font-size: 14px;
-    color: #aaa;
-    margin: 5px;
+    color: #8e8984;
+    font-size: 13px;
+    margin: 3px;
 }
 
-@media (max-width: 650px) {
+@media (max-width: 700px) {
     h1 {
         font-size: 27px;
     }
 
     #game {
-        width: 94vw;
-        height: 94vw;
+        width: 95vw;
+        height: 81vw;
     }
 }
 </style>
@@ -234,35 +561,56 @@ button:hover {
 
 <body>
 
-<h1>⚔️ Dungeon Escape</h1>
+<h1>⚔️ DUNGEON ESCAPE</h1>
 
 <div id="hud">
     <span id="health">❤️ 3</span>
-    <span id="level">Level: 1</span>
-    <span id="score">Score: 0</span>
+    <span id="level">Level 1</span>
+    <span id="score">Score 0</span>
+</div>
+
+<div id="bossHud">
+    <div id="bossName">BOSS</div>
+    <div id="bossBar">
+        <div id="bossHealth"></div>
+    </div>
 </div>
 
 <div id="game">
 
     <div class="floor"></div>
 
-    <div class="wall" style="left:100px;top:80px;width:180px;height:25px;"></div>
-    <div class="wall" style="left:390px;top:80px;width:25px;height:180px;"></div>
-    <div class="wall" style="left:90px;top:250px;width:25px;height:190px;"></div>
-    <div class="wall" style="left:190px;top:200px;width:150px;height:25px;"></div>
-    <div class="wall" style="left:270px;top:350px;width:25px;height:150px;"></div>
-    <div class="wall" style="left:420px;top:400px;width:100px;height:25px;"></div>
+    <!-- Dungeon walls -->
+    <div class="wall" style="left:90px;top:80px;width:220px;height:30px;"></div>
+    <div class="wall" style="left:380px;top:65px;width:30px;height:190px;"></div>
+    <div class="wall" style="left:75px;top:255px;width:30px;height:190px;"></div>
+    <div class="wall" style="left:180px;top:205px;width:170px;height:28px;"></div>
+    <div class="wall" style="left:270px;top:345px;width:30px;height:155px;"></div>
+    <div class="wall" style="left:430px;top:405px;width:130px;height:28px;"></div>
 
-    <div id="exit" class="exit" style="left:535px;top:525px;"></div>
+    <!-- Torches -->
+    <div class="torch" style="left:35px;top:135px;"></div>
+    <div class="torch" style="left:330px;top:45px;"></div>
+    <div class="torch" style="left:440px;top:290px;"></div>
+    <div class="torch" style="left:325px;top:535px;"></div>
 
-    <div id="player">
-        <div class="player-eye"></div>
+    <div class="exit"></div>
+
+    <div id="player" class="player">
+        <div class="helmet"></div>
+        <div class="head"></div>
+        <div class="eye"></div>
+        <div class="body"></div>
+        <div class="leg left"></div>
+        <div class="leg right"></div>
+        <div id="sword" class="sword"></div>
     </div>
 
     <div id="message"></div>
+    <div id="damageFlash"></div>
 
     <div id="gameOver">
-        <h2 id="gameOverTitle">GAME OVER</h2>
+        <h2 id="gameOverTitle">YOU DIED</h2>
         <p id="finalScore"></p>
         <button onclick="restart()">Restart</button>
     </div>
@@ -287,19 +635,32 @@ button:hover {
 
 const game = document.getElementById("game");
 const player = document.getElementById("player");
+
 const healthText = document.getElementById("health");
 const levelText = document.getElementById("level");
 const scoreText = document.getElementById("score");
-const message = document.getElementById("message");
-const gameOverScreen = document.getElementById("gameOver");
-const finalScore = document.getElementById("finalScore");
-const exit = document.getElementById("exit");
 
-const GAME_SIZE = 600;
-const PLAYER_SIZE = 28;
+const message = document.getElementById("message");
+const damageFlash = document.getElementById("damageFlash");
+
+const gameOverScreen = document.getElementById("gameOver");
+const gameOverTitle = document.getElementById("gameOverTitle");
+const finalScore = document.getElementById("finalScore");
+
+const bossHud = document.getElementById("bossHud");
+const bossName = document.getElementById("bossName");
+const bossHealth = document.getElementById("bossHealth");
+
+const sword = document.getElementById("sword");
+
+const GAME_WIDTH = 700;
+const GAME_HEIGHT = 600;
+
+const PLAYER_WIDTH = 34;
+const PLAYER_HEIGHT = 46;
 
 let px = 25;
-let py = 525;
+let py = 510;
 
 let health = 3;
 let score = 0;
@@ -307,7 +668,9 @@ let level = 1;
 
 let enemies = [];
 let coins = [];
-let powers = [];
+let potions = [];
+
+let boss = null;
 
 let running = true;
 let invincible = false;
@@ -316,45 +679,52 @@ let attackCooldown = false;
 let best = Number(localStorage.getItem("dungeonBest")) || 0;
 
 const walls = [
-    {x:100,y:80,w:180,h:25},
-    {x:390,y:80,w:25,h:180},
-    {x:90,y:250,w:25,h:190},
-    {x:190,y:200,w:150,h:25},
-    {x:270,y:350,w:25,h:150},
-    {x:420,y:400,w:100,h:25}
+    {x:90,y:80,w:220,h:30},
+    {x:380,y:65,w:30,h:190},
+    {x:75,y:255,w:30,h:190},
+    {x:180,y:205,w:170,h:28},
+    {x:270,y:345,w:30,h:155},
+    {x:430,y:405,w:130,h:28}
 ];
 
 function updateHUD() {
+
     healthText.textContent = "❤️ " + health;
-    levelText.textContent = "Level: " + level;
-    scoreText.textContent = "Score: " + score;
+    levelText.textContent = "Level " + level;
+    scoreText.textContent = "Score " + score;
+
 }
 
-function rectsOverlap(a,b) {
+function overlap(a,b) {
+
     return (
         a.x < b.x + b.w &&
         a.x + a.w > b.x &&
         a.y < b.y + b.h &&
         a.y + a.h > b.y
     );
+
 }
 
-function hitsWall(x,y) {
+function hitsWall(x,y,w=PLAYER_WIDTH,h=PLAYER_HEIGHT) {
 
-    const playerRect = {
+    const rect = {
         x:x,
         y:y,
-        w:PLAYER_SIZE,
-        h:PLAYER_SIZE
+        w:w,
+        h:h
     };
 
     for (const wall of walls) {
-        if (rectsOverlap(playerRect, wall)) {
+
+        if (overlap(rect,wall)) {
             return true;
         }
+
     }
 
     return false;
+
 }
 
 function move(dx,dy) {
@@ -366,214 +736,281 @@ function move(dx,dy) {
     let nx = px + dx * speed;
     let ny = py + dy * speed;
 
-    nx = Math.max(0, Math.min(GAME_SIZE - PLAYER_SIZE, nx));
-    ny = Math.max(0, Math.min(GAME_SIZE - PLAYER_SIZE, ny));
+    nx = Math.max(0,Math.min(GAME_WIDTH-PLAYER_WIDTH,nx));
+    ny = Math.max(0,Math.min(GAME_HEIGHT-PLAYER_HEIGHT,ny));
 
-    if (!hitsWall(nx, py)) {
+    if (!hitsWall(nx,py)) {
         px = nx;
     }
 
-    if (!hitsWall(px, ny)) {
+    if (!hitsWall(px,ny)) {
         py = ny;
     }
 
     player.style.left = px + "px";
     player.style.top = py + "px";
 
-    checkCoins();
-    checkPower();
+    collectItems();
     checkExit();
+
 }
 
-document.addEventListener("keydown", function(e) {
+document.addEventListener("keydown",e => {
 
     if (!running) return;
 
     if (
         e.key === "ArrowUp" ||
         e.key.toLowerCase() === "w"
-    ) {
-        move(0,-1);
-    }
+    ) move(0,-1);
 
     if (
         e.key === "ArrowDown" ||
         e.key.toLowerCase() === "s"
-    ) {
-        move(0,1);
-    }
+    ) move(0,1);
 
     if (
         e.key === "ArrowLeft" ||
         e.key.toLowerCase() === "a"
-    ) {
-        move(-1,0);
-    }
+    ) move(-1,0);
 
     if (
         e.key === "ArrowRight" ||
         e.key.toLowerCase() === "d"
-    ) {
-        move(1,0);
-    }
+    ) move(1,0);
 
     if (e.code === "Space") {
+
         e.preventDefault();
         attack();
+
     }
+
 });
 
-function spawnEnemy() {
+function randomPosition(w=30,h=30) {
 
     let x;
     let y;
 
+    let attempts = 0;
+
     do {
-        x = Math.random() * 540;
-        y = Math.random() * 540;
+
+        x = 25 + Math.random() * (GAME_WIDTH-w-50);
+        y = 25 + Math.random() * (GAME_HEIGHT-h-50);
+
+        attempts++;
+
     } while (
-        Math.hypot(x-px,y-py) < 180 ||
-        hitsWall(x,y)
+        (
+            hitsWall(x,y,w,h) ||
+            Math.hypot(x-px,y-py) < 170
+        ) &&
+        attempts < 200
     );
+
+    return {x,y};
+
+}
+
+function createEnemy(type="warrior") {
+
+    const pos = randomPosition();
 
     const enemy = document.createElement("div");
 
-    enemy.className = "enemy";
+    enemy.className = "enemy " + type;
 
-    enemy.style.left = x + "px";
-    enemy.style.top = y + "px";
+    enemy.innerHTML = `
+        <div class="head"></div>
+        <div class="eye"></div>
+        <div class="body"></div>
+        <div class="leg left"></div>
+        <div class="leg right"></div>
+    `;
+
+    enemy.style.left = pos.x + "px";
+    enemy.style.top = pos.y + "px";
 
     game.appendChild(enemy);
 
     enemies.push({
+
         element:enemy,
-        x:x,
-        y:y,
-        speed:0.8 + level * 0.12,
-        alive:true
+
+        x:pos.x,
+        y:pos.y,
+
+        speed:
+            type === "archer"
+            ? .65 + level*.07
+            : .85 + level*.11,
+
+        type:type,
+
+        attackTimer:0
+
     });
+
 }
 
-function spawnCoin() {
+function createBoss() {
 
-    let x;
-    let y;
+    const pos = randomPosition(70,88);
 
-    do {
-        x = 25 + Math.random() * 530;
-        y = 25 + Math.random() * 530;
-    } while (hitsWall(x,y));
+    const element = document.createElement("div");
+
+    element.className = "boss";
+
+    element.innerHTML = `
+        <div class="horn left"></div>
+        <div class="horn right"></div>
+        <div class="head"></div>
+        <div class="eye"></div>
+        <div class="body"></div>
+        <div class="leg left"></div>
+        <div class="leg right"></div>
+    `;
+
+    element.style.left = pos.x + "px";
+    element.style.top = pos.y + "px";
+
+    game.appendChild(element);
+
+    boss = {
+
+        element:element,
+
+        x:pos.x,
+        y:pos.y,
+
+        health:100 + level*30,
+
+        maxHealth:100 + level*30,
+
+        speed:.55 + level*.05,
+
+        attackTimer:0
+
+    };
+
+    bossHud.style.display = "block";
+
+    bossName.textContent =
+        level === 5
+        ? "👹 THE DUNGEON LORD"
+        : "👹 DUNGEON BOSS";
+
+    updateBossBar();
+
+    showMessage("⚠️ BOSS LEVEL!");
+
+}
+
+function updateBossBar() {
+
+    if (!boss) return;
+
+    const percent =
+        Math.max(0,boss.health / boss.maxHealth * 100);
+
+    bossHealth.style.width = percent + "%";
+
+}
+
+function createCoin() {
+
+    const pos = randomPosition(18,18);
 
     const coin = document.createElement("div");
 
     coin.className = "coin";
 
-    coin.style.left = x + "px";
-    coin.style.top = y + "px";
+    coin.style.left = pos.x + "px";
+    coin.style.top = pos.y + "px";
 
     game.appendChild(coin);
 
     coins.push({
+
         element:coin,
-        x:x,
-        y:y
+        x:pos.x,
+        y:pos.y
+
     });
+
 }
 
-function spawnPower() {
+function createPotion() {
 
-    let x;
-    let y;
+    const pos = randomPosition(18,23);
 
-    do {
-        x = 25 + Math.random() * 530;
-        y = 25 + Math.random() * 530;
-    } while (hitsWall(x,y));
+    const potion = document.createElement("div");
 
-    const power = document.createElement("div");
+    potion.className = "potion";
 
-    power.className = "power";
+    potion.style.left = pos.x + "px";
+    potion.style.top = pos.y + "px";
 
-    power.style.left = x + "px";
-    power.style.top = y + "px";
+    game.appendChild(potion);
 
-    game.appendChild(power);
+    potions.push({
 
-    powers.push({
-        element:power,
-        x:x,
-        y:y
+        element:potion,
+        x:pos.x,
+        y:pos.y
+
     });
+
 }
 
-function checkCoins() {
+function collectItems() {
 
     coins.forEach((coin,index) => {
 
         if (
             Math.hypot(
-                px - coin.x,
-                py - coin.y
-            ) < 30
+                px-coin.x,
+                py-coin.y
+            ) < 32
         ) {
 
             coin.element.remove();
-
             coins.splice(index,1);
 
             score += 25;
 
             updateHUD();
+
         }
 
     });
-}
 
-function checkPower() {
-
-    powers.forEach((power,index) => {
+    potions.forEach((potion,index) => {
 
         if (
             Math.hypot(
-                px - power.x,
-                py - power.y
-            ) < 30
+                px-potion.x,
+                py-potion.y
+            ) < 32
         ) {
 
-            power.element.remove();
+            potion.element.remove();
+            potions.splice(index,1);
 
-            powers.splice(index,1);
-
-            health = Math.min(5,health + 1);
+            health = Math.min(5,health+1);
 
             score += 50;
 
-            showMessage("💜 HEALTH UP!");
+            showMessage("🧪 HEALTH RESTORED");
 
             updateHUD();
+
         }
 
     });
-}
 
-function checkExit() {
-
-    if (
-        px > 510 &&
-        py > 500
-    ) {
-
-        if (enemies.length === 0) {
-
-            nextLevel();
-
-        } else {
-
-            showMessage("Defeat all enemies!");
-
-        }
-
-    }
 }
 
 function attack() {
@@ -582,43 +1019,136 @@ function attack() {
 
     attackCooldown = true;
 
-    const range = 75;
+    sword.style.display = "block";
 
-    enemies.forEach((enemy,index) => {
+    setTimeout(() => {
 
-        const distance = Math.hypot(
-            px - enemy.x,
-            py - enemy.y
-        );
+        sword.style.display = "none";
 
-        if (distance < range) {
+    },180);
+
+    const attackRange = 78;
+
+    enemies.slice().forEach((enemy,index) => {
+
+        const distance =
+            Math.hypot(
+                px-enemy.x,
+                py-enemy.y
+            );
+
+        if (distance < attackRange) {
 
             enemy.element.remove();
 
-            enemies.splice(index,1);
+            enemies.splice(
+                enemies.indexOf(enemy),
+                1
+            );
 
             score += 100;
 
+            showMessage("⚔️ ENEMY DEFEATED");
+
             updateHUD();
 
-            showMessage("⚔️ ENEMY DEFEATED!");
         }
 
     });
 
+    if (boss) {
+
+        const distance =
+            Math.hypot(
+                px-boss.x,
+                py-boss.y
+            );
+
+        if (distance < 105) {
+
+            boss.health -= 20;
+
+            score += 25;
+
+            updateBossBar();
+            updateHUD();
+
+            showMessage("⚔️ BOSS HIT!");
+
+            if (boss.health <= 0) {
+
+                defeatBoss();
+
+            }
+
+        }
+
+    }
+
     setTimeout(() => {
+
         attackCooldown = false;
+
     },350);
+
+}
+
+function defeatBoss() {
+
+    if (!boss) return;
+
+    boss.element.remove();
+
+    boss = null;
+
+    bossHud.style.display = "none";
+
+    score += 1000;
+
+    showMessage("🏆 BOSS DEFEATED!");
+
+    updateHUD();
+
+}
+
+function damagePlayer(amount=1) {
+
+    if (invincible) return;
+
+    health -= amount;
+
+    updateHUD();
+
+    invincible = true;
+
+    damageFlash.style.display = "block";
+
+    setTimeout(() => {
+
+        damageFlash.style.display = "none";
+
+    },150);
+
+    setTimeout(() => {
+
+        invincible = false;
+
+    },900);
+
+    if (health <= 0) {
+
+        endGame();
+
+    }
+
 }
 
 function enemyAI() {
 
-    if (!running) return;
-
     enemies.forEach(enemy => {
 
-        const dx = px - enemy.x;
-        const dy = py - enemy.y;
+        const dx = px-enemy.x;
+        const dy = py-enemy.y;
 
         const distance = Math.hypot(dx,dy);
 
@@ -626,21 +1156,22 @@ function enemyAI() {
 
             let nx =
                 enemy.x +
-                (dx / distance) *
+                dx/distance *
                 enemy.speed;
 
             let ny =
                 enemy.y +
-                (dy / distance) *
+                dy/distance *
                 enemy.speed;
 
-            if (!hitsWall(nx,enemy.y)) {
+            if (!hitsWall(nx,enemy.y,30,40)) {
                 enemy.x = nx;
             }
 
-            if (!hitsWall(enemy.x,ny)) {
+            if (!hitsWall(enemy.x,ny,30,40)) {
                 enemy.y = ny;
             }
+
         }
 
         enemy.element.style.left =
@@ -649,34 +1180,95 @@ function enemyAI() {
         enemy.element.style.top =
             enemy.y + "px";
 
-        if (distance < 30 && !invincible) {
+        if (distance < 31) {
 
-            takeDamage();
+            enemy.attackTimer--;
+
+            if (enemy.attackTimer <= 0) {
+
+                damagePlayer();
+
+                enemy.attackTimer = 55;
+
+            }
+
         }
 
     });
+
 }
 
-function takeDamage() {
+function bossAI() {
 
-    invincible = true;
+    if (!boss) return;
 
-    health--;
+    const dx = px-boss.x;
+    const dy = py-boss.y;
 
-    updateHUD();
+    const distance = Math.hypot(dx,dy);
 
-    if (health <= 0) {
+    if (distance > 1) {
 
-        endGame();
+        let nx =
+            boss.x +
+            dx/distance *
+            boss.speed;
 
-        return;
+        let ny =
+            boss.y +
+            dy/distance *
+            boss.speed;
+
+        if (!hitsWall(nx,boss.y,65,80)) {
+            boss.x = nx;
+        }
+
+        if (!hitsWall(boss.x,ny,65,80)) {
+            boss.y = ny;
+        }
+
     }
 
-    showMessage("💥 HIT!");
+    boss.element.style.left =
+        boss.x + "px";
 
-    setTimeout(() => {
-        invincible = false;
-    },1000);
+    boss.element.style.top =
+        boss.y + "px";
+
+    if (distance < 80) {
+
+        boss.attackTimer--;
+
+        if (boss.attackTimer <= 0) {
+
+            damagePlayer();
+
+            boss.attackTimer = 45;
+
+        }
+
+    }
+
+}
+
+function checkExit() {
+
+    const nearExit =
+        px > GAME_WIDTH-85 &&
+        py > GAME_HEIGHT-100;
+
+    if (!nearExit) return;
+
+    if (enemies.length > 0 || boss) {
+
+        showMessage("⚔️ DEFEAT THE ENEMIES FIRST");
+
+        return;
+
+    }
+
+    nextLevel();
+
 }
 
 function nextLevel() {
@@ -686,63 +1278,129 @@ function nextLevel() {
     score += 250;
 
     px = 25;
-    py = 525;
+    py = 510;
 
     player.style.left = px + "px";
     player.style.top = py + "px";
 
-    clearObjects();
+    clearEnemies();
 
-    const enemyCount =
-        Math.min(12, 2 + level);
+    const isBossLevel =
+        level % 5 === 0;
 
-    for (let i=0;i<enemyCount;i++) {
-        spawnEnemy();
+    if (isBossLevel) {
+
+        createBoss();
+
+    } else {
+
+        const count =
+            Math.min(12,2+level);
+
+        for (let i=0;i<count;i++) {
+
+            const types =
+                ["warrior","warrior","archer"];
+
+            createEnemy(
+                types[
+                    Math.floor(
+                        Math.random()*types.length
+                    )
+                ]
+            );
+
+        }
+
     }
 
-    for (let i=0;i<2;i++) {
-        spawnCoin();
+    for (let i=0;i<3;i++) {
+        createCoin();
     }
 
-    if (level % 2 === 0) {
-        spawnPower();
+    if (level % 3 === 0) {
+        createPotion();
     }
 
-    showMessage("LEVEL " + level);
+    showMessage(
+        isBossLevel
+        ? "👹 BOSS LEVEL " + level
+        : "LEVEL " + level
+    );
 
     updateHUD();
+
 }
 
-function clearObjects() {
+function clearEnemies() {
 
-    enemies.forEach(enemy =>
-        enemy.element.remove()
-    );
+    enemies.forEach(enemy => {
+
+        enemy.element.remove();
+
+    });
+
+    enemies = [];
+
+    if (boss) {
+
+        boss.element.remove();
+
+        boss = null;
+
+    }
+
+    bossHud.style.display = "none";
+
+}
+
+function clearItems() {
 
     coins.forEach(coin =>
         coin.element.remove()
     );
 
-    powers.forEach(power =>
-        power.element.remove()
+    potions.forEach(potion =>
+        potion.element.remove()
     );
 
-    enemies = [];
     coins = [];
-    powers = [];
+    potions = [];
+
 }
 
-function showMessage(text) {
+function restart() {
 
-    message.textContent = text;
+    clearEnemies();
+    clearItems();
 
-    setTimeout(() => {
+    px = 25;
+    py = 510;
 
-        if (message.textContent === text) {
-            message.textContent = "";
-        }
+    health = 3;
+    score = 0;
+    level = 1;
 
-    },900);
+    running = true;
+    invincible = false;
+
+    gameOverScreen.style.display = "none";
+
+    player.style.left = px + "px";
+    player.style.top = py + "px";
+
+    bossHud.style.display = "none";
+
+    for (let i=0;i<3;i++) {
+        createEnemy();
+    }
+
+    for (let i=0;i<3;i++) {
+        createCoin();
+    }
+
+    updateHUD();
+
 }
 
 function endGame() {
@@ -757,7 +1415,11 @@ function endGame() {
             "dungeonBest",
             best
         );
+
     }
+
+    gameOverTitle.textContent =
+        "YOU DIED";
 
     finalScore.textContent =
         "Score: " +
@@ -768,58 +1430,50 @@ function endGame() {
         level;
 
     gameOverScreen.style.display = "flex";
+
 }
 
-function restart() {
+function showMessage(text) {
 
-    clearObjects();
+    message.textContent = text;
 
-    px = 25;
-    py = 525;
+    setTimeout(() => {
 
-    health = 3;
-    score = 0;
-    level = 1;
+        if (message.textContent === text) {
 
-    running = true;
-    invincible = false;
+            message.textContent = "";
 
-    player.style.left = px + "px";
-    player.style.top = py + "px";
+        }
 
-    gameOverScreen.style.display = "none";
+    },1000);
 
-    for (let i=0;i<3;i++) {
-        spawnEnemy();
-    }
-
-    for (let i=0;i<3;i++) {
-        spawnCoin();
-    }
-
-    updateHUD();
 }
 
 function gameLoop() {
 
-    enemyAI();
+    if (running) {
 
-    checkCoins();
-    checkPower();
-    checkExit();
+        enemyAI();
+        bossAI();
+
+        collectItems();
+        checkExit();
+
+    }
 
     requestAnimationFrame(gameLoop);
+
 }
 
 player.style.left = px + "px";
 player.style.top = py + "px";
 
 for (let i=0;i<3;i++) {
-    spawnEnemy();
+    createEnemy();
 }
 
 for (let i=0;i<3;i++) {
-    spawnCoin();
+    createCoin();
 }
 
 updateHUD();
