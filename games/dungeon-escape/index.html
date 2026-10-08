@@ -2,795 +2,409 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dungeon Escape - MattBread Arcade</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Dungeon Escape 3D - MattBread Arcade</title>
 
 <style>
 *{box-sizing:border-box}
 
-body{
+html,body{
     margin:0;
-    background:#050506;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#030304;
     color:#eee;
-    font-family:Georgia,"Times New Roman",serif;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+}
+
+#top{
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    z-index:20;
+    pointer-events:none;
     text-align:center;
+    padding:8px;
+    background:linear-gradient(rgba(0,0,0,.85),transparent);
 }
 
 h1{
-    margin:10px 0 4px;
+    margin:0 0 5px;
     color:#d8c5a0;
+    font-family:Georgia,serif;
     text-shadow:0 0 12px #000;
 }
 
 #hud{
-    width:900px;
-    max-width:96vw;
-    margin:auto;
     display:flex;
-    justify-content:space-between;
-    padding:7px 12px;
+    justify-content:center;
+    gap:30px;
     font-weight:bold;
+    text-shadow:0 2px 5px #000;
 }
 
 #game{
     position:relative;
-    width:900px;
-    height:650px;
-    max-width:96vw;
-    max-height:70vh;
-    margin:auto;
+    width:100vw;
+    height:100vh;
     overflow:hidden;
-    background:#0c0b0e;
-    border:5px solid #463d3a;
-    box-shadow:inset 0 0 100px #000,0 0 30px #000;
+    background:#050506;
 }
 
-#world{
-    position:absolute;
-    width:1800px;
-    height:1300px;
-    left:0;
-    top:0;
-}
-
-.floor{
-    position:absolute;
-    background:
-        linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
-        linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
-    background-size:48px 48px;
-    background-color:#181519;
-}
-
-.room{
-    position:absolute;
-    background:#211e22;
-    border:12px solid #423b3b;
-    box-shadow:inset 0 0 45px #000;
-}
-
-.roomLabel{
-    position:absolute;
-    color:#655d5b;
-    font-size:18px;
-    letter-spacing:3px;
-    pointer-events:none;
-}
-
-.corridor{
-    position:absolute;
-    background:#161318;
-    border:6px solid #342e31;
-    box-shadow:inset 0 0 30px #000;
-}
-
-.wall{
-    position:absolute;
-    background:linear-gradient(#40393a,#211e20);
-    border:3px solid #554b4c;
-    box-shadow:inset 0 0 12px #000;
-}
-
-.door{
-    position:absolute;
-    background:#5a432c;
-    border:4px solid #8b7049;
-    z-index:4;
-}
-
-.torch{
-    position:absolute;
-    width:18px;
-    height:34px;
-    background:#4b3020;
-    border-radius:5px;
-    z-index:6;
-}
-
-.torch:before{
-    content:"";
-    position:absolute;
-    width:20px;
-    height:25px;
-    left:-1px;
-    top:-18px;
-    border-radius:50%;
-    background:#ff9d28;
-    box-shadow:0 0 12px #ff7a00,0 0 30px #ff5a00;
-}
-
-.exit{
-    position:absolute;
-    width:55px;
-    height:65px;
-    background:#15100d;
-    border:5px solid #80653e;
-    box-shadow:0 0 15px #80653e;
-    z-index:5;
-}
-
-.exit:before{
-    content:"EXIT";
-    position:absolute;
-    top:-22px;
-    left:10px;
-    color:#d8b56b;
-    font-size:10px;
-}
-
-.chest{
-    position:absolute;
-    width:42px;
-    height:32px;
-    background:#754719;
-    border:4px solid #b77a32;
-    border-radius:5px;
-    z-index:5;
-}
-
-.chest:after{
-    content:"";
-    position:absolute;
-    width:7px;
-    height:9px;
-    background:#e1c15b;
-    left:14px;
-    top:9px;
-}
-
-.player{
-    position:absolute;
-    width:34px;
-    height:46px;
-    z-index:20;
-}
-
-.player .head{
-    position:absolute;
-    width:20px;
-    height:20px;
-    left:7px;
-    border-radius:50%;
-    background:#b88965;
-    border:2px solid #674b3b;
-}
-
-.player .helmet{
-    position:absolute;
-    width:24px;
-    height:9px;
-    left:5px;
-    background:#171b20;
-    border-radius:8px 8px 2px 2px;
-    z-index:2;
-}
-
-.player .body{
-    position:absolute;
-    width:30px;
-    height:25px;
-    left:2px;
-    top:17px;
-    background:#303d4a;
-    border:2px solid #17202a;
-    border-radius:7px;
-}
-
-.player .eye{
-    position:absolute;
-    width:4px;
-    height:4px;
-    background:#e8d6b2;
-    left:18px;
-    top:9px;
-    z-index:4;
-}
-
-.player .leg{
-    position:absolute;
-    width:8px;
-    height:12px;
-    background:#191b20;
-    top:39px;
-}
-
-.player .leg.left{left:6px}
-.player .leg.right{right:6px}
-
-.enemy{
-    position:absolute;
-    width:34px;
-    height:45px;
-    z-index:15;
-}
-
-.enemy .head{
-    position:absolute;
-    width:21px;
-    height:21px;
-    left:6px;
-    border-radius:50%;
-    background:#75655d;
-    border:2px solid #332b29;
-}
-
-.enemy .body{
-    position:absolute;
-    width:30px;
-    height:24px;
-    left:2px;
-    top:18px;
-    background:#572d2d;
-    border:2px solid #291515;
-    border-radius:7px;
-}
-
-.enemy .eye{
-    position:absolute;
-    width:5px;
-    height:5px;
-    background:#ff3030;
-    border-radius:50%;
-    top:8px;
-    left:9px;
-    box-shadow:8px 0 0 #ff3030;
-    z-index:4;
-}
-
-.enemy.archer .body{background:#31513a}
-.enemy.knight .body{background:#424852}
-
-.boss{
-    position:absolute;
-    width:70px;
-    height:88px;
-    z-index:18;
-}
-
-.boss .head{
-    position:absolute;
-    width:43px;
-    height:43px;
-    left:14px;
-    border-radius:50%;
-    background:#4c3434;
-    border:4px solid #201315;
-}
-
-.boss .body{
-    position:absolute;
-    width:62px;
-    height:48px;
-    left:4px;
-    top:35px;
-    background:#43191f;
-    border:4px solid #211014;
-    border-radius:12px;
-}
-
-.boss .eye{
-    position:absolute;
-    width:8px;
-    height:8px;
-    background:#ff3030;
-    border-radius:50%;
-    top:15px;
-    left:18px;
-    box-shadow:0 0 7px #f00,16px 0 7px #f00;
-    z-index:5;
-}
-
-.boss .horn{
-    position:absolute;
-    width:13px;
-    height:23px;
-    background:#c3b9a5;
-    top:-12px;
-}
-
-.boss .horn.left{
-    left:10px;
-    transform:rotate(-28deg);
-}
-
-.boss .horn.right{
-    right:10px;
-    transform:rotate(28deg);
-}
-
-.boss .leg{
-    position:absolute;
-    width:14px;
-    height:20px;
-    background:#171012;
-    top:72px;
-}
-
-.boss .leg.left{left:13px}
-.boss .leg.right{right:13px}
-
-.coin{
-    position:absolute;
-    width:18px;
-    height:18px;
-    border-radius:50%;
-    background:#c89b32;
-    border:2px solid #f2d16a;
-    box-shadow:0 0 10px #c89b32;
-    z-index:7;
-}
-
-.potion{
-    position:absolute;
-    width:18px;
-    height:23px;
-    background:#8d2525;
-    border:2px solid #d98a8a;
-    border-radius:5px 5px 8px 8px;
-    z-index:7;
-}
-
-.sword{
-    position:absolute;
-    width:7px;
-    height:42px;
-    background:#d9dce0;
-    border:1px solid #777;
-    z-index:30;
-    transform:rotate(42deg);
-    display:none;
-}
-
-.sword:after{
-    content:"";
-    position:absolute;
-    width:17px;
-    height:5px;
-    background:#a37a3d;
-    left:-6px;
-    bottom:1px;
-}
-
-#camera{
-    position:absolute;
-    left:0;
-    top:0;
+canvas{
     width:100%;
     height:100%;
-}
-
-#message{
-    position:absolute;
-    left:50%;
-    top:45%;
-    transform:translate(-50%,-50%);
-    color:#e5d1aa;
-    font-size:27px;
-    font-weight:bold;
-    text-shadow:0 3px 10px #000;
-    z-index:100;
-    pointer-events:none;
-    white-space:nowrap;
-}
-
-#damageFlash{
-    position:absolute;
-    inset:0;
-    background:rgba(255,0,0,.25);
-    display:none;
-    z-index:90;
+    display:block;
 }
 
 #bossHud{
+    position:absolute;
+    top:75px;
+    left:50%;
+    transform:translateX(-50%);
+    width:min(600px,80vw);
     display:none;
-    width:900px;
-    max-width:96vw;
-    margin:auto;
+    z-index:25;
+    text-align:center;
 }
 
 #bossName{
-    color:#d84a4a;
+    color:#ff4b4b;
     font-weight:bold;
+    text-shadow:0 2px 5px #000;
 }
 
 #bossBar{
-    height:15px;
-    background:#160708;
-    border:2px solid #702020;
+    height:16px;
+    border:2px solid #641b1b;
+    background:#170707;
 }
 
 #bossHealth{
     width:100%;
     height:100%;
-    background:#b51f2b;
+    background:#c51f2b;
 }
 
-#gameOver{
+#message{
+    position:absolute;
+    top:46%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    z-index:30;
+    font-size:30px;
+    font-weight:bold;
+    color:#ead7b1;
+    text-shadow:0 3px 12px #000;
+    pointer-events:none;
+    white-space:nowrap;
+}
+
+#damage{
     position:absolute;
     inset:0;
-    background:rgba(0,0,0,.92);
+    background:rgba(255,0,0,.25);
     display:none;
-    align-items:center;
-    justify-content:center;
-    flex-direction:column;
-    z-index:200;
+    z-index:28;
+    pointer-events:none;
 }
 
-#gameOver h2{
-    color:#d8c5a0;
-    font-size:43px;
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    width:18px;
+    height:18px;
+    transform:translate(-50%,-50%);
+    z-index:22;
+    pointer-events:none;
+}
+
+#crosshair:before,
+#crosshair:after{
+    content:"";
+    position:absolute;
+    background:rgba(255,255,255,.85);
+}
+
+#crosshair:before{
+    width:18px;
+    height:2px;
+    top:8px;
+}
+
+#crosshair:after{
+    width:2px;
+    height:18px;
+    left:8px;
+}
+
+#controls{
+    position:absolute;
+    bottom:15px;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:25;
+    display:flex;
+    gap:8px;
 }
 
 button{
     border:2px solid #665541;
     border-radius:7px;
-    padding:11px 20px;
-    margin:4px;
-    font-size:16px;
-    font-weight:bold;
-    cursor:pointer;
-    background:#27231f;
+    background:rgba(30,27,25,.9);
     color:#eee;
+    font-weight:bold;
+    padding:10px 16px;
+    cursor:pointer;
 }
 
-button:hover{background:#40382f}
-
-.controls{
-    margin:8px auto;
-}
-
-.controls button{
-    width:62px;
-    height:45px;
-    padding:0;
+button:hover{
+    background:#4a4034;
 }
 
 #attack{
-    background:#572020;
-    border-color:#9a4444;
+    background:#5b2020;
+    border-color:#a14a4a;
+}
+
+#gameOver{
+    position:absolute;
+    inset:0;
+    z-index:100;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    background:rgba(0,0,0,.93);
+    text-align:center;
+}
+
+#gameOver h2{
+    color:#d8c5a0;
+    font-size:48px;
+    margin:5px;
+}
+
+#gameOver p{
+    color:#bbb;
+}
+
+#instructions{
+    position:absolute;
+    bottom:65px;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:25;
+    color:#aaa;
+    font-size:13px;
+    text-shadow:0 2px 4px #000;
+    text-align:center;
 }
 
 #back{
+    position:absolute;
+    top:12px;
+    right:15px;
+    z-index:30;
     color:#ddd;
     text-decoration:none;
     font-weight:bold;
 }
 
-#instructions{
-    color:#8e8984;
-    font-size:13px;
+#mobile{
+    display:none;
+    position:absolute;
+    bottom:80px;
+    left:20px;
+    z-index:30;
+}
+
+#mobile button{
+    width:55px;
+    height:48px;
+    padding:0;
+    margin:2px;
 }
 
 @media(max-width:700px){
-    #game{
-        height:70vh;
-    }
+    #mobile{display:block}
+    #controls{display:none}
+    #instructions{bottom:15px}
 }
 </style>
 </head>
 
 <body>
 
-<h1>⚔️ DUNGEON ESCAPE</h1>
+<div id="game">
+
+<canvas id="canvas"></canvas>
+
+<div id="top">
+<h1>⚔️ DUNGEON ESCAPE 3D</h1>
 
 <div id="hud">
-    <span id="health">❤️ 3</span>
-    <span id="roomName">Entrance Hall</span>
-    <span id="level">Level 1</span>
-    <span id="score">Score 0</span>
+<span id="health">❤️ 3</span>
+<span id="room">Entrance</span>
+<span id="level">Level 1</span>
+<span id="score">Score 0</span>
+</div>
 </div>
 
 <div id="bossHud">
-    <div id="bossName">BOSS</div>
-    <div id="bossBar">
-        <div id="bossHealth"></div>
-    </div>
+<div id="bossName">DUNGEON BOSS</div>
+<div id="bossBar">
+<div id="bossHealth"></div>
+</div>
 </div>
 
-<div id="game">
-
-<div id="camera">
-
-<div id="world">
-
-<div class="floor" style="left:0;top:0;width:1800px;height:1300px"></div>
-
-<!-- ROOMS -->
-
-<div class="room" style="left:80px;top:80px;width:420px;height:300px"></div>
-<div class="roomLabel" style="left:220px;top:210px">ENTRANCE HALL</div>
-
-<div class="room" style="left:620px;top:80px;width:420px;height:300px"></div>
-<div class="roomLabel" style="left:770px;top:210px">ARMORY</div>
-
-<div class="room" style="left:1160px;top:80px;width:500px;height:300px"></div>
-<div class="roomLabel" style="left:1340px;top:210px">LIBRARY</div>
-
-<div class="room" style="left:80px;top:560px;width:420px;height:300px"></div>
-<div class="roomLabel" style="left:225px;top:700px">PRISON</div>
-
-<div class="room" style="left:620px;top:560px;width:420px;height:300px"></div>
-<div class="roomLabel" style="left:780px;top:700px">CRYPT</div>
-
-<div class="room" style="left:1160px;top:560px;width:500px;height:300px"></div>
-<div class="roomLabel" style="left:1320px;top:700px">THRONE ROOM</div>
-
-<div class="room" style="left:620px;top:1040px;width:420px;height:210px"></div>
-<div class="roomLabel" style="left:770px;top:1130px">TREASURE ROOM</div>
-
-<!-- CORRIDORS -->
-
-<div class="corridor" style="left:500px;top:185px;width:120px;height:90px"></div>
-<div class="corridor" style="left:1040px;top:185px;width:120px;height:90px"></div>
-
-<div class="corridor" style="left:500px;top:665px;width:120px;height:90px"></div>
-<div class="corridor" style="left:1040px;top:665px;width:120px;height:90px"></div>
-
-<div class="corridor" style="left:255px;top:380px;width:90px;height:180px"></div>
-<div class="corridor" style="left:800px;top:380px;width:90px;height:180px"></div>
-<div class="corridor" style="left:1370px;top:380px;width:90px;height:180px"></div>
-
-<div class="corridor" style="left:800px;top:860px;width:90px;height:180px"></div>
-
-<!-- DOORS -->
-
-<div class="door" style="left:500px;top:210px;width:120px;height:40px"></div>
-<div class="door" style="left:1040px;top:210px;width:120px;height:40px"></div>
-
-<div class="door" style="left:500px;top:690px;width:120px;height:40px"></div>
-<div class="door" style="left:1040px;top:690px;width:120px;height:40px"></div>
-
-<div class="door" style="left:275px;top:380px;width:50px;height:180px"></div>
-<div class="door" style="left:820px;top:380px;width:50px;height:180px"></div>
-<div class="door" style="left:1390px;top:380px;width:50px;height:180px"></div>
-
-<div class="door" style="left:820px;top:860px;width:50px;height:180px"></div>
-
-<!-- TORCHES -->
-
-<div class="torch" style="left:120px;top:120px"></div>
-<div class="torch" style="left:450px;top:120px"></div>
-<div class="torch" style="left:660px;top:120px"></div>
-<div class="torch" style="left:980px;top:120px"></div>
-<div class="torch" style="left:1210px;top:120px"></div>
-<div class="torch" style="left:1600px;top:120px"></div>
-
-<div class="torch" style="left:120px;top:600px"></div>
-<div class="torch" style="left:450px;top:600px"></div>
-<div class="torch" style="left:660px;top:600px"></div>
-<div class="torch" style="left:980px;top:600px"></div>
-<div class="torch" style="left:1210px;top:600px"></div>
-<div class="torch" style="left:1600px;top:600px"></div>
-
-<!-- FURNITURE PLACEHOLDERS -->
-
-<div class="chest" style="left:700px;top:145px"></div>
-<div class="chest" style="left:900px;top:290px"></div>
-
-<div class="chest" style="left:1270px;top:150px"></div>
-<div class="chest" style="left:1500px;top:280px"></div>
-
-<div class="chest" style="left:160px;top:700px"></div>
-<div class="chest" style="left:380px;top:790px"></div>
-
-<div class="chest" style="left:700px;top:1110px"></div>
-<div class="chest" style="left:920px;top:1170px"></div>
-
-<div id="exit" class="exit" style="left:850px;top:1160px"></div>
-
-<div id="player" class="player">
-    <div class="helmet"></div>
-    <div class="head"></div>
-    <div class="eye"></div>
-    <div class="body"></div>
-    <div class="leg left"></div>
-    <div class="leg right"></div>
-    <div id="sword" class="sword"></div>
-</div>
-
+<div id="crosshair"></div>
 <div id="message"></div>
-<div id="damageFlash"></div>
+<div id="damage"></div>
 
-</div>
-</div>
-
-<div id="gameOver">
-    <h2 id="gameOverTitle">YOU DIED</h2>
-    <p id="finalScore"></p>
-    <button onclick="restart()">Restart</button>
-</div>
-
+<div id="controls">
+<button onclick="turn(-1)">↶</button>
+<button onclick="move(1)">▲</button>
+<button onclick="move(-1)">▼</button>
+<button onclick="turn(1)">↷</button>
+<button id="attack" onclick="attack()">⚔️ ATTACK</button>
 </div>
 
-<div class="controls">
-    <button onclick="move(0,-1)">⬆️</button><br>
-    <button onclick="move(-1,0)">⬅️</button>
-    <button id="attack" onclick="attack()">⚔️</button>
-    <button onclick="move(1,0)">➡️</button><br>
-    <button onclick="move(0,1)">⬇️</button>
+<div id="mobile">
+<button onclick="turn(-1)">↶</button>
+<button onclick="move(1)">▲</button>
+<button onclick="move(-1)">▼</button>
+<button onclick="turn(1)">↷</button>
+<button id="attack" onclick="attack()">⚔️</button>
 </div>
 
 <div id="instructions">
-Arrow Keys / WASD = Move | Space = Attack
+WASD / Arrow Keys = Move &nbsp; | &nbsp; Mouse = Look &nbsp; | &nbsp; Space = Attack
 </div>
 
-<a id="back" href="../../index.html">← Back to Arcade</a>
+<a id="back" href="../../index.html">← Arcade</a>
+
+<div id="gameOver">
+<h2>YOU DIED</h2>
+<p id="finalScore"></p>
+<button onclick="restart()">Restart</button>
+</div>
+
+</div>
 
 <script>
 
-const game=document.getElementById("game");
-const world=document.getElementById("world");
-const player=document.getElementById("player");
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
 
 const healthText=document.getElementById("health");
-const levelText=document.getElementById("level");
 const scoreText=document.getElementById("score");
-const roomName=document.getElementById("roomName");
+const levelText=document.getElementById("level");
+const roomText=document.getElementById("room");
 
 const message=document.getElementById("message");
-const damageFlash=document.getElementById("damageFlash");
-const sword=document.getElementById("sword");
+const damage=document.getElementById("damage");
+
+const bossHud=document.getElementById("bossHud");
+const bossHealth=document.getElementById("bossHealth");
 
 const gameOver=document.getElementById("gameOver");
 const finalScore=document.getElementById("finalScore");
 
-const bossHud=document.getElementById("bossHud");
-const bossName=document.getElementById("bossName");
-const bossHealth=document.getElementById("bossHealth");
+let W=0;
+let H=0;
 
-const exit=document.getElementById("exit");
+function resize(){
+    W=canvas.width=window.innerWidth;
+    H=canvas.height=window.innerHeight;
+}
 
-const WORLD_W=1800;
-const WORLD_H=1300;
+window.addEventListener("resize",resize);
+resize();
 
-const PLAYER_W=34;
-const PLAYER_H=46;
+/*
+    1 = wall
+    0 = floor
 
-let px=150;
-let py=200;
+    This is a large connected dungeon.
+    Rooms are deliberately connected by open corridors.
+*/
+
+const map=[
+"111111111111111111111111111111111111",
+"111111111111111111111111111111111111",
+"110000000000011000000000011000000011",
+"110000000000011000000000011000000011",
+"110000000000011000000000011000000011",
+"110000000000000000000000000000000011",
+"110000000000011000000000011000000011",
+"110000000000011000000000011000000011",
+"110000000000011000000000011000000011",
+"111111111111011111011111111111111111",
+"111111111111011111011111111111111111",
+"110000000000000000000000000000000011",
+"110000000000000000000000000000000011",
+"110000000000000000000000000000000011",
+"110000000000000000000000000000000011",
+"110000000000000000000000000000000011",
+"111111111111011111011111111111111111",
+"111111111111011111011111111111111111",
+"110000000000011000000000011000000011",
+"110000000000011000000000011000000011",
+"110000000000011000000000011000000011",
+"110000000000000000000000000000000011",
+"110000000000011000000000011000000011",
+"110000000000011000000000011000000011",
+"110000000000011000000000011000000011",
+"111111111111011111011111111111111111",
+"111111111111011111011111111111111111",
+"110000000000011000000000011000000011",
+"110000000000011000000000011000000011",
+"110000000000011000000000011000000011",
+"110000000000000000000000000000000011",
+"110000000000011000000000011000000011",
+"110000000000011000000000011000000011",
+"110000000000011000000000011000000011",
+"111111111111111111111111111111111111"
+];
+
+const TILE=64;
+
+const MAP_H=map.length;
+const MAP_W=map[0].length;
+
+let px=4.5*TILE;
+let py=5.5*TILE;
+
+let angle=0;
 
 let health=3;
 let score=0;
 let level=1;
 
-let enemies=[];
-let coins=[];
-let potions=[];
-let boss=null;
-
 let running=true;
 let invincible=false;
-let attackCooldown=false;
+let attacking=false;
 
-const walls=[];
+let enemies=[];
+let items=[];
 
-/* Room boundaries */
+let boss=null;
 
-function addWall(x,y,w,h){
-    walls.push({x,y,w,h});
-}
-
-/* Outer boundary */
-
-addWall(0,0,WORLD_W,20);
-addWall(0,WORLD_H-20,WORLD_W,20);
-addWall(0,0,20,WORLD_H);
-addWall(WORLD_W-20,0,20,WORLD_H);
-
-/* Some interior walls creating room structure */
-
-addWall(80,80,420,12);
-addWall(80,368,420,12);
-
-addWall(620,80,420,12);
-addWall(620,368,420,12);
-
-addWall(1160,80,500,12);
-addWall(1160,368,500,12);
-
-addWall(80,560,420,12);
-addWall(80,848,420,12);
-
-addWall(620,560,420,12);
-addWall(620,848,420,12);
-
-addWall(1160,560,500,12);
-addWall(1160,848,500,12);
-
-function updateHUD(){
-
-    healthText.textContent="❤️ "+health;
-    levelText.textContent="Level "+level;
-    scoreText.textContent="Score "+score;
-
-}
-
-function overlap(a,b){
-
-    return (
-        a.x < b.x+b.w &&
-        a.x+a.w > b.x &&
-        a.y < b.y+b.h &&
-        a.y+a.h > b.y
-    );
-
-}
-
-function hitsWall(x,y,w=PLAYER_W,h=PLAYER_H){
-
-    const rect={x,y,w,h};
-
-    for(const wall of walls){
-
-        if(overlap(rect,wall)) return true;
-
-    }
-
-    return false;
-
-}
-
-function move(dx,dy){
-
-    if(!running)return;
-
-    const speed=7;
-
-    let nx=px+dx*speed;
-    let ny=py+dy*speed;
-
-    nx=Math.max(25,Math.min(WORLD_W-PLAYER_W-25,nx));
-    ny=Math.max(25,Math.min(WORLD_H-PLAYER_H-25,ny));
-
-    if(!hitsWall(nx,py))px=nx;
-    if(!hitsWall(px,ny))py=ny;
-
-    player.style.left=px+"px";
-    player.style.top=py+"px";
-
-    camera();
-
-    collectItems();
-    checkExit();
-    updateRoom();
-
-}
+const keys={};
 
 document.addEventListener("keydown",e=>{
 
-    if(!running)return;
-
-    if(e.key==="ArrowUp"||e.key.toLowerCase()==="w")
-        move(0,-1);
-
-    if(e.key==="ArrowDown"||e.key.toLowerCase()==="s")
-        move(0,1);
-
-    if(e.key==="ArrowLeft"||e.key.toLowerCase()==="a")
-        move(-1,0);
-
-    if(e.key==="ArrowRight"||e.key.toLowerCase()==="d")
-        move(1,0);
+    keys[e.key.toLowerCase()]=true;
 
     if(e.code==="Space"){
         e.preventDefault();
@@ -799,301 +413,477 @@ document.addEventListener("keydown",e=>{
 
 });
 
-function camera(){
+document.addEventListener("keyup",e=>{
+    keys[e.key.toLowerCase()]=false;
+});
 
-    let camX=px-450;
-    let camY=py-325;
+canvas.addEventListener("click",()=>{
+    canvas.requestPointerLock?.();
+});
 
-    camX=Math.max(0,Math.min(WORLD_W-900,camX));
-    camY=Math.max(0,Math.min(WORLD_H-650,camY));
+document.addEventListener("mousemove",e=>{
 
-    world.style.left=(-camX)+"px";
-    world.style.top=(-camY)+"px";
+    if(document.pointerLockElement===canvas){
+        angle+=e.movementX*.0025;
+    }
+
+});
+
+function wallAt(x,y){
+
+    const gx=Math.floor(x/TILE);
+    const gy=Math.floor(y/TILE);
+
+    if(
+        gx<0||
+        gy<0||
+        gy>=MAP_H||
+        gx>=MAP_W
+    )return true;
+
+    return map[gy][gx]==="1";
 
 }
 
-function updateRoom(){
+function canMove(x,y){
 
-    let name="Dungeon";
+    const r=14;
 
-    if(px<500&&py<500)name="Entrance Hall";
-    else if(px>600&&px<1050&&py<500)name="Armory";
-    else if(px>1150&&py<500)name="Library";
-    else if(px<500&&py>550)name="Prison";
-    else if(px>600&&px<1050&&py>550&&py<900)name="Crypt";
-    else if(px>1150&&py>550)name="Throne Room";
-    else if(px>600&&px<1050&&py>1000)name="Treasure Room";
-
-    roomName.textContent=name;
-
-}
-
-function randomPosition(){
-
-    let x,y;
-
-    let attempts=0;
-
-    do{
-
-        x=40+Math.random()*(WORLD_W-100);
-        y=40+Math.random()*(WORLD_H-100);
-
-        attempts++;
-
-    }while(
-        (hitsWall(x,y,35,45)||Math.hypot(x-px,y-py)<180)
-        &&attempts<300
+    return(
+        !wallAt(x-r,y-r)&&
+        !wallAt(x+r,y-r)&&
+        !wallAt(x-r,y+r)&&
+        !wallAt(x+r,y+r)
     );
 
-    return{x,y};
+}
+
+function movePlayer(amount){
+
+    const nx=px+Math.cos(angle)*amount;
+    const ny=py+Math.sin(angle)*amount;
+
+    if(canMove(nx,py))px=nx;
+    if(canMove(px,ny))py=ny;
 
 }
 
-function createEnemy(type="warrior"){
+function strafe(amount){
 
-    const pos=randomPosition();
+    const nx=px+Math.cos(angle+Math.PI/2)*amount;
+    const ny=py+Math.sin(angle+Math.PI/2)*amount;
 
-    const element=document.createElement("div");
-
-    element.className="enemy "+type;
-
-    element.innerHTML=`
-        <div class="head"></div>
-        <div class="eye"></div>
-        <div class="body"></div>
-    `;
-
-    element.style.left=pos.x+"px";
-    element.style.top=pos.y+"px";
-
-    world.appendChild(element);
-
-    enemies.push({
-        element,
-        x:pos.x,
-        y:pos.y,
-        speed:.7+level*.08,
-        attackTimer:0
-    });
+    if(canMove(nx,py))px=nx;
+    if(canMove(px,ny))py=ny;
 
 }
 
-function createBoss(){
+function turn(amount){
 
-    const pos=randomPosition();
+    angle+=amount*.15;
 
-    const element=document.createElement("div");
+}
 
-    element.className="boss";
+function updateMovement(){
 
-    element.innerHTML=`
-        <div class="horn left"></div>
-        <div class="horn right"></div>
-        <div class="head"></div>
-        <div class="eye"></div>
-        <div class="body"></div>
-    `;
+    if(!running)return;
 
-    element.style.left=pos.x+"px";
-    element.style.top=pos.y+"px";
+    const speed=3;
 
-    world.appendChild(element);
+    if(keys["w"]||keys["arrowup"])
+        movePlayer(speed);
 
-    boss={
-        element,
-        x:pos.x,
-        y:pos.y,
-        health:100+level*30,
-        maxHealth:100+level*30,
-        speed:.45+level*.04,
-        attackTimer:0
+    if(keys["s"]||keys["arrowdown"])
+        movePlayer(-speed);
+
+    if(keys["a"]||keys["arrowleft"])
+        strafe(-speed);
+
+    if(keys["d"]||keys["arrowright"])
+        strafe(speed);
+
+}
+
+function raycast(){
+
+    const FOV=Math.PI/3;
+    const rays=Math.floor(W/2);
+
+    for(let x=0;x<rays;x++){
+
+        const rayAngle=
+            angle-FOV/2+
+            FOV*x/rays;
+
+        const dx=Math.cos(rayAngle);
+        const dy=Math.sin(rayAngle);
+
+        let distance=0;
+
+        while(distance<1400){
+
+            distance+=2;
+
+            const rx=px+dx*distance;
+            const ry=py+dy*distance;
+
+            if(wallAt(rx,ry))break;
+
+        }
+
+        const corrected=
+            distance*Math.cos(rayAngle-angle);
+
+        const wallHeight=
+            Math.min(
+                H*1.5,
+                H*TILE/(corrected+1)
+            );
+
+        const top=
+            H/2-wallHeight/2;
+
+        const shade=
+            Math.max(
+                20,
+                170-corrected*.10
+            );
+
+        ctx.fillStyle=
+            `rgb(${shade*.75},${shade*.70},${shade*.70})`;
+
+        ctx.fillRect(
+            x*2,
+            top,
+            3,
+            wallHeight
+        );
+    }
+
+}
+
+function drawFloorAndCeiling(){
+
+    ctx.fillStyle="#09090b";
+    ctx.fillRect(0,0,W,H/2);
+
+    ctx.fillStyle="#151217";
+    ctx.fillRect(0,H/2,W,H/2);
+
+}
+
+function distanceTo(x,y){
+
+    return Math.hypot(
+        x-px,
+        y-py
+    );
+
+}
+
+function projectObject(obj){
+
+    const dx=obj.x-px;
+    const dy=obj.y-py;
+
+    const distance=Math.hypot(dx,dy);
+
+    let relative=
+        Math.atan2(dy,dx)-angle;
+
+    while(relative>Math.PI)
+        relative-=Math.PI*2;
+
+    while(relative<-Math.PI)
+        relative+=Math.PI*2;
+
+    const FOV=Math.PI/3;
+
+    if(Math.abs(relative)>FOV/2)
+        return null;
+
+    const screenX=
+        W/2+
+        relative/(FOV/2)*
+        W/2;
+
+    const size=
+        Math.min(
+            H*1.2,
+            H*TILE/(distance+1)
+        );
+
+    const screenY=
+        H/2-size/2;
+
+    return{
+        x:screenX,
+        y:screenY,
+        size,
+        distance
     };
 
-    bossHud.style.display="block";
-
-    bossName.textContent="👹 DUNGEON BOSS";
-
-    updateBossBar();
-
-    showMessage("⚠️ BOSS LEVEL!");
-
 }
 
-function updateBossBar(){
+function drawEnemies(){
 
-    if(!boss)return;
+    const objects=[...enemies];
 
-    bossHealth.style.width=
-        Math.max(0,boss.health/boss.maxHealth*100)+"%";
+    if(boss)objects.push(boss);
 
-}
+    objects.sort(
+        (a,b)=>
+            distanceTo(b.x,b.y)-
+            distanceTo(a.x,a.y)
+    );
 
-function createCoin(){
+    objects.forEach(enemy=>{
 
-    const pos=randomPosition();
+        const p=projectObject(enemy);
 
-    const element=document.createElement("div");
+        if(!p)return;
 
-    element.className="coin";
+        const s=p.size;
 
-    element.style.left=pos.x+"px";
-    element.style.top=pos.y+"px";
+        if(enemy.isBoss){
 
-    world.appendChild(element);
+            ctx.fillStyle="#301014";
 
-    coins.push({
-        element,
-        x:pos.x,
-        y:pos.y
-    });
+            ctx.fillRect(
+                p.x-s*.25,
+                p.y+s*.30,
+                s*.5,
+                s*.45
+            );
 
-}
+            ctx.fillStyle="#593535";
 
-function createPotion(){
+            ctx.beginPath();
 
-    const pos=randomPosition();
+            ctx.arc(
+                p.x,
+                p.y+s*.2,
+                s*.27,
+                0,
+                Math.PI*2
+            );
 
-    const element=document.createElement("div");
+            ctx.fill();
 
-    element.className="potion";
+            ctx.fillStyle="#ff2525";
 
-    element.style.left=pos.x+"px";
-    element.style.top=pos.y+"px";
+            ctx.beginPath();
 
-    world.appendChild(element);
+            ctx.arc(
+                p.x-s*.09,
+                p.y+s*.16,
+                s*.045,
+                0,
+                Math.PI*2
+            );
 
-    potions.push({
-        element,
-        x:pos.x,
-        y:pos.y
-    });
+            ctx.fill();
 
-}
+            ctx.beginPath();
 
-function collectItems(){
+            ctx.arc(
+                p.x+s*.09,
+                p.y+s*.16,
+                s*.045,
+                0,
+                Math.PI*2
+            );
 
-    coins.slice().forEach(coin=>{
+            ctx.fill();
 
-        if(Math.hypot(px-coin.x,py-coin.y)<35){
+        }else{
 
-            coin.element.remove();
+            ctx.fillStyle=
+                enemy.type==="archer"
+                ?"#31513a"
+                :"#572d2d";
 
-            coins.splice(coins.indexOf(coin),1);
+            ctx.fillRect(
+                p.x-s*.18,
+                p.y+s*.30,
+                s*.36,
+                s*.35
+            );
 
-            score+=25;
+            ctx.fillStyle="#8b6c58";
 
-            updateHUD();
+            ctx.beginPath();
+
+            ctx.arc(
+                p.x,
+                p.y+s*.18,
+                s*.17,
+                0,
+                Math.PI*2
+            );
+
+            ctx.fill();
+
+            ctx.fillStyle="#ff3030";
+
+            ctx.fillRect(
+                p.x-s*.08,
+                p.y+s*.15,
+                s*.045,
+                s*.045
+            );
+
+            ctx.fillRect(
+                p.x+s*.035,
+                p.y+s*.15,
+                s*.045,
+                s*.045
+            );
 
         }
 
     });
 
-    potions.slice().forEach(potion=>{
+}
 
-        if(Math.hypot(px-potion.x,py-potion.y)<35){
+function drawItems(){
 
-            potion.element.remove();
+    items.forEach(item=>{
 
-            potions.splice(potions.indexOf(potion),1);
+        const p=projectObject(item);
 
-            health=Math.min(5,health+1);
+        if(!p)return;
 
-            score+=50;
+        ctx.fillStyle=
+            item.type==="potion"
+            ?"#b52b36"
+            :"#d2a632";
 
-            showMessage("🧪 HEALTH RESTORED");
+        ctx.beginPath();
 
-            updateHUD();
+        ctx.arc(
+            p.x,
+            p.y+p.size*.35,
+            Math.max(4,p.size*.09),
+            0,
+            Math.PI*2
+        );
 
-        }
+        ctx.fill();
 
     });
 
 }
 
-function attack(){
+function spawnEnemy(){
 
-    if(!running||attackCooldown)return;
+    for(let i=0;i<300;i++){
 
-    attackCooldown=true;
+        const x=
+            (Math.floor(
+                Math.random()*(MAP_W-2)
+            )+.5)*TILE;
 
-    sword.style.display="block";
+        const y=
+            (Math.floor(
+                Math.random()*(MAP_H-2)
+            )+.5)*TILE;
 
-    setTimeout(()=>{
-        sword.style.display="none";
-    },180);
+        if(
+            !wallAt(x,y)&&
+            distanceTo(x,y)>350
+        ){
 
-    enemies.slice().forEach(enemy=>{
+            enemies.push({
+                x,
+                y,
+                type:
+                    Math.random()<.25
+                    ?"archer"
+                    :"warrior",
+                speed:.45+level*.04,
+                attackTimer:0
+            });
 
-        if(Math.hypot(px-enemy.x,py-enemy.y)<80){
-
-            enemy.element.remove();
-
-            enemies.splice(enemies.indexOf(enemy),1);
-
-            score+=100;
-
-            showMessage("⚔️ ENEMY DEFEATED");
-
-            updateHUD();
-
-        }
-
-    });
-
-    if(boss&&Math.hypot(px-boss.x,py-boss.y)<110){
-
-        boss.health-=20;
-
-        score+=25;
-
-        updateBossBar();
-        updateHUD();
-
-        showMessage("⚔️ BOSS HIT!");
-
-        if(boss.health<=0){
-
-            boss.element.remove();
-            boss=null;
-
-            bossHud.style.display="none";
-
-            score+=1000;
-
-            showMessage("🏆 BOSS DEFEATED!");
+            return;
 
         }
 
     }
 
-    setTimeout(()=>{
-        attackCooldown=false;
-    },350);
+}
+
+function spawnItem(type){
+
+    for(let i=0;i<300;i++){
+
+        const x=
+            (Math.floor(
+                Math.random()*(MAP_W-2)
+            )+.5)*TILE;
+
+        const y=
+            (Math.floor(
+                Math.random()*(MAP_H-2)
+            )+.5)*TILE;
+
+        if(
+            !wallAt(x,y)&&
+            distanceTo(x,y)>250
+        ){
+
+            items.push({
+                x,
+                y,
+                type
+            });
+
+            return;
+
+        }
+
+    }
 
 }
 
-function damagePlayer(){
+function spawnBoss(){
 
-    if(invincible)return;
+    for(let i=0;i<300;i++){
 
-    health--;
+        const x=
+            (Math.floor(
+                Math.random()*(MAP_W-2)
+            )+.5)*TILE;
 
-    updateHUD();
+        const y=
+            (Math.floor(
+                Math.random()*(MAP_H-2)
+            )+.5)*TILE;
 
-    invincible=true;
+        if(
+            !wallAt(x,y)&&
+            distanceTo(x,y)>500
+        ){
 
-    damageFlash.style.display="block";
+            boss={
+                x,
+                y,
+                isBoss:true,
+                health:150+level*30,
+                maxHealth:150+level*30,
+                speed:.35+level*.02,
+                attackTimer:0
+            };
 
-    setTimeout(()=>{
-        damageFlash.style.display="none";
-    },150);
+            bossHud.style.display="block";
 
-    setTimeout(()=>{
-        invincible=false;
-    },900);
+            showMessage("👹 BOSS LEVEL!");
 
-    if(health<=0)endGame();
+            return;
+
+        }
+
+    }
 
 }
 
@@ -1104,33 +894,37 @@ function enemyAI(){
         const dx=px-enemy.x;
         const dy=py-enemy.y;
 
-        const distance=Math.hypot(dx,dy);
+        const d=Math.hypot(dx,dy);
 
-        if(distance>1){
+        if(d<500&&d>1){
 
-            const nx=enemy.x+dx/distance*enemy.speed;
-            const ny=enemy.y+dy/distance*enemy.speed;
+            const nx=
+                enemy.x+
+                dx/d*
+                enemy.speed;
 
-            if(!hitsWall(nx,enemy.y,30,40))
+            const ny=
+                enemy.y+
+                dy/d*
+                enemy.speed;
+
+            if(canMove(nx,enemy.y))
                 enemy.x=nx;
 
-            if(!hitsWall(enemy.x,ny,30,40))
+            if(canMove(enemy.x,ny))
                 enemy.y=ny;
 
         }
 
-        enemy.element.style.left=enemy.x+"px";
-        enemy.element.style.top=enemy.y+"px";
-
-        if(distance<32){
+        if(d<35){
 
             enemy.attackTimer--;
 
             if(enemy.attackTimer<=0){
 
-                damagePlayer();
+                hurt();
 
-                enemy.attackTimer=55;
+                enemy.attackTimer=60;
 
             }
 
@@ -1147,31 +941,35 @@ function bossAI(){
     const dx=px-boss.x;
     const dy=py-boss.y;
 
-    const distance=Math.hypot(dx,dy);
+    const d=Math.hypot(dx,dy);
 
-    if(distance>1){
+    if(d<700&&d>1){
 
-        const nx=boss.x+dx/distance*boss.speed;
-        const ny=boss.y+dy/distance*boss.speed;
+        const nx=
+            boss.x+
+            dx/d*
+            boss.speed;
 
-        if(!hitsWall(nx,boss.y,65,80))
+        const ny=
+            boss.y+
+            dy/d*
+            boss.speed;
+
+        if(canMove(nx,boss.y))
             boss.x=nx;
 
-        if(!hitsWall(boss.x,ny,65,80))
+        if(canMove(boss.x,ny))
             boss.y=ny;
 
     }
 
-    boss.element.style.left=boss.x+"px";
-    boss.element.style.top=boss.y+"px";
-
-    if(distance<80){
+    if(d<70){
 
         boss.attackTimer--;
 
         if(boss.attackTimer<=0){
 
-            damagePlayer();
+            hurt();
 
             boss.attackTimer=45;
 
@@ -1181,26 +979,178 @@ function bossAI(){
 
 }
 
-function checkExit(){
+function attack(){
 
-    if(
-        Math.hypot(
-            px-(parseInt(exit.style.left)+25),
-            py-(parseInt(exit.style.top)+30)
-        )<55
-    ){
+    if(!running||attacking)return;
 
-        if(enemies.length>0||boss){
+    attacking=true;
 
-            showMessage("⚔️ DEFEAT THE ENEMIES FIRST");
+    showMessage("⚔️");
 
-        }else{
+    let target=null;
+    let best=95;
 
-            nextLevel();
+    enemies.forEach(enemy=>{
+
+        const d=distanceTo(enemy.x,enemy.y);
+
+        if(d<best){
+
+            best=d;
+            target=enemy;
+
+        }
+
+    });
+
+    if(target){
+
+        enemies.splice(
+            enemies.indexOf(target),
+            1
+        );
+
+        score+=100;
+
+        showMessage("⚔️ ENEMY DEFEATED");
+
+    }
+
+    if(boss){
+
+        const d=distanceTo(boss.x,boss.y);
+
+        if(d<120){
+
+            boss.health-=20;
+
+            updateBossBar();
+
+            score+=25;
+
+            if(boss.health<=0){
+
+                boss=null;
+
+                bossHud.style.display="none";
+
+                score+=1000;
+
+                showMessage("🏆 BOSS DEFEATED!");
+
+            }
 
         }
 
     }
+
+    setTimeout(()=>{
+        attacking=false;
+    },300);
+
+}
+
+function hurt(){
+
+    if(invincible)return;
+
+    health--;
+
+    updateHUD();
+
+    invincible=true;
+
+    damage.style.display="block";
+
+    setTimeout(()=>{
+        damage.style.display="none";
+    },150);
+
+    setTimeout(()=>{
+        invincible=false;
+    },900);
+
+    if(health<=0)
+        endGame();
+
+}
+
+function collectItems(){
+
+    items.slice().forEach(item=>{
+
+        if(distanceTo(item.x,item.y)<35){
+
+            items.splice(
+                items.indexOf(item),
+                1
+            );
+
+            if(item.type==="potion"){
+
+                health=Math.min(5,health+1);
+
+                score+=50;
+
+                showMessage("🧪 HEALTH RESTORED");
+
+            }else{
+
+                score+=25;
+
+            }
+
+            updateHUD();
+
+        }
+
+    });
+
+}
+
+function updateBossBar(){
+
+    if(!boss)return;
+
+    bossHealth.style.width=
+        Math.max(
+            0,
+            boss.health/boss.maxHealth*100
+        )+"%";
+
+}
+
+function updateRoom(){
+
+    const gx=Math.floor(px/TILE);
+    const gy=Math.floor(py/TILE);
+
+    let name="Dungeon";
+
+    if(gy<10&&gx<13)
+        name="Entrance Hall";
+    else if(gy<10&&gx<24)
+        name="Armory";
+    else if(gy<10)
+        name="Library";
+    else if(gy>17&&gx<13)
+        name="Prison";
+    else if(gy>17&&gx<24)
+        name="Crypt";
+    else if(gy>17)
+        name="Throne Room";
+    else if(gy>27)
+        name="Treasure Room";
+
+    roomText.textContent=name;
+
+}
+
+function updateHUD(){
+
+    healthText.textContent="❤️ "+health;
+    scoreText.textContent="Score "+score;
+    levelText.textContent="Level "+level;
 
 }
 
@@ -1210,108 +1160,58 @@ function nextLevel(){
 
     score+=250;
 
-    clearEnemies();
+    enemies=[];
+    items=[];
 
-    px=150;
-    py=200;
+    if(level%5===0)
+        spawnBoss();
+    else{
 
-    player.style.left=px+"px";
-    player.style.top=py+"px";
-
-    const bossLevel=level%5===0;
-
-    if(bossLevel){
-
-        createBoss();
-
-    }else{
-
-        const count=Math.min(15,3+level);
-
-        for(let i=0;i<count;i++){
-
-            const types=["warrior","warrior","archer","knight"];
-
-            createEnemy(
-                types[Math.floor(Math.random()*types.length)]
-            );
-
-        }
+        for(let i=0;i<4+level;i++)
+            spawnEnemy();
 
     }
 
     for(let i=0;i<5;i++)
-        createCoin();
+        spawnItem("coin");
 
     if(level%3===0)
-        createPotion();
+        spawnItem("potion");
 
-    showMessage(
-        bossLevel
-        ?"👹 BOSS LEVEL "+level
-        :"LEVEL "+level
-    );
+    showMessage("LEVEL "+level);
 
     updateHUD();
-
-}
-
-function clearEnemies(){
-
-    enemies.forEach(e=>e.element.remove());
-
-    enemies=[];
-
-    if(boss){
-
-        boss.element.remove();
-        boss=null;
-
-    }
-
-    bossHud.style.display="none";
-
-}
-
-function clearItems(){
-
-    coins.forEach(c=>c.element.remove());
-    potions.forEach(p=>p.element.remove());
-
-    coins=[];
-    potions=[];
 
 }
 
 function restart(){
 
-    clearEnemies();
-    clearItems();
+    px=4.5*TILE;
+    py=5.5*TILE;
 
-    px=150;
-    py=200;
+    angle=0;
 
     health=3;
     score=0;
     level=1;
 
+    enemies=[];
+    items=[];
+    boss=null;
+
+    bossHud.style.display="none";
+
     running=true;
-    invincible=false;
 
     gameOver.style.display="none";
 
-    player.style.left=px+"px";
-    player.style.top=py+"px";
-
     for(let i=0;i<4;i++)
-        createEnemy();
+        spawnEnemy();
 
     for(let i=0;i<5;i++)
-        createCoin();
+        spawnItem("coin");
 
     updateHUD();
-    camera();
-    updateRoom();
 
 }
 
@@ -1336,42 +1236,36 @@ function showMessage(text){
         if(message.textContent===text)
             message.textContent="";
 
-    },1200);
+    },1100);
 
 }
 
-/* START */
+function draw(){
 
-for(let i=0;i<4;i++)
-    createEnemy();
-
-for(let i=0;i<5;i++)
-    createCoin();
-
-player.style.left=px+"px";
-player.style.top=py+"px";
-
-updateHUD();
-camera();
-updateRoom();
-
-function gameLoop(){
-
-    if(running){
-
-        enemyAI();
-        bossAI();
-        collectItems();
-        camera();
-        updateRoom();
-
-    }
-
-    requestAnimationFrame(gameLoop);
+    drawFloorAndCeiling();
+    raycast();
+    drawItems();
+    drawEnemies();
 
 }
 
-requestAnimationFrame(gameLoop);
+function loop(){
+
+    updateMovement();
+    enemyAI();
+    bossAI();
+    collectItems();
+    updateRoom();
+
+    draw();
+
+    requestAnimationFrame(loop);
+
+}
+
+restart();
+
+loop();
 
 </script>
 
