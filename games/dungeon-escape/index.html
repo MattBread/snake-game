@@ -3,612 +3,515 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dungeon Escape - Fog of the Forgotten</title>
+<title>Dungeon Escape | MattBread Arcade</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;overflow:hidden;background:#777f80;color:#eee;font-family:Arial,sans-serif}
-canvas{display:block}
-#hud{position:fixed;top:15px;left:15px;z-index:5;background:#101416dd;padding:14px 17px;border:1px solid #d0d0c077;border-radius:8px;min-width:205px}
-#hud strong{color:#e4d8c1;letter-spacing:2px}
-.bar{height:13px;background:#382323;margin:7px 0 10px}
-#health{height:100%;width:100%;background:#d33b35}
-#help{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);z-index:5;background:#101416dd;padding:10px 14px;border-radius:7px;text-align:center;font-size:13px;width:max-content;max-width:95%}
-#message{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;background:#111719bb;padding:20px}
-.panel{max-width:520px;text-align:center;background:#202525f5;border:1px solid #c3c3b277;padding:30px;border-radius:10px;box-shadow:0 0 45px #000}
-h1{color:#e1d8c9;letter-spacing:3px;font-size:clamp(27px,5vw,46px)}
-button{padding:13px 22px;margin-top:10px;background:#665543;color:white;border:1px solid #d3bda0;border-radius:5px;font-size:16px;cursor:pointer}
-button:hover{background:#887258}
-#toast{position:fixed;top:25%;left:0;width:100%;text-align:center;font-size:22px;color:#fff0d9;text-shadow:0 2px 8px #000;z-index:7;pointer-events:none}
+body{margin:0;background:#090d16;color:#f2f5ff;font-family:Arial,sans-serif;overflow:hidden}
+canvas{display:block;width:100vw;height:100vh;image-rendering:pixelated}
+#hud{position:fixed;top:14px;left:14px;z-index:2;background:#101827e8;border:1px solid #34445f;border-radius:12px;padding:12px 16px;min-width:210px}
+#hud strong{color:#7cf7ff}
+#health{height:10px;background:#3b1c2b;border-radius:8px;margin-top:8px;overflow:hidden}
+#healthFill{height:100%;width:100%;background:#ff496c;transition:width .15s}
+#help{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:#101827e8;border:1px solid #34445f;border-radius:10px;padding:10px 14px;text-align:center;font-size:13px;width:max-content;max-width:95vw}
+#overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#050812c9;z-index:5;padding:20px}
+.panel{max-width:510px;width:100%;padding:30px;background:linear-gradient(145deg,#17243a,#0c1220);border:1px solid #425b80;border-radius:18px;text-align:center;box-shadow:0 0 50px #00d9ff22}
+h1{font-size:clamp(30px,6vw,48px);margin:0 0 10px;color:#7cf7ff;text-shadow:0 0 18px #00d9ff66}
+p{line-height:1.6;color:#c8d3e8}
+button{cursor:pointer;background:linear-gradient(90deg,#00bcd4,#7164ff);color:white;border:0;border-radius:9px;padding:13px 22px;font-size:16px;font-weight:bold;margin:6px}
+button:hover{filter:brightness(1.15)}
+.small{font-size:12px;color:#8e9cb4}
 </style>
 </head>
 <body>
 <div id="hud">
-<strong>DUNGEON ESCAPE</strong>
-<div style="margin-top:12px">VITALITY</div>
-<div class="bar"><div id="health"></div></div>
-<div>Souls: <span id="souls">0</span></div>
-<div id="status" style="font-size:12px;margin-top:8px;color:#d0d0c7">Something moves in the fog...</div>
+  <strong>DUNGEON ESCAPE</strong>
+  <div id="stats">Health: 100 · Enemies: 5</div>
+  <div id="health"><div id="healthFill"></div></div>
+  <div style="margin-top:8px;font-size:13px" id="objective">Find the golden exit.</div>
 </div>
-<div id="help">WASD: Move · Mouse: Look · Click or Space: Attack · Shift: Run · Esc: Pause</div>
-<div id="toast"></div>
-<div id="message">
-<div class="panel">
-<h1>DUNGEON ESCAPE</h1>
-<p style="letter-spacing:3px;color:#c4c8c5">FOG OF THE FORGOTTEN</p>
-<p>Cold stone. Distant footsteps. Something watches from beyond the fog.</p>
-<p>Find the way through the dungeon. Defeat its keeper. Escape alive.</p>
-<button id="start">ENTER THE DUNGEON</button>
-</div>
+<div id="help">Move: WASD / Arrow Keys &nbsp; · &nbsp; Attack: Space / Click &nbsp; · &nbsp; Restart: R</div>
+<div id="overlay">
+  <div class="panel">
+    <h1 id="title">DUNGEON ESCAPE</h1>
+    <p id="message">Fight through the dungeon, defeat every monster, and reach the glowing golden exit.</p>
+    <button id="start">ENTER THE DUNGEON</button>
+    <p class="small">A MattBread Arcade adventure</p>
+    <a href="../../../" style="color:#7cf7ff;font-size:13px">← Back to MattBread Arcade</a>
+  </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
 "use strict";
 
-const $ = id => document.getElementById(id);
+const canvas = document.createElement("canvas");
+document.body.insertBefore(canvas, document.body.firstChild);
+const ctx = canvas.getContext("2d");
 
-if (!window.THREE) {
-  $("message").innerHTML = '<div class="panel"><h1>LOAD ERROR</h1><p>Three.js could not load. Check your internet connection and refresh.</p><button onclick="location.reload()">RETRY</button></div>';
-  return;
-}
+const hudStats = document.getElementById("stats");
+const healthFill = document.getElementById("healthFill");
+const objective = document.getElementById("objective");
+const overlay = document.getElementById("overlay");
+const title = document.getElementById("title");
+const message = document.getElementById("message");
+const startButton = document.getElementById("start");
 
-// Scene and Silent Hill-inspired fog.
-const scene = new THREE.Scene();
-const fogColor = new THREE.Color(0x899091);
-scene.background = fogColor;
-scene.fog = new THREE.FogExp2(fogColor, 0.021);
-
-const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.1, 150);
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.outputEncoding = THREE.sRGBEncoding;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.35;
-document.body.appendChild(renderer.domElement);
-
-scene.add(new THREE.HemisphereLight(0xdce4e4, 0x45413a, 2.1));
-scene.add(new THREE.AmbientLight(0xb9c4c4, 0.5));
-
-const materials = {};
-function material(name, color, roughness = 0.94) {
-  if (!materials[name]) {
-    materials[name] = new THREE.MeshStandardMaterial({ color, roughness });
-  }
-  return materials[name];
-}
-
-const stone = material("stone", 0x777a77);
-const darkStone = material("darkStone", 0x4a4e4c);
-const floorStone = material("floor", 0x777b78);
-const wornStone = material("worn", 0x626662);
-const trimStone = material("trim", 0x99988d);
-const wood = material("wood", 0x49382b);
-const metal = material("metal", 0x707775, 0.55);
-const playerMat = material("player", 0x343a3a);
-const enemyMat = material("enemy", 0x454c49);
-const bossMat = material("boss", 0x3e3035);
-const boneMat = material("bone", 0xb8b5a8);
-const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff4932 });
-
-const obstacles = [];
-
-function addBox(w, h, d, mat, x, y, z, solid = true) {
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-  mesh.position.set(x, y, z);
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
-  scene.add(mesh);
-
-  if (solid) {
-    obstacles.push({
-      minX: x - w / 2, maxX: x + w / 2,
-      minZ: z - d / 2, maxZ: z + d / 2
-    });
-  }
-  return mesh;
-}
-
-// Stone floor with clearly visible square tiles.
-addBox(60, 0.3, 60, floorStone, 0, -0.2, 0, false);
-
-for (let x = -29; x < 30; x += 2) {
-  for (let z = -29; z < 30; z += 2) {
-    const tile = new THREE.Mesh(
-      new THREE.BoxGeometry(1.94, 0.07, 1.94),
-      Math.random() < 0.22 ? wornStone : floorStone
-    );
-    tile.position.set(x + 1, -0.025, z + 1);
-    tile.receiveShadow = true;
-    scene.add(tile);
-  }
-}
-
-// Outer walls.
-const bound = 30;
-addBox(60, 6, 1, stone, 0, 2.8, -bound);
-addBox(60, 6, 1, stone, 0, 2.8, bound);
-addBox(1, 6, 60, stone, -bound, 2.8, 0);
-addBox(1, 6, 60, stone, bound, 2.8, 0);
-
-// Interior maze walls. Gaps are intentional doorways.
-addBox(1, 4.5, 15, stone, -9, 2.1, -20);
-addBox(1, 4.5, 15, stone, 9, 2.1, -20);
-addBox(11, 4.5, 1, stone, -14.5, 2.1, -12);
-addBox(11, 4.5, 1, stone, 14.5, 2.1, -12);
-addBox(1, 4.5, 12, stone, -16, 2.1, -4);
-addBox(1, 4.5, 12, stone, 16, 2.1, -4);
-addBox(9, 4.5, 1, stone, -20.5, 2.1, 3);
-addBox(9, 4.5, 1, stone, 20.5, 2.1, 3);
-addBox(1, 4.5, 11, stone, -25, 2.1, 10);
-addBox(1, 4.5, 11, stone, 25, 2.1, 10);
-addBox(8, 4.5, 1, stone, -21, 2.1, 16);
-addBox(8, 4.5, 1, stone, 21, 2.1, 16);
-
-// Pillars with decorative bases and capitals.
-const pillarPositions = [
-  [-13,-23],[13,-23],[-21,-7],[21,-7],
-  [-21,9],[21,9],[-13,22],[13,22],
-  [-4,-15],[4,-15],[-4,8],[4,8],
-  [-11,2],[11,2],[-10,18],[10,18]
+const TILE = 48;
+const MAP = [
+"####################",
+"#P.....#..........E#",
+"#......#..##.......#",
+"#..##.....##..##...#",
+"#..##............###",
+"#......####.........#",
+"###...........##....#",
+"#......##...........#",
+"#..##......###......#",
+"#..##...............#",
+"#......###....##....#",
+"#.............##....#",
+"#..##...............#",
+"#..##...##......##..#",
+"#........##.........#",
+"#.............##....#",
+"#..##...............#",
+"#.............##....#",
+"#...................#",
+"####################"
 ];
 
-for (const [x,z] of pillarPositions) {
-  addBox(1.7, 0.35, 1.7, trimStone, x, 0.18, z);
-  addBox(1.1, 4.3, 1.1, darkStone, x, 2.5, z);
-  addBox(1.55, 0.35, 1.55, trimStone, x, 4.8, z);
+const mapHeight = MAP.length;
+const mapWidth = Math.max(...MAP.map(row => row.length));
+const worldWidth = mapWidth * TILE;
+const worldHeight = mapHeight * TILE;
+
+let walls = [];
+let enemies = [];
+let particles = [];
+let player;
+let started = false;
+let ended = false;
+let lastTime = 0;
+let attackCooldown = 0;
+let hurtFlash = 0;
+const keys = Object.create(null);
+
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.floor(innerWidth * dpr);
+  canvas.height = Math.floor(innerHeight * dpr);
+  canvas.style.width = innerWidth + "px";
+  canvas.style.height = innerHeight + "px";
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
+window.addEventListener("resize", resize);
+resize();
 
-// Decorative overhead stone beams.
-for (let z = -25; z <= 25; z += 10) {
-  addBox(58, 0.55, 0.9, darkStone, 0, 5.5, z, false);
-}
+function resetGame() {
+  walls = [];
+  enemies = [];
+  particles = [];
+  player = {
+    x: TILE * 1.5, y: TILE * 1.5,
+    r: 13, speed: 185, health: 100,
+    facingX: 1, facingY: 0,
+    attack: 0, invulnerable: 0
+  };
+  attackCooldown = 0;
+  hurtFlash = 0;
+  ended = false;
 
-// Flickering torches create warm pools of light in the gray fog.
-const torches = [];
-
-function addTorch(x, z) {
-  addBox(0.17, 0.8, 0.17, wood, x, 2, z, false);
-
-  const flame = new THREE.Mesh(
-    new THREE.SphereGeometry(0.17, 10, 8),
-    new THREE.MeshBasicMaterial({ color: 0xffa45c })
-  );
-  flame.position.set(x, 2.55, z);
-  scene.add(flame);
-
-  const light = new THREE.PointLight(0xffad70, 5, 12);
-  light.position.set(x, 2.7, z);
-  scene.add(light);
-  torches.push({ flame, light, phase: Math.random() * 10 });
-}
-
-[
-  [-7,-22],[7,-22],[-14,-9],[14,-9],
-  [-23,0],[23,0],[-22,13],[22,13],
-  [-9,20],[9,20],[0,-3],[-2,25],[2,25]
-].forEach(p => addTorch(p[0], p[1]));
-
-// Player character.
-const player = new THREE.Group();
-scene.add(player);
-player.position.set(0, 0, 25);
-
-const body = new THREE.Mesh(
-  new THREE.CapsuleGeometry(0.34, 0.75, 4, 8),
-  playerMat
-);
-body.position.y = 0.95;
-body.castShadow = true;
-player.add(body);
-
-const head = new THREE.Mesh(
-  new THREE.SphereGeometry(0.25, 12, 10),
-  boneMat
-);
-head.position.y = 1.65;
-player.add(head);
-
-const hood = new THREE.Mesh(
-  new THREE.SphereGeometry(0.3, 12, 8),
-  darkStone
-);
-hood.position.y = 1.75;
-player.add(hood);
-
-// Sword held at the character's side.
-const sword = new THREE.Group();
-sword.position.set(0.45, 1.05, -0.1);
-player.add(sword);
-
-const blade = new THREE.Mesh(
-  new THREE.BoxGeometry(0.09, 0.07, 1.0), metal
-);
-blade.position.z = -0.52;
-sword.add(blade);
-
-const guard = new THREE.Mesh(
-  new THREE.BoxGeometry(0.36, 0.1, 0.1), trimStone
-);
-guard.position.z = -0.08;
-sword.add(guard);
-
-const handle = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.045, 0.045, 0.3, 8), wood
-);
-handle.rotation.x = Math.PI / 2;
-handle.position.z = 0.12;
-sword.add(handle);
-
-// Circle-vs-rectangle collision prevents walking through walls.
-const playerRadius = 0.42;
-
-function isBlocked(x, z) {
-  if (x < -29.2 || x > 29.2 || z < -29.2 || z > 29.2) {
-    return true;
+  for (let y = 0; y < mapHeight; y++) {
+    for (let x = 0; x < mapWidth; x++) {
+      const cell = (MAP[y] || "")[x] || "#";
+      if (cell === "#") walls.push({x, y});
+      if (cell === "E") {
+        enemies.push({
+          x: x * TILE + TILE / 2,
+          y: y * TILE + TILE / 2,
+          r: 14, health: 55, speed: 57,
+          attackCooldown: Math.random(),
+          alive: true, wander: Math.random() * 6
+        });
+      }
+    }
   }
+}
 
-  for (const o of obstacles) {
-    const closestX = Math.max(o.minX, Math.min(x, o.maxX));
-    const closestZ = Math.max(o.minZ, Math.min(z, o.maxZ));
-    const dx = x - closestX;
-    const dz = z - closestZ;
+function isWallAt(x, y) {
+  const tx = Math.floor(x / TILE);
+  const ty = Math.floor(y / TILE);
+  if (ty < 0 || ty >= mapHeight || tx < 0 || tx >= mapWidth) return true;
+  return ((MAP[ty] || "")[tx] || "#") === "#";
+}
 
-    if (dx * dx + dz * dz < playerRadius * playerRadius) {
-      return true;
+// Circle-versus-tile collision. Walls and movement use the same map.
+function blocked(x, y, radius) {
+  const minX = Math.floor((x - radius) / TILE);
+  const maxX = Math.floor((x + radius) / TILE);
+  const minY = Math.floor((y - radius) / TILE);
+  const maxY = Math.floor((y + radius) / TILE);
+
+  for (let ty = minY; ty <= maxY; ty++) {
+    for (let tx = minX; tx <= maxX; tx++) {
+      if (ty < 0 || ty >= mapHeight || tx < 0 || tx >= mapWidth ||
+          ((MAP[ty] || "")[tx] || "#") === "#") {
+        const left = tx * TILE, top = ty * TILE;
+        const cx = Math.max(left, Math.min(x, left + TILE));
+        const cy = Math.max(top, Math.min(y, top + TILE));
+        const dx = x - cx, dy = y - cy;
+        if (dx * dx + dy * dy < radius * radius) return true;
+      }
     }
   }
   return false;
 }
 
-function movePlayer(dx, dz) {
-  const nextX = player.position.x + dx;
-  if (!isBlocked(nextX, player.position.z)) {
-    player.position.x = nextX;
+function moveEntity(entity, dx, dy) {
+  if (!blocked(entity.x + dx, entity.y, entity.r)) entity.x += dx;
+  if (!blocked(entity.x, entity.y + dy, entity.r)) entity.y += dy;
+}
+
+function spawnParticles(x, y, color, amount = 8) {
+  for (let i = 0; i < amount; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 35 + Math.random() * 130;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: .25 + Math.random() * .45,
+      maxLife: .7,
+      color
+    });
   }
-
-  const nextZ = player.position.z + dz;
-  if (!isBlocked(player.position.x, nextZ)) {
-    player.position.z = nextZ;
-  }
-}
-
-// Enemies and dungeon keeper.
-const enemies = [];
-
-function createEnemy(x, z, isBoss = false) {
-  const group = new THREE.Group();
-  group.position.set(x, 0, z);
-  scene.add(group);
-
-  const scale = isBoss ? 1.65 : 1;
-
-  const torso = new THREE.Mesh(
-    new THREE.CapsuleGeometry(0.32 * scale, 0.65 * scale, 4, 8),
-    isBoss ? bossMat : enemyMat
-  );
-  torso.position.y = 0.8 * scale;
-  torso.castShadow = true;
-  group.add(torso);
-
-  const skull = new THREE.Mesh(
-    new THREE.SphereGeometry(0.22 * scale, 10, 8), boneMat
-  );
-  skull.position.y = 1.42 * scale;
-  group.add(skull);
-
-  for (const side of [-1, 1]) {
-    const eye = new THREE.Mesh(
-      new THREE.SphereGeometry(0.055 * scale, 8, 6), eyeMat
-    );
-    eye.position.set(side * 0.1 * scale, 1.44 * scale, -0.18 * scale);
-    group.add(eye);
-  }
-
-  const weapon = new THREE.Mesh(
-    new THREE.BoxGeometry(0.09 * scale, 0.09 * scale, 0.85 * scale),
-    metal
-  );
-  weapon.position.set(0.35 * scale, 0.75 * scale, -0.2 * scale);
-  group.add(weapon);
-
-  const enemy = {
-    group,
-    hp: isBoss ? 10 : 3,
-    boss: isBoss,
-    alive: true,
-    cooldown: 0,
-    speed: isBoss ? 1.2 : 1.45
-  };
-  enemies.push(enemy);
-  return enemy;
-}
-
-[
-  [-18,-19],[18,-19],[-19,-1],[19,-1],
-  [-18,11],[18,11],[-7,11],[7,11],[0,-17]
-].forEach(p => createEnemy(p[0], p[1]));
-
-const keeper = createEnemy(0, -25, true);
-
-// Game state.
-let health = 100;
-let souls = 0;
-let started = false;
-let paused = false;
-let finished = false;
-let yaw = 0;
-let pitch = 0;
-let attackCooldown = 0;
-let attackAnimation = 0;
-let invulnerable = 0;
-let toastTimer = 0;
-const keys = {};
-
-camera.position.set(0, 2.7, 29);
-
-function toast(text) {
-  $("toast").textContent = text;
-  toastTimer = 1.8;
-}
-
-function updateHUD() {
-  $("health").style.width = health + "%";
-  $("souls").textContent = souls;
-  const count = enemies.filter(e => e.alive).length;
-  $("status").textContent = count === 0
-    ? "The dungeon falls silent..."
-    : count + " creatures remain in the fog";
-}
-
-function finishGame(won) {
-  finished = true;
-  paused = true;
-  if (document.pointerLockElement) document.exitPointerLock();
-
-  $("message").style.display = "flex";
-  $("message").innerHTML =
-    '<div class="panel"><h1>' + (won ? "YOU ESCAPED" : "YOU WERE LOST") +
-    '</h1><p>' + (won
-      ? "The fog releases you. For now."
-      : "The dungeon has claimed another soul.") +
-    '</p><p>Souls collected: ' + souls +
-    '</p><button id="restart">PLAY AGAIN</button></div>';
-
-  $("restart").onclick = () => location.reload();
 }
 
 function attack() {
-  if (!started || paused || finished || attackCooldown > 0) return;
+  if (!started || ended || attackCooldown > 0) return;
+  attackCooldown = .38;
+  player.attack = .19;
 
-  attackCooldown = 0.55;
-  attackAnimation = 0.28;
+  const reach = 57;
+  let hitSomething = false;
+  for (const enemy of enemies) {
+    if (!enemy.alive) continue;
+    const dx = enemy.x - player.x;
+    const dy = enemy.y - player.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance > reach + enemy.r) continue;
+    if (distance > 0 &&
+        (dx / distance) * player.facingX +
+        (dy / distance) * player.facingY < .15) continue;
 
-  let target = null;
-  let bestDistance = 2.6;
-  const facingX = -Math.sin(yaw);
-  const facingZ = -Math.cos(yaw);
+    enemy.health -= 30;
+    spawnParticles(enemy.x, enemy.y, "#ffbf69", 10);
+    hitSomething = true;
+    if (enemy.health <= 0) {
+      enemy.alive = false;
+      spawnParticles(enemy.x, enemy.y, "#ff496c", 18);
+    }
+  }
+  if (!hitSomething) spawnParticles(
+    player.x + player.facingX * 36,
+    player.y + player.facingY * 36,
+    "#7cf7ff", 4
+  );
+}
+
+function aliveEnemies() {
+  return enemies.filter(e => e.alive).length;
+}
+
+function showEnd(won) {
+  ended = true;
+  started = false;
+  overlay.style.display = "flex";
+  title.textContent = won ? "DUNGEON CLEARED!" : "YOU WERE DEFEATED";
+  message.textContent = won
+    ? "Every monster has fallen. You escaped the dungeon!"
+    : "The dungeon was too dangerous this time. Give it another try.";
+  startButton.textContent = "PLAY AGAIN";
+}
+
+function update(dt) {
+  if (!started || ended) return;
+  dt = Math.min(dt, .035);
+
+  attackCooldown = Math.max(0, attackCooldown - dt);
+  player.attack = Math.max(0, player.attack - dt);
+  player.invulnerable = Math.max(0, player.invulnerable - dt);
+  hurtFlash = Math.max(0, hurtFlash - dt);
+
+  let dx = 0, dy = 0;
+  if (keys.KeyW || keys.ArrowUp) dy -= 1;
+  if (keys.KeyS || keys.ArrowDown) dy += 1;
+  if (keys.KeyA || keys.ArrowLeft) dx -= 1;
+  if (keys.KeyD || keys.ArrowRight) dx += 1;
+
+  if (dx || dy) {
+    const length = Math.hypot(dx, dy);
+    dx /= length; dy /= length;
+    player.facingX = dx;
+    player.facingY = dy;
+    moveEntity(player, dx * player.speed * dt, dy * player.speed * dt);
+  }
 
   for (const enemy of enemies) {
     if (!enemy.alive) continue;
+    enemy.attackCooldown -= dt;
+    enemy.wander += dt;
 
-    const dx = enemy.group.position.x - player.position.x;
-    const dz = enemy.group.position.z - player.position.z;
-    const distance = Math.hypot(dx, dz);
-    if (distance < 0.001 || distance >= bestDistance) continue;
+    const vx = player.x - enemy.x;
+    const vy = player.y - enemy.y;
+    const distance = Math.hypot(vx, vy);
 
-    const dot = (dx * facingX + dz * facingZ) / distance;
-    if (dot > 0.05) {
-      target = enemy;
-      bestDistance = distance;
+    if (distance < TILE * 5 && distance > player.r + enemy.r + 2) {
+      moveEntity(enemy, vx / distance * enemy.speed * dt,
+                        vy / distance * enemy.speed * dt);
+    } else if (distance > player.r + enemy.r + 2) {
+      const wx = Math.cos(enemy.wander) * .35;
+      const wy = Math.sin(enemy.wander) * .35;
+      moveEntity(enemy, wx * enemy.speed * dt, wy * enemy.speed * dt);
+    }
+
+    const nowDistance = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+    if (nowDistance < player.r + enemy.r + 5 &&
+        enemy.attackCooldown <= 0 && player.invulnerable <= 0) {
+      player.health -= 10;
+      player.invulnerable = .7;
+      enemy.attackCooldown = .85;
+      hurtFlash = .18;
+      spawnParticles(player.x, player.y, "#ff496c", 8);
+      if (player.health <= 0) {
+        player.health = 0;
+        showEnd(false);
+      }
     }
   }
 
-  if (!target) {
-    toast("Your blade cuts through the mist...");
-    return;
+  for (const p of particles) {
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.life -= dt;
+  }
+  particles = particles.filter(p => p.life > 0);
+
+  const remaining = aliveEnemies();
+  hudStats.textContent = `Health: ${player.health} · Enemies: ${remaining}`;
+  healthFill.style.width = player.health + "%";
+  objective.textContent = remaining
+    ? `Defeat the remaining ${remaining} monster${remaining === 1 ? "" : "s"}.`
+    : "The exit is open! Find the golden door.";
+
+  // Exit tile is only usable after all enemies are defeated.
+  if (remaining === 0) {
+    const exitX = (mapWidth - 2) * TILE + TILE / 2;
+    const exitY = TILE * 1.5;
+    if (Math.hypot(player.x - exitX, player.y - exitY) < TILE * .6) {
+      showEnd(true);
+    }
+  }
+}
+
+function draw() {
+  const w = innerWidth, h = innerHeight;
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = "#070b13";
+  ctx.fillRect(0, 0, w, h);
+  if (!player) return;
+
+  // Camera follows the player.
+  const cameraX = Math.max(0, Math.min(worldWidth - w, player.x - w / 2));
+  const cameraY = Math.max(0, Math.min(worldHeight - h, player.y - h / 2));
+  ctx.save();
+  ctx.translate(-cameraX, -cameraY);
+
+  // Solid stone floor: no floating planks or gaps.
+  for (let y = 0; y < mapHeight; y++) {
+    for (let x = 0; x < mapWidth; x++) {
+      const px = x * TILE, py = y * TILE;
+      ctx.fillStyle = (x + y) % 2 ? "#343e4b" : "#3b4654";
+      ctx.fillRect(px, py, TILE, TILE);
+      ctx.strokeStyle = "#29323e";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(px + 1, py + 1, TILE - 2, TILE - 2);
+      // Subtle stone wear.
+      ctx.fillStyle = "#ffffff09";
+      ctx.fillRect(px + 5, py + 5, 9, 2);
+    }
   }
 
-  target.hp--;
-
-  if (target.hp <= 0) {
-    target.alive = false;
-    target.group.visible = false;
-    souls += target.boss ? 10 : 1;
-    toast(target.boss ? "THE KEEPER HAS FALLEN" : "A SOUL RELEASED");
-    updateHUD();
-  } else {
-    toast("HIT!");
+  // Walls are drawn from the exact same map used for collision.
+  for (const wall of walls) {
+    const x = wall.x * TILE, y = wall.y * TILE;
+    ctx.fillStyle = "#172131";
+    ctx.fillRect(x, y, TILE, TILE);
+    ctx.fillStyle = "#394b61";
+    ctx.fillRect(x + 2, y + 2, TILE - 4, TILE - 7);
+    ctx.fillStyle = "#53657a";
+    ctx.fillRect(x + 4, y + 4, TILE - 8, 5);
+    ctx.fillStyle = "#101724";
+    ctx.fillRect(x + 3, y + TILE - 7, TILE - 6, 5);
+    ctx.strokeStyle = "#101722";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x + 1, y + 1, TILE - 2, TILE - 2);
   }
+
+  // Exit: the gate glows brighter once every enemy is defeated.
+  const exitX = (mapWidth - 2) * TILE + TILE / 2;
+  const exitY = TILE * 1.5;
+  const exitOpen = aliveEnemies() === 0;
+  const glow = ctx.createRadialGradient(exitX, exitY, 3, exitX, exitY, 72);
+  glow.addColorStop(0, exitOpen ? "#ffe87c66" : "#e9a73520");
+  glow.addColorStop(1, "#e9a73500");
+  ctx.fillStyle = glow;
+  ctx.fillRect(exitX - 75, exitY - 75, 150, 150);
+  ctx.fillStyle = exitOpen ? "#ffe06b" : "#96733b";
+  ctx.fillRect(exitX - 15, exitY - 22, 30, 44);
+  ctx.fillStyle = "#191d27";
+  ctx.fillRect(exitX - 9, exitY - 16, 18, 36);
+  ctx.fillStyle = "#ffe87b";
+  ctx.beginPath();
+  ctx.arc(exitX + 5, exitY + 1, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Enemies.
+  for (const enemy of enemies) {
+    if (!enemy.alive) continue;
+    ctx.fillStyle = "#00000055";
+    ctx.beginPath();
+    ctx.ellipse(enemy.x, enemy.y + 8, 17, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#8e2c54";
+    ctx.beginPath();
+    ctx.arc(enemy.x, enemy.y, enemy.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#d64a70";
+    ctx.beginPath();
+    ctx.arc(enemy.x - 3, enemy.y - 4, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#fff0d7";
+    ctx.fillRect(enemy.x - 7, enemy.y - 5, 4, 4);
+    ctx.fillRect(enemy.x + 3, enemy.y - 5, 4, 4);
+    ctx.fillStyle = "#ff496c";
+    ctx.fillRect(enemy.x - 15, enemy.y - 24, 30, 4);
+    ctx.fillStyle = "#80ff9f";
+    ctx.fillRect(enemy.x - 15, enemy.y - 24,
+      30 * Math.max(0, enemy.health) / 55, 4);
+  }
+
+  // Player and sword.
+  if (player.invulnerable <= 0 || Math.floor(performance.now() / 80) % 2 === 0) {
+    ctx.fillStyle = "#00000066";
+    ctx.beginPath();
+    ctx.ellipse(player.x, player.y + 8, 17, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#2463a6";
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#53b7ff";
+    ctx.beginPath();
+    ctx.arc(player.x - 3, player.y - 5, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#f0d4a6";
+    ctx.beginPath();
+    ctx.arc(player.x, player.y - 3, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    const swordLength = player.attack > 0 ? 39 : 25;
+    const sx = player.x + player.facingX * swordLength;
+    const sy = player.y + player.facingY * swordLength;
+    ctx.strokeStyle = "#d7f8ff";
+    ctx.lineWidth = player.attack > 0 ? 7 : 4;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(player.x + player.facingX * 8, player.y + player.facingY * 8);
+    ctx.lineTo(sx, sy);
+    ctx.stroke();
+    ctx.strokeStyle = "#f4bf65";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(sx - player.facingY * 5, sy + player.facingX * 5);
+    ctx.lineTo(sx + player.facingY * 5, sy - player.facingX * 5);
+    ctx.stroke();
+  }
+
+  // Combat particles.
+  for (const p of particles) {
+    ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // Atmospheric darkness around the player with a large clear sight radius.
+  const light = ctx.createRadialGradient(player.x, player.y, 55, player.x, player.y, 310);
+  light.addColorStop(0, "#00000000");
+  light.addColorStop(.7, "#02061118");
+  light.addColorStop(1, "#020611b8");
+  ctx.fillStyle = light;
+  ctx.fillRect(cameraX, cameraY, w, h);
+
+  ctx.restore();
+
+  if (hurtFlash > 0) {
+    ctx.fillStyle = `rgba(255,35,80,${hurtFlash * .6})`;
+    ctx.fillRect(0, 0, w, h);
+  }
+}
+
+function frame(time) {
+  const dt = lastTime ? (time - lastTime) / 1000 : 0;
+  lastTime = time;
+  update(dt);
+  draw();
+  requestAnimationFrame(frame);
 }
 
 function startGame() {
   if (started) return;
+  resetGame();
   started = true;
-  paused = false;
-  $("message").style.display = "none";
-  renderer.domElement.requestPointerLock?.();
+  ended = false;
+  overlay.style.display = "none";
+  lastTime = 0;
 }
 
-$("start").onclick = startGame;
+startButton.addEventListener("click", startGame);
 
-document.addEventListener("pointerlockchange", () => {
-  if (!document.pointerLockElement && started && !paused && !finished) {
-    paused = true;
-    $("message").style.display = "flex";
-    $("message").innerHTML =
-      '<div class="panel"><h1>PAUSED</h1><p>The fog is waiting.</p>' +
-      '<button id="resume">CONTINUE</button><br>' +
-      '<button id="restart">RESTART</button></div>';
-
-    $("resume").onclick = () => {
-      paused = false;
-      $("message").style.display = "none";
-      renderer.domElement.requestPointerLock?.();
-    };
-    $("restart").onclick = () => location.reload();
+document.addEventListener("keydown", event => {
+  keys[event.code] = true;
+  if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.code)) {
+    event.preventDefault();
+  }
+  if (event.code === "Enter" && !started) startGame();
+  if (event.code === "Space") attack();
+  if (event.code === "KeyR") {
+    resetGame();
+    started = true;
+    ended = false;
+    overlay.style.display = "none";
   }
 });
 
-document.addEventListener("mousemove", e => {
-  if (document.pointerLockElement === renderer.domElement && !paused) {
-    yaw -= e.movementX * 0.0022;
-    pitch -= e.movementY * 0.0018;
-    pitch = Math.max(-0.35, Math.min(0.4, pitch));
-  }
+document.addEventListener("keyup", event => {
+  keys[event.code] = false;
+});
+window.addEventListener("blur", () => {
+  for (const key in keys) keys[key] = false;
+});
+canvas.addEventListener("pointerdown", event => {
+  if (event.button === 0) attack();
 });
 
-document.addEventListener("keydown", e => {
-  keys[e.code] = true;
-  if (["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.code)) {
-    e.preventDefault();
-  }
-  if (e.code === "Space") attack();
-  if (e.code === "Escape" && started && !finished && document.pointerLockElement) {
-    document.exitPointerLock();
-  }
-});
-
-document.addEventListener("keyup", e => {
-  keys[e.code] = false;
-});
-
-renderer.domElement.addEventListener("mousedown", e => {
-  if (e.button !== 0) return;
-  if (!started) startGame();
-  else attack();
-});
-
-renderer.domElement.addEventListener("contextmenu", e => e.preventDefault());
-
-const clock = new THREE.Clock();
-
-function update(dt) {
-  // Torch flicker.
-  for (const t of torches) {
-    const flicker = 0.85 + Math.random() * 0.2 +
-      Math.sin(clock.elapsedTime * 8 + t.phase) * 0.08;
-    t.light.intensity = 5 * flicker;
-    t.flame.scale.y = 0.8 + Math.random() * 0.5;
-  }
-
-  if (toastTimer > 0) {
-    toastTimer -= dt;
-    if (toastTimer <= 0) $("toast").textContent = "";
-  }
-
-  if (!started || paused || finished) return;
-
-  attackCooldown = Math.max(0, attackCooldown - dt);
-  invulnerable = Math.max(0, invulnerable - dt);
-
-  if (attackAnimation > 0) {
-    attackAnimation -= dt;
-    sword.rotation.x = -Math.sin((0.28 - attackAnimation) / 0.28 * Math.PI);
-  } else {
-    sword.rotation.x = 0;
-  }
-
-  // Movement relative to camera direction.
-  const forward =
-    (keys.KeyW || keys.ArrowUp ? 1 : 0) -
-    (keys.KeyS || keys.ArrowDown ? 1 : 0);
-
-  const side =
-    (keys.KeyD || keys.ArrowRight ? 1 : 0) -
-    (keys.KeyA || keys.ArrowLeft ? 1 : 0);
-
-  const speed = (keys.ShiftLeft || keys.ShiftRight) ? 6 : 3.8;
-  let dx = (-Math.sin(yaw) * forward + Math.cos(yaw) * side) * speed * dt;
-  let dz = (-Math.cos(yaw) * forward - Math.sin(yaw) * side) * speed * dt;
-
-  const length = Math.hypot(dx, dz);
-  if (length > speed * dt && length > 0) {
-    dx *= speed * dt / length;
-    dz *= speed * dt / length;
-  }
-
-  movePlayer(dx, dz);
-  player.rotation.y = yaw;
-
-  // Third-person camera, following behind the player.
-  const cameraDistance = 4.2;
-  camera.position.set(
-    player.position.x + Math.sin(yaw) * cameraDistance,
-    player.position.y + 2.65 + pitch,
-    player.position.z + Math.cos(yaw) * cameraDistance
-  );
-  camera.lookAt(
-    player.position.x,
-    player.position.y + 1.2,
-    player.position.z
-  );
-  camera.rotation.x += pitch;
-
-  // Enemies pursue the player but stop at solid walls.
-  for (const enemy of enemies) {
-    if (!enemy.alive) continue;
-
-    enemy.cooldown -= dt;
-
-    const dx = player.position.x - enemy.group.position.x;
-    const dz = player.position.z - enemy.group.position.z;
-    const distance = Math.hypot(dx, dz);
-
-    if (distance > 1.5 && distance < 22) {
-      const step = enemy.speed * dt;
-      const nx = enemy.group.position.x + dx / distance * step;
-      const nz = enemy.group.position.z + dz / distance * step;
-
-      if (!isBlocked(nx, enemy.group.position.z)) {
-        enemy.group.position.x = nx;
-      }
-      if (!isBlocked(enemy.group.position.x, nz)) {
-        enemy.group.position.z = nz;
-      }
-    }
-
-    if (distance <= 1.65 && enemy.cooldown <= 0) {
-      enemy.cooldown = enemy.boss ? 1.5 : 1.7;
-
-      if (invulnerable <= 0) {
-        health = Math.max(0, health - (enemy.boss ? 17 : 9));
-        invulnerable = 0.75;
-        toast("YOU HAVE BEEN STRUCK");
-        updateHUD();
-        if (health <= 0) finishGame(false);
-      }
-    }
-
-    if (distance < 24) {
-      enemy.group.lookAt(player.position.x, 0, player.position.z);
-    }
-  }
-
-  // Escape becomes possible once every enemy, including the keeper, is defeated.
-  if (enemies.every(e => !e.alive) && player.position.z < -27) {
-    finishGame(true);
-  }
-}
-
-function animate() {
-  requestAnimationFrame(animate);
-  const dt = Math.min(clock.getDelta(), 0.04);
-  update(dt);
-  renderer.render(scene, camera);
-}
-
-addEventListener("resize", () => {
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-});
-
-updateHUD();
-animate();
+resetGame();
+requestAnimationFrame(frame);
 })();
 </script>
 </body>
