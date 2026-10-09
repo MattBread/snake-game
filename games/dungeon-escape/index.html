@@ -55,6 +55,7 @@ button{padding:14px 25px;background:linear-gradient(90deg,#00abc5,#665bff);borde
 (()=>{
 "use strict";
 const $=id=>document.getElementById(id);
+ const startBtn=$("start");
 if(!window.THREE){$("message").textContent="The 3D engine could not load. Check your internet connection and refresh.";return;}
 
 const scene=new THREE.Scene();
