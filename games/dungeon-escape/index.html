@@ -3,193 +3,304 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dungeon Escape | MattBread Arcade</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dungeon Escape: Open World | MattBread Arcade</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#090e19;color:#fff;font-family:Arial,sans-serif;text-align:center}
-header{padding:12px;background:#111d31;border-bottom:2px solid #31d9ff}
-h1{margin:4px;color:#50e8ff}
-#stats{display:flex;justify-content:center;gap:22px;flex-wrap:wrap;padding:12px;font-weight:bold}
-#game{display:block;width:min(900px,96vw);height:auto;margin:0 auto;background:#172334;border:3px solid #3a627f;image-rendering:pixelated}
-#controls{padding:12px;color:#c5d8eb;font-size:14px}
-button{border:0;border-radius:8px;padding:12px 20px;margin:5px;background:#16bad5;color:#06121c;font-weight:bold;font-size:15px;cursor:pointer}
-button:hover{background:#80f1ff}
-#message{font-weight:bold;color:#ffe18a;min-height:24px;padding:8px}
-a{color:#67eaff}
+body{margin:0;background:#08111b;color:#fff;font-family:Arial,sans-serif;text-align:center}
+header{padding:12px;background:#101c2d;border-bottom:2px solid #40ddff}
+h1{margin:3px;color:#59eaff;font-size:clamp(22px,4vw,34px)}
+#hud{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;padding:10px;font-weight:bold}
+#game{display:block;width:min(960px,98vw);height:auto;margin:auto;border:2px solid #426582;background:#172536;image-rendering:pixelated}
+#message{min-height:24px;color:#ffe18a;padding:9px;font-weight:bold}
+button{padding:11px 18px;margin:5px;border:0;border-radius:8px;background:#39d9ed;color:#07141d;font-weight:bold;cursor:pointer}
+#help{font-size:13px;color:#c4d6e9;padding:8px}
+a{color:#6eeaff}
 </style>
 </head>
 <body>
-<header>
-<h1>⚔️ DUNGEON ESCAPE</h1>
-<div>MattBread Arcade</div>
-</header>
-<div id="stats">
-<span>❤️ Health: <b id="health">100</b></span>
-<span>⭐ Points: <b id="points">0</b></span>
-<span>👹 Monsters: <b id="count">0</b></span>
+<header><h1>⚔️ DUNGEON ESCAPE</h1>OPEN WORLD EDITION</header>
+<div id="hud">
+<span>❤️ Health: <b id="hp">100</b></span>
+<span>⭐ Gold: <b id="gold">0</b></span>
+<span>👹 Enemies: <b id="enemies">0</b></span>
+<span>🗺️ <b id="area">Forest</b></span>
 </div>
 <canvas id="game" width="800" height="500"></canvas>
-<div id="message">Find the exit. Defeat monsters. Survive the dungeon!</div>
-<div id="controls">Move: WASD or Arrow Keys · Attack: Space · Restart: R</div>
-<button id="start">START GAME</button>
+<div id="message">Explore the forest. Find the stone dungeon entrance!</div>
+<div id="help">Move: WASD / Arrow keys · Sword: SPACE · Interact: E · Restart: R</div>
+<button id="start">START ADVENTURE</button>
 <button id="restart">RESTART</button>
 <p><a href="../../../">← Back to MattBread Arcade</a></p>
 <script>
 (()=>{
 "use strict";
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
-const healthEl=document.getElementById("health");
-const pointsEl=document.getElementById("points");
-const countEl=document.getElementById("count");
-const message=document.getElementById("message");
-const startBtn=document.getElementById("start");
-const tile=40,cols=20,rows=12;
-let keys={},player,monsters,points,health,running,finished,lastAttack,exit;
-const map=[
-"####################",
-"#........#.........#",
-"#.####...#..####...#",
-"#....#......#......#",
-"###..#.####.#..###..#",
-"#....#....#.#.......#",
-"#.######..#..#####..#",
-"#...........#.......#",
-"#..####.....#..###..#",
-"#.....#.............#",
-"#.............#....E#",
-"####################"
-];
-function wall(x,y){
- const c=Math.floor(x/tile),r=Math.floor(y/tile);
- return r<0||r>=rows||c<0||c>=cols||map[r][c]==="#";
+const canvas=document.getElementById("game"),ctx=canvas.getContext("2d");
+const $=id=>document.getElementById(id);
+const TILE=32;
+const WORLD={w:2400,h:1800};
+let player,keys={},enemies,chests,obstacles,doors,area,camera,started,dead,won,gold,swing,attackTime,lastTime;
+const rand=(a,b)=>a+Math.random()*(b-a);
+function rectHit(a,b){return a.x-a.r<b.x+b.w&&a.x+a.r>b.x&&a.y-a.r<b.y+b.h&&a.y+a.r>b.y}
+function say(s){$("message").textContent=s}
+function makeWorld(){
+ obstacles=[];enemies=[];chests=[];doors=[];
+ // Forest boundaries and scattered trees/rocks
+ for(let i=0;i<95;i++){
+  let x=rand(50,WORLD.w-70),y=rand(50,WORLD.h-70);
+  if(Math.hypot(x-200,y-200)<150||Math.hypot(x-1160,y-850)<190)continue;
+  obstacles.push({x,y,w:rand(25,42),h:rand(25,42),kind:Math.random()<.75?"tree":"rock"});
+ }
+ // River and crossing bridge
+ obstacles.push({x:1000,y:0,w:65,h:690,kind:"water"});
+ obstacles.push({x:1000,y:820,w:65,h:980,kind:"water"});
+ // Dungeon exterior entrance
+ obstacles.push({x:1090,y:700,w:270,h:35,kind:"wall"});
+ obstacles.push({x:1090,y:700,w:35,h:220,kind:"wall"});
+ obstacles.push({x:1325,y:700,w:35,h:220,kind:"wall"});
+ obstacles.push({x:1090,y:885,w:95,h:35,kind:"wall"});
+ obstacles.push({x:1270,y:885,w:90,h:35,kind:"wall"});
+ doors.push({x:1185,y:878,w:85,h:18,to:"Dungeon",tx:220,ty:160,open:false});
+ for(let i=0;i<17;i++)enemies.push({x:rand(100,WORLD.w-100),y:rand(100,WORLD.h-100),hp:2,max:2,speed:rand(.35,.65),kind:"slime",hurt:0});
+ for(let i=0;i<14;i++)chests.push({x:rand(100,WORLD.w-100),y:rand(100,WORLD.h-100),taken:false});
+}
+function makeDungeon(){
+ // Local coordinates for dungeon room complex
+ obstacles=[
+ {x:0,y:0,w:800,h:30,kind:"wall"},{x:0,y:0,w:30,h:500,kind:"wall"},
+ {x:770,y:0,w:30,h:500,kind:"wall"},{x:0,y:470,w:800,h:30,kind:"wall"},
+ {x:220,y:30,w:24,h:150,kind:"wall"},{x:220,y:250,w:24,h:100,kind:"wall"},
+ {x:220,y:420,w:24,h:50,kind:"wall"},
+ {x:244,y:180,w:170,h:24,kind:"wall"},{x:390,y:204,w:24,h:100,kind:"wall"},
+ {x:414,y:280,w:170,h:24,kind:"wall"},{x:560,y:304,w:24,h:100,kind:"wall"},
+ {x:584,y:380,w:186,h:24,kind:"wall"}
+ ];
+ enemies=[
+ {x:130,y:125,hp:3,max:3,speed:.45,kind:"skeleton",hurt:0},
+ {x:330,y:110,hp:3,max:3,speed:.5,kind:"skeleton",hurt:0},
+ {x:480,y:235,hp:4,max:4,speed:.48,kind:"skeleton",hurt:0},
+ {x:675,y:330,hp:8,max:8,speed:.65,kind:"boss",hurt:0}
+ ];
+ chests=[{x:120,y:350,taken:false},{x:330,y:370,taken:false},{x:670,y:430,taken:false}];
+ doors=[{x:355,y:30,w:75,h:20,to:"Forest",tx:1225,ty:960,open:true}];
 }
 function reset(){
- player={x:60,y:60,size:24,speed:2.6,faceX:1,faceY:0};
- monsters=[
- {x:260,y:100,hp:2},
- {x:500,y:140,hp:2},
- {x:340,y:300,hp:2},
- {x:620,y:380,hp:2},
- {x:180,y:420,hp:2}
- ];
- points=0;health=100;running=false;finished=false;lastAttack=0;
- exit={x:740,y:420};
- updateStats();draw();
- message.textContent="Press START GAME to enter the dungeon.";
- startBtn.textContent="START GAME";
+ player={x:200,y:200,r:11,speed:2.6,faceX:1,faceY:0,health:100,invuln:0};
+ area="Forest";gold=0;started=false;dead=false;won=false;swing=0;attackTime=0;
+ makeWorld();camera={x:0,y:0};updateHUD();draw();
+ say("Press START ADVENTURE to explore the open world.");
+ $("start").textContent="START ADVENTURE";
 }
-function updateStats(){
- healthEl.textContent=health;
- pointsEl.textContent=points;
- countEl.textContent=monsters.length;
-}
-function draw(){
- ctx.clearRect(0,0,canvas.width,canvas.height);
- for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
-  const x=c*tile,y=r*tile;
-  ctx.fillStyle=map[r][c]==="#"?"#39495c":"#172536";
-  ctx.fillRect(x,y,tile,tile);
-  ctx.strokeStyle="#26384a";ctx.strokeRect(x,y,tile,tile);
-  if(map[r][c]==="#"){
-   ctx.fillStyle="#52667a";ctx.fillRect(x+4,y+4,tile-8,4);
-  }
- }
- ctx.fillStyle="#35f3a1";ctx.fillRect(exit.x-14,exit.y-14,28,28);
- ctx.fillStyle="#071b17";ctx.font="bold 19px Arial";ctx.fillText("E",exit.x-6,exit.y+7);
- for(const m of monsters){
-  ctx.fillStyle="#ff496c";ctx.fillRect(m.x-13,m.y-13,26,26);
-  ctx.fillStyle="#fff";ctx.fillRect(m.x-7,m.y-5,4,4);ctx.fillRect(m.x+3,m.y-5,4,4);
-  ctx.fillStyle="#ffb4c2";ctx.fillRect(m.x-10,m.y-19,20,3);
- }
- if(player){
-  ctx.fillStyle="#57ddff";ctx.fillRect(player.x-12,player.y-12,24,24);
-  ctx.fillStyle="#fff";ctx.fillRect(player.x+(player.faceX*5)-3,player.y+(player.faceY*5)-3,6,6);
- }
- if(!running&&!finished){
-  ctx.fillStyle="#0009";ctx.fillRect(150,170,500,130);
-  ctx.fillStyle="#fff";ctx.font="bold 30px Arial";ctx.fillText("DUNGEON ESCAPE",240,220);
-  ctx.font="17px Arial";ctx.fillText("Press START GAME below",285,260);
- }
- if(finished){
-  ctx.fillStyle="#000b";ctx.fillRect(130,170,540,130);
-  ctx.fillStyle=health>0?"#70ffb0":"#ff7187";
-  ctx.font="bold 30px Arial";ctx.fillText(health>0?"DUNGEON CLEARED!":"YOU WERE DEFEATED",205,225);
-  ctx.fillStyle="#fff";ctx.font="18px Arial";ctx.fillText("Points: "+points+" — Press RESTART",245,265);
- }
+function updateHUD(){
+ $("hp").textContent=Math.max(0,Math.ceil(player.health));
+ $("gold").textContent=gold;
+ $("enemies").textContent=enemies.length;
+ $("area").textContent=area;
 }
 function blocked(x,y){
- return [[x-10,y-10],[x+10,y-10],[x-10,y+10],[x+10,y+10]].some(p=>wall(p[0],p[1]));
+ const p={x,y,r:player.r};
+ if(x<player.r||y<player.r||x>(area==="Forest"?WORLD.w:800)-player.r||y>(area==="Forest"?WORLD.h:500)-player.r)return true;
+ return obstacles.some(o=>o.kind!=="water"&&rectHit(p,o));
 }
-function attack(){
- const now=performance.now();
- if(now-lastAttack<350)return;
- lastAttack=now;
- let hit=null,best=48;
- for(const m of monsters){
-  const dx=m.x-player.x,dy=m.y-player.y;
-  const forward=dx*player.faceX+dy*player.faceY;
-  const side=Math.abs(dx*player.faceY-dy*player.faceX);
-  if(forward>0&&forward<best&&side<27){hit=m;best=forward;}
+function enterDoor(d){
+ if(d.to==="Dungeon"){
+  area="Dungeon";player.x=395;player.y=420;makeDungeon();
+  say("Dungeon entered! Defeat the skeletons and find the treasure.");
+ }else{
+  area="Forest";player.x=1225;player.y=950;makeWorld();
+  say("You're back in the forest. Explore and find more treasure!");
  }
- if(hit){
-  hit.hp--;message.textContent="Hit! Keep fighting!";
-  if(hit.hp<=0){monsters=monsters.filter(m=>m!==hit);points+=100;message.textContent="Monster defeated! +100 points";}
- }else message.textContent="Swing! Get closer and face a monster.";
- updateStats();
+ updateHUD();
 }
-function finish(win){
- running=false;finished=true;
- message.textContent=win?"You escaped the dungeon!":"You have fallen. Try again!";
- startBtn.textContent="PLAY AGAIN";draw();
-}
-function loop(){
- if(!running)return;
- let dx=0,dy=0;
- if(keys.ArrowLeft||keys.KeyA)dx--;
- if(keys.ArrowRight||keys.KeyD)dx++;
- if(keys.ArrowUp||keys.KeyW)dy--;
- if(keys.ArrowDown||keys.KeyS)dy++;
- if(dx||dy){
-  const len=Math.hypot(dx,dy);dx=dx/len*player.speed;dy=dy/len*player.speed;
-  if(dx){player.faceX=Math.sign(dx);player.faceY=0;}
-  else if(dy){player.faceX=0;player.faceY=Math.sign(dy);}
-  if(!blocked(player.x+dx,player.y))player.x+=dx;
-  if(!blocked(player.x,player.y+dy))player.y+=dy;
- }
- for(const m of monsters){
-  const vx=player.x-m.x,vy=player.y-m.y,d=Math.hypot(vx,vy);
-  if(d>20){
-   const mx=vx/d*0.65,my=vy/d*0.65;
-   if(!blocked(m.x+mx,m.y))m.x+=mx;
-   if(!blocked(m.x,m.y+my))m.y+=my;
-  }else if(Math.random()<0.025){
-   health-=5;message.textContent="A monster hit you!";
-   updateStats();
-   if(health<=0){health=0;updateStats();finish(false);return;}
+function interact(){
+ if(!started||dead)return;
+ for(const d of doors){
+  if(Math.hypot(player.x-(d.x+d.w/2),player.y-(d.y+d.h/2))<65){
+   enterDoor(d);return;
   }
  }
- if(Math.hypot(player.x-exit.x,player.y-exit.y)<25&&monsters.length===0){
-  points+=250;updateStats();finish(true);return;
- }
- draw();
- requestAnimationFrame(loop);
+ let c=chests.find(c=>!c.taken&&Math.hypot(player.x-c.x,player.y-c.y)<45);
+ if(c){c.taken=true;const prize=area==="Dungeon"?75:35;gold+=prize;say("Treasure found! +"+prize+" gold.");updateHUD();return;}
+ say("Nothing nearby. Look for a door or treasure chest.");
 }
-document.getElementById("start").addEventListener("click",()=>{
- if(finished)reset();
- running=true;finished=false;startBtn.textContent="GAME RUNNING";
- message.textContent="Defeat every monster, then reach the green exit!";
- loop();
+function attack(){
+ if(!started||dead||won||performance.now()-attackTime<360)return;
+ attackTime=performance.now();swing=14;
+ let hit=false;
+ for(const e of [...enemies]){
+  const dx=e.x-player.x,dy=e.y-player.y;
+  const forward=dx*player.faceX+dy*player.faceY;
+  const side=Math.abs(dx*player.faceY-dy*player.faceX);
+  if(forward>-10&&forward<54&&side<32){
+   e.hp--;e.hurt=10;hit=true;
+   if(e.hp<=0){
+    enemies=enemies.filter(x=>x!==e);gold+=e.kind==="boss"?250:15;
+    say(e.kind==="boss"?"BOSS DEFEATED! +250 gold!":"Monster defeated! +15 gold.");
+   }else say("Sword strike! Enemy health reduced.");
+  }
+ }
+ if(!hit)say("Sword slash! Get closer and face your enemy.");
+ updateHUD();
+ if(enemies.length===0&&area==="Dungeon"){
+  won=true;started=false;say("DUNGEON CLEARED! You defeated every monster!");
+ }
+}
+function drawTree(x,y){
+ ctx.fillStyle="#4a2c20";ctx.fillRect(x-5,y+4,10,16);
+ ctx.fillStyle="#124a37";ctx.beginPath();ctx.arc(x,y,19,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#23734a";ctx.beginPath();ctx.arc(x-5,y-6,12,0,Math.PI*2);ctx.fill();
+}
+function draw(){
+ const w=canvas.width,h=canvas.height;
+ ctx.clearRect(0,0,w,h);
+ const worldW=area==="Forest"?WORLD.w:800,worldH=area==="Forest"?WORLD.h:500;
+ camera.x=Math.max(0,Math.min(worldW-w,player.x-w/2));
+ camera.y=Math.max(0,Math.min(worldH-h,player.y-h/2));
+ ctx.save();ctx.translate(-camera.x,-camera.y);
+ if(area==="Forest"){
+  ctx.fillStyle="#286541";ctx.fillRect(camera.x,camera.y,w,h);
+  // Subtle grass
+  ctx.fillStyle="#34764a";
+  for(let y=Math.floor(camera.y/64)*64;y<camera.y+h+64;y+=64)
+   for(let x=Math.floor(camera.x/64)*64;x<camera.x+w+64;x+=64){ctx.fillRect(x+8,y+12,3,3);ctx.fillRect(x+35,y+40,2,2);}
+  // River and bridge
+  ctx.fillStyle="#287da2";ctx.fillRect(1000,0,65,WORLD.h);
+  ctx.fillStyle="#3c9fc0";for(let y=0;y<WORLD.h;y+=35)ctx.fillRect(1012,y,3,18);
+  ctx.fillStyle="#92613b";ctx.fillRect(987,690,91,130);
+  ctx.fillStyle="#c18a51";for(let y=700;y<820;y+=20)ctx.fillRect(990,y,85,4);
+ }else{
+  ctx.fillStyle="#242a33";ctx.fillRect(0,0,800,500);
+  for(let y=0;y<500;y+=32)for(let x=0;x<800;x+=32){
+   ctx.fillStyle=((x+y)/32)%2?"#3c424a":"#343a43";ctx.fillRect(x,y,32,32);
+  }
+ }
+ // Objects
+ for(const o of obstacles){
+  if(o.x<camera.x-70||o.y<camera.y-70||o.x>camera.x+w+70||o.y>camera.y+h+70)continue;
+  if(o.kind==="tree")drawTree(o.x+o.w/2,o.y+o.h/2);
+  else if(o.kind==="rock"){ctx.fillStyle="#818b91";ctx.beginPath();ctx.ellipse(o.x+o.w/2,o.y+o.h/2,o.w/2,o.h/2,0,0,Math.PI*2);ctx.fill();}
+  else if(o.kind==="water"){ctx.fillStyle="#247ba0";ctx.fillRect(o.x,o.y,o.w,o.h);}
+  else{ctx.fillStyle="#626b76";ctx.fillRect(o.x,o.y,o.w,o.h);ctx.fillStyle="#84919c";ctx.fillRect(o.x,o.y,o.w,5);}
+ }
+ if(area==="Forest"){
+  // Entrance building
+  ctx.fillStyle="#4c5058";ctx.fillRect(1090,700,270,220);
+  ctx.fillStyle="#737b86";ctx.fillRect(1110,720,230,180);
+  ctx.fillStyle="#292e36";ctx.fillRect(1180,850,90,60);
+  ctx.fillStyle="#b1a07c";ctx.fillRect(1185,855,80,55);
+  ctx.fillStyle="#2b201b";ctx.fillRect(1195,865,60,45);
+  ctx.fillStyle="#f8d77c";ctx.fillRect(1243,883,4,4);
+  ctx.fillStyle="#fff";ctx.font="bold 14px Arial";ctx.fillText("DUNGEON",1168,744);
+ }else{
+  ctx.fillStyle="#f0b45c";ctx.fillRect(345,18,110,20);
+  ctx.fillStyle="#432a1b";ctx.fillRect(365,20,70,15);
+ }
+ for(const d of doors){
+  ctx.fillStyle="#b27b40";ctx.fillRect(d.x,d.y,d.w,d.h);
+  ctx.fillStyle="#ffdc82";ctx.fillRect(d.x+d.w-13,d.y+d.h/2-3,4,6);
+ }
+ for(const c of chests){
+  if(c.taken)continue;
+  ctx.fillStyle="#6c3d20";ctx.fillRect(c.x-12,c.y-9,24,18);
+  ctx.fillStyle="#edb34b";ctx.fillRect(c.x-12,c.y-10,24,6);
+  ctx.fillStyle="#ffe9a4";ctx.fillRect(c.x-2,c.y-5,4,7);
+ }
+ for(const e of enemies){
+  ctx.fillStyle=e.hurt>0?"#fff":e.kind==="boss"?"#9e3bd2":e.kind==="skeleton"?"#c6c6b6":"#58d76b";
+  ctx.beginPath();ctx.arc(e.x,e.y,e.kind==="boss"?19:13,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#25252a";ctx.fillRect(e.x-8,e.y-4,5,5);ctx.fillRect(e.x+3,e.y-4,5,5);
+  ctx.fillStyle="#641e2c";ctx.fillRect(e.x-15,e.y-23,30,4);
+  ctx.fillStyle="#70ff77";ctx.fillRect(e.x-15,e.y-23,30*Math.max(0,e.hp/e.max),4);
+ }
+ // Player shadow and body
+ ctx.fillStyle="#14241d";ctx.beginPath();ctx.ellipse(player.x,player.y+9,13,7,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#287bbd";ctx.fillRect(player.x-10,player.y-11,20,23);
+ ctx.fillStyle="#f2c59a";ctx.fillRect(player.x-8,player.y-17,16,12);
+ ctx.fillStyle="#4c2e22";ctx.fillRect(player.x-9,player.y-19,18,5);
+ ctx.fillStyle="#fff";ctx.fillRect(player.x+player.faceX*5-4,player.y+player.faceY*5-11,3,3);
+ // Sword points in facing direction, slash when attacking
+ const sx=player.x+player.faceX*18,sy=player.y+player.faceY*18;
+ ctx.save();ctx.translate(sx,sy);ctx.rotate(Math.atan2(player.faceY,player.faceX)+(swing>0?-.8:0));
+ ctx.fillStyle="#76502c";ctx.fillRect(0,-3,12,6);
+ ctx.fillStyle="#e1eaf5";ctx.beginPath();ctx.moveTo(10,-4);ctx.lineTo(35,0);ctx.lineTo(10,4);ctx.fill();
+ ctx.fillStyle="#ffe58a";ctx.fillRect(8,-6,4,12);
+ ctx.restore();
+ if(swing>0){
+  ctx.strokeStyle="#b8f8ff";ctx.lineWidth=4;ctx.beginPath();
+  ctx.arc(player.x,player.y,38,-.9+Math.atan2(player.faceY,player.faceX),.9+Math.atan2(player.faceY,player.faceX));ctx.stroke();
+ }
+ ctx.restore();
+ if(!started&&!dead&&!won){
+  ctx.fillStyle="#06101bdc";ctx.fillRect(120,170,560,145);
+  ctx.fillStyle="#5ceaff";ctx.font="bold 30px Arial";ctx.textAlign="center";ctx.fillText("DUNGEON ESCAPE",400,218);
+  ctx.fillStyle="#fff";ctx.font="16px Arial";ctx.fillText("Explore the forest · Find the dungeon · Fight the boss",400,252);
+  ctx.fillText("Press START ADVENTURE",400,281);ctx.textAlign="left";
+ }
+ if(dead||won){
+  ctx.fillStyle="#06101bee";ctx.fillRect(120,170,560,145);
+  ctx.fillStyle=won?"#76ffac":"#ff657b";ctx.font="bold 28px Arial";ctx.textAlign="center";
+  ctx.fillText(won?"DUNGEON CLEARED!":"YOU FELL IN BATTLE",400,220);
+  ctx.fillStyle="#fff";ctx.font="16px Arial";ctx.fillText("Gold: "+gold+" · Press RESTART to play again",400,258);ctx.textAlign="left";
+ }
+}
+function tick(now){
+ if(!started)return;
+ const dt=Math.min(2,(now-lastTime)/16.67||1);lastTime=now;
+ if(swing>0)swing-=dt;
+ let dx=0,dy=0;
+ if(keys.KeyA||keys.ArrowLeft)dx--;
+ if(keys.KeyD||keys.ArrowRight)dx++;
+ if(keys.KeyW||keys.ArrowUp)dy--;
+ if(keys.KeyS||keys.ArrowDown)dy++;
+ if(dx||dy){
+  const len=Math.hypot(dx,dy);dx=dx/len*player.speed*dt;dy=dy/len*player.speed*dt;
+  if(Math.abs(dx)>Math.abs(dy)){player.faceX=Math.sign(dx);player.faceY=0;}
+  else{player.faceX=0;player.faceY=Math.sign(dy);}
+  // Water is blocked except for the bridge
+  function isWater(x,y){
+   if(area!=="Forest")return false;
+   return x>1000&&x<1065&&!(y>685&&y<825);
+  }
+  if(!blocked(player.x+dx,player.y)&&!isWater(player.x+dx,player.y))player.x+=dx;
+  if(!blocked(player.x,player.y+dy)&&!isWater(player.x,player.y+dy))player.y+=dy;
+ }
+ for(const e of enemies){
+  if(e.hurt>0)e.hurt-=dt;
+  const vx=player.x-e.x,vy=player.y-e.y,d=Math.hypot(vx,vy);
+  if(d>20&&d<330){
+   const ex=vx/d*e.speed*dt,ey=vy/d*e.speed*dt;
+   if(!blocked(e.x+ex,e.y))e.x+=ex;
+   if(!blocked(e.x,e.y+ey))e.y+=ey;
+  }else if(d<=24&&player.invuln<=0){
+   player.health-=e.kind==="boss"?12:5;player.invuln=40;
+   say("You were hit! Move away and swing your sword.");
+   updateHUD();
+   if(player.health<=0){player.health=0;dead=true;started=false;say("You were defeated. Press RESTART to try again.");updateHUD();draw();return;}
+  }
+ }
+ if(player.invuln>0)player.invuln-=dt;
+ // Door prompts
+ const d=doors.find(d=>Math.hypot(player.x-(d.x+d.w/2),player.y-(d.y+d.h/2))<60);
+ if(d)say("Press E to enter "+d.to);
+ draw();updateHUD();
+ requestAnimationFrame(tick);
+}
+$("start").addEventListener("click",()=>{
+ if(dead||won)reset();
+ started=true;lastTime=performance.now();say("Explore! Space swings your sword. E opens nearby doors and treasure.");requestAnimationFrame(tick);
 });
-document.getElementById("restart").addEventListener("click",reset);
+$("restart").addEventListener("click",reset);
 document.addEventListener("keydown",e=>{
  keys[e.code]=true;
  if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code))e.preventDefault();
- if(e.code==="Space"&&running)attack();
+ if(e.code==="Space")attack();
+ if(e.code==="KeyE")interact();
  if(e.code==="KeyR")reset();
 });
 document.addEventListener("keyup",e=>keys[e.code]=false);
+canvas.addEventListener("pointerdown",()=>{
+ if(started)attack();
+});
 reset();
 })();
 </script>
