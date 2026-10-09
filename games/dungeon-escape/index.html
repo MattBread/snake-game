@@ -4,304 +4,382 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Dungeon Escape: Open World | MattBread Arcade</title>
+<title>Dungeon Escape: Easter Egg Quest</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#08111b;color:#fff;font-family:Arial,sans-serif;text-align:center}
-header{padding:12px;background:#101c2d;border-bottom:2px solid #40ddff}
-h1{margin:3px;color:#59eaff;font-size:clamp(22px,4vw,34px)}
-#hud{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;padding:10px;font-weight:bold}
-#game{display:block;width:min(960px,98vw);height:auto;margin:auto;border:2px solid #426582;background:#172536;image-rendering:pixelated}
-#message{min-height:24px;color:#ffe18a;padding:9px;font-weight:bold}
-button{padding:11px 18px;margin:5px;border:0;border-radius:8px;background:#39d9ed;color:#07141d;font-weight:bold;cursor:pointer}
-#help{font-size:13px;color:#c4d6e9;padding:8px}
-a{color:#6eeaff}
+body{margin:0;background:#10151b;color:#f1f5f9;font-family:Arial,sans-serif;overflow:hidden}
+#game{display:block;width:100%;height:100vh;background:#17261d;image-rendering:pixelated}
+#hud{position:fixed;inset:0;pointer-events:none}
+.panel{background:#10151be8;border:1px solid #607568;border-radius:10px;padding:12px;box-shadow:0 4px 20px #0008}
+#top{position:absolute;top:12px;left:12px;max-width:min(430px,75vw)}
+#title{font-weight:900;font-size:18px;color:#e6d68b}
+#objective{margin-top:6px;font-size:13px;line-height:1.45}
+#stats{margin-top:8px;font-size:12px;color:#cbd5e1}
+#message{position:absolute;top:22%;left:50%;transform:translateX(-50%);text-align:center;width:max-content;max-width:85vw;font-size:16px;font-weight:bold;text-shadow:0 2px 5px #000}
+#bottom{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);text-align:center;width:max-content;max-width:95vw;font-size:12px}
+#questButton{position:absolute;right:12px;top:12px;pointer-events:auto;background:#273c33;color:white;border:1px solid #94b9a2;border-radius:8px;padding:10px;cursor:pointer}
+#questPanel{position:absolute;right:12px;top:60px;width:min(340px,90vw);max-height:65vh;overflow:auto;display:none;pointer-events:auto}
+#questPanel h3{margin:4px 0 10px;color:#e6d68b}
+#questPanel p{font-size:13px;line-height:1.5}
+#mobile{position:absolute;bottom:70px;left:12px;display:none;pointer-events:auto;gap:5px}
+#mobile button,#actions button{background:#17261de8;color:white;border:1px solid #82998a;border-radius:9px;padding:12px;font-size:17px;min-width:45px}
+#actions{position:absolute;bottom:70px;right:12px;display:none;pointer-events:auto;gap:6px;flex-direction:column}
+#toast{color:#f6df83}
+@media(max-width:700px){#mobile{display:grid;grid-template-columns:repeat(3,48px)}#actions{display:flex}#top{max-width:72vw;padding:9px}#title{font-size:15px}#objective{font-size:12px}#bottom{bottom:8px;font-size:11px}}
 </style>
 </head>
 <body>
-<header><h1>⚔️ DUNGEON ESCAPE</h1>OPEN WORLD EDITION</header>
+<canvas id="game"></canvas>
 <div id="hud">
-<span>❤️ Health: <b id="hp">100</b></span>
-<span>⭐ Gold: <b id="gold">0</b></span>
-<span>👹 Enemies: <b id="enemies">0</b></span>
-<span>🗺️ <b id="area">Forest</b></span>
+ <div id="top" class="panel">
+  <div id="title">DUNGEON ESCAPE <span style="color:#9dd9ae">• EASTER EGG QUEST</span></div>
+  <div id="objective">Quest: Discover the forest's secret.</div>
+  <div id="stats">Eggs: 0/5 · Clues: 0/4 · Power: OFF</div>
+ </div>
+ <button id="questButton">📜 QUEST LOG</button>
+ <div id="questPanel" class="panel">
+  <h3>Quest Journal</h3>
+  <p id="journal"></p>
+  <p><b>Controls</b><br>WASD / arrow keys: Move<br>I: Interact with nearby objects<br>Space: Swing sword / break cracked walls<br>Q: Toggle quest journal<br>Explore carefully. Some secrets are hidden in plain sight.</p>
+  <button id="closeQuest">Close</button>
+  <button id="reset">Reset Quest</button>
+ </div>
+ <div id="message"></div>
+ <div id="bottom" class="panel">WASD / ARROWS: MOVE · I: INTERACT · SPACE: SWORD · Q: QUEST LOG <span id="toast"></span></div>
+ <div id="mobile">
+  <span></span><button data-key="ArrowUp">▲</button><span></span>
+  <button data-key="ArrowLeft">◀</button><button data-key="ArrowDown">▼</button><button data-key="ArrowRight">▶</button>
+ </div>
+ <div id="actions"><button data-key="i">I · INTERACT</button><button data-key=" ">⚔ SWORD</button></div>
 </div>
-<canvas id="game" width="800" height="500"></canvas>
-<div id="message">Explore the forest. Find the stone dungeon entrance!</div>
-<div id="help">Move: WASD / Arrow keys · Sword: SPACE · Interact: E · Restart: R</div>
-<button id="start">START ADVENTURE</button>
-<button id="restart">RESTART</button>
-<p><a href="../../../">← Back to MattBread Arcade</a></p>
 <script>
 (()=>{
 "use strict";
 const canvas=document.getElementById("game"),ctx=canvas.getContext("2d");
 const $=id=>document.getElementById(id);
-const TILE=32;
-const WORLD={w:2400,h:1800};
-let player,keys={},enemies,chests,obstacles,doors,area,camera,started,dead,won,gold,swing,attackTime,lastTime;
-const rand=(a,b)=>a+Math.random()*(b-a);
-function rectHit(a,b){return a.x-a.r<b.x+b.w&&a.x+a.r>b.x&&a.y-a.r<b.y+b.h&&a.y+a.r>b.y}
-function say(s){$("message").textContent=s}
-function makeWorld(){
- obstacles=[];enemies=[];chests=[];doors=[];
- // Forest boundaries and scattered trees/rocks
- for(let i=0;i<95;i++){
-  let x=rand(50,WORLD.w-70),y=rand(50,WORLD.h-70);
-  if(Math.hypot(x-200,y-200)<150||Math.hypot(x-1160,y-850)<190)continue;
-  obstacles.push({x,y,w:rand(25,42),h:rand(25,42),kind:Math.random()<.75?"tree":"rock"});
+let W=1000,H=650,dpr=1;
+function resize(){dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+"px";canvas.style.height=H+"px";ctx.setTransform(dpr,0,0,dpr,0,0)}
+addEventListener("resize",resize);resize();
+
+const keys={};
+addEventListener("keydown",e=>{
+ let k=e.key.length===1?e.key.toLowerCase():e.key;
+ if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key))e.preventDefault();
+ keys[k]=true;
+ if(k==="i")interact();
+ if(k===" "&&!e.repeat)swing();
+ if(k==="q"&&!e.repeat)toggleJournal();
+});
+addEventListener("keyup",e=>{keys[e.key.length===1?e.key.toLowerCase():e.key]=false});
+document.querySelectorAll("[data-key]").forEach(b=>{
+ const k=b.dataset.key;
+ const down=e=>{e.preventDefault();keys[k]=true};
+ const up=e=>{e.preventDefault();keys[k]=false};
+ b.addEventListener("pointerdown",down);b.addEventListener("pointerup",up);
+ b.addEventListener("pointercancel",up);b.addEventListener("pointerleave",up);
+});
+$("questButton").onclick=toggleJournal;
+$("closeQuest").onclick=()=>$("questPanel").style.display="none";
+function toggleJournal(){$("questPanel").style.display=$("questPanel").style.display==="block"?"none":"block";updateJournal()}
+
+const saveKey="dungeonEggQuestV1";
+let saved=null;
+try{saved=JSON.parse(localStorage.getItem(saveKey)||"null")}catch(e){}
+let state=saved||{eggs:[],clues:[],switches:[],codePieces:[],power:false,altar:false,secret:false,ending:false,broken:[],opened:[],room:"forest",px:480,py:430,sword:0};
+const player={x:state.px||480,y:state.py||430,r:12,speed:190,faceX:0,faceY:1};
+let room=state.room||"forest",notice="",noticeTime=0,near=null,attackTime=0,flash=0;
+const rooms={forest:{w:2200,h:1600},dungeon:{w:1200,h:1000},crypt:{w:800,h:700},sanctum:{w:800,h:700}};
+const walls=[],things=[];
+function wall(x,y,w,h,type="wall",id=""){walls.push({x,y,w,h,type,id})}
+function thing(id,type,x,y,label,extra={}){things.push({id,type,x,y,label,...extra})}
+function clearWorld(){walls.length=0;things.length=0}
+function buildForest(){
+ clearWorld();let r=rooms.forest;
+ // Boundary walls
+ wall(0,0,r.w,35);wall(0,r.h-35,r.w,35);wall(0,0,35,r.h);wall(r.w-35,0,35,r.h);
+ // Forest trees and clearings
+ for(let i=0;i<105;i++){
+  let x=70+((i*193+Math.sin(i*17)*73+2200)%2040),y=70+((i*277+Math.cos(i*9)*81+1600)%1440);
+  if(Math.abs(x-480)<180&&Math.abs(y-430)<150)continue;
+  if(Math.abs(x-1120)<180&&Math.abs(y-800)<160)continue;
+  wall(x,y,28,28,"tree","tree"+i);
  }
- // River and crossing bridge
- obstacles.push({x:1000,y:0,w:65,h:690,kind:"water"});
- obstacles.push({x:1000,y:820,w:65,h:980,kind:"water"});
- // Dungeon exterior entrance
- obstacles.push({x:1090,y:700,w:270,h:35,kind:"wall"});
- obstacles.push({x:1090,y:700,w:35,h:220,kind:"wall"});
- obstacles.push({x:1325,y:700,w:35,h:220,kind:"wall"});
- obstacles.push({x:1090,y:885,w:95,h:35,kind:"wall"});
- obstacles.push({x:1270,y:885,w:90,h:35,kind:"wall"});
- doors.push({x:1185,y:878,w:85,h:18,to:"Dungeon",tx:220,ty:160,open:false});
- for(let i=0;i<17;i++)enemies.push({x:rand(100,WORLD.w-100),y:rand(100,WORLD.h-100),hp:2,max:2,speed:rand(.35,.65),kind:"slime",hurt:0});
- for(let i=0;i<14;i++)chests.push({x:rand(100,WORLD.w-100),y:rand(100,WORLD.h-100),taken:false});
+ // Ancient ruin and dungeon entrance
+ wall(1030,690,300,30);wall(1030,690,30,230);wall(1300,690,30,230);wall(1030,890,75,30);wall(1190,890,140,30);
+ thing("dungeonDoor","door",1135,895,"Ancient dungeon entrance",{target:"dungeon",tx:580,ty:850});
+ // River and bridge
+ wall(700,0,55,630,"water","river1");wall(700,760,55,840,"water","river2");
+ thing("bridge","bridge",727,690,"Old wooden bridge");
+ // Shrine in forest
+ wall(360,210,210,24);wall(360,210,24,140);wall(546,210,24,140);wall(360,326,65,24);wall(490,326,80,24);
+ thing("forestShrine","altar",465,320,"Weathered forest shrine");
+ thing("egg1","egg",260,190,"Golden egg");
+ thing("egg2","egg",1580,250,"Golden egg");
+ thing("clue1","clue",530,500,"Carved stone");
+ thing("clue2","clue",850,1060,"Old journal");
+ thing("switch1","switch",1440,1100,"Power switch");
+ thing("secretWall","secretwall",1770,760,"Cracked ancient wall");
+ thing("note1","note",1840,760,"Hidden inscription");
+ thing("chest1","chest",330,1190,"Forest chest");
+ thing("cryptDoor","door",1860,1260,"Overgrown crypt door",{target:"crypt",tx:390,ty:610,requires:"clue2"});
+ thing("hiddenDoor","secretdoor",1670,760,"Concealed passage",{target:"sanctum",tx:400,ty:620,requires:"power"});
 }
-function makeDungeon(){
- // Local coordinates for dungeon room complex
- obstacles=[
- {x:0,y:0,w:800,h:30,kind:"wall"},{x:0,y:0,w:30,h:500,kind:"wall"},
- {x:770,y:0,w:30,h:500,kind:"wall"},{x:0,y:470,w:800,h:30,kind:"wall"},
- {x:220,y:30,w:24,h:150,kind:"wall"},{x:220,y:250,w:24,h:100,kind:"wall"},
- {x:220,y:420,w:24,h:50,kind:"wall"},
- {x:244,y:180,w:170,h:24,kind:"wall"},{x:390,y:204,w:24,h:100,kind:"wall"},
- {x:414,y:280,w:170,h:24,kind:"wall"},{x:560,y:304,w:24,h:100,kind:"wall"},
- {x:584,y:380,w:186,h:24,kind:"wall"}
- ];
- enemies=[
- {x:130,y:125,hp:3,max:3,speed:.45,kind:"skeleton",hurt:0},
- {x:330,y:110,hp:3,max:3,speed:.5,kind:"skeleton",hurt:0},
- {x:480,y:235,hp:4,max:4,speed:.48,kind:"skeleton",hurt:0},
- {x:675,y:330,hp:8,max:8,speed:.65,kind:"boss",hurt:0}
- ];
- chests=[{x:120,y:350,taken:false},{x:330,y:370,taken:false},{x:670,y:430,taken:false}];
- doors=[{x:355,y:30,w:75,h:20,to:"Forest",tx:1225,ty:960,open:true}];
+function buildDungeon(){
+ clearWorld();let r=rooms.dungeon;
+ wall(0,0,r.w,30);wall(0,r.h-30,r.w,30);wall(0,0,30,r.h);wall(r.w-30,0,30,r.h);
+ // Chamber walls with gaps for doors
+ wall(160,120,880,28);wall(160,120,28,280);wall(1012,120,28,280);wall(160,372,180,28);wall(460,372,580,28);
+ wall(160,500,880,28);wall(160,500,28,260);wall(1012,500,28,260);wall(160,732,300,28);wall(600,732,440,28);
+ // Pillars
+ for(let x of [300,480,700,880])for(let y of [240,620])wall(x,y,34,34,"pillar");
+ thing("returnDoor","door",390,385,"Return to forest",{target:"forest",tx:1160,ty:950});
+ thing("egg3","egg",550,190,"Golden egg");
+ thing("clue3","clue",870,280,"Stone tablet");
+ thing("switch2","switch",930,660,"Generator switch");
+ thing("switch3","switch",250,660,"Rune switch");
+ thing("chest2","chest",810,440,"Ancient chest");
+ thing("code1","code",390,280,"First code fragment");
+ thing("secretWall2","secretwall",1000,430,"Cracked dungeon wall");
+ thing("cryptDoor2","door",560,760,"Sealed crypt door",{target:"crypt",tx:390,ty:610,requires:"power"});
+ thing("altar2","altar",600,850,"Main quest altar");
 }
-function reset(){
- player={x:200,y:200,r:11,speed:2.6,faceX:1,faceY:0,health:100,invuln:0};
- area="Forest";gold=0;started=false;dead=false;won=false;swing=0;attackTime=0;
- makeWorld();camera={x:0,y:0};updateHUD();draw();
- say("Press START ADVENTURE to explore the open world.");
- $("start").textContent="START ADVENTURE";
+function buildCrypt(){
+ clearWorld();let r=rooms.crypt;
+ wall(0,0,r.w,28);wall(0,r.h-28,r.w,28);wall(0,0,28,r.h);wall(r.w-28,0,28,r.h);
+ wall(120,120,560,25);wall(120,120,25,260);wall(655,120,25,260);wall(120,355,170,25);wall(400,355,280,25);
+ wall(120,470,560,25);
+ thing("cryptReturn","door",390,625,"Return to forest",{target:"forest",tx:1820,ty:1260});
+ thing("egg4","egg",390,220,"Golden egg");
+ thing("clue4","clue",560,300,"Crypt inscription");
+ thing("switch4","switch",390,420,"Crypt power switch");
+ thing("code2","code",230,420,"Second code fragment");
+ thing("chest3","chest",550,550,"Burial chest");
+ thing("cryptAltar","altar",390,320,"Burial altar");
+ thing("egg5","egg",80,620,"Hidden golden egg");
 }
-function updateHUD(){
- $("hp").textContent=Math.max(0,Math.ceil(player.health));
- $("gold").textContent=gold;
- $("enemies").textContent=enemies.length;
- $("area").textContent=area;
+function buildSanctum(){
+ clearWorld();let r=rooms.sanctum;
+ wall(0,0,r.w,28);wall(0,r.h-28,r.w,28);wall(0,0,28,r.h);wall(r.w-28,0,28,r.h);
+ wall(110,110,580,25);wall(110,110,25,450);wall(665,110,25,450);wall(110,535,190,25);wall(500,535,190,25);
+ thing("sanctumReturn","door",400,620,"Return to forest",{target:"forest",tx:1640,ty:800});
+ thing("ultimateEgg","ultimate",400,270,"The impossible egg");
+ thing("finalAltar","finalaltar",400,400,"The ancient final altar");
+ thing("finalNote","note",250,480,"The final secret");
 }
+function buildRoom(){({forest:buildForest,dungeon:buildDungeon,crypt:buildCrypt,sanctum:buildSanctum}[room]||buildForest)();player.x=Math.max(45,Math.min(rooms[room].w-45,player.x));player.y=Math.max(45,Math.min(rooms[room].h-45,player.y))}
+function persist(){state.room=room;state.px=player.x;state.py=player.y;try{localStorage.setItem(saveKey,JSON.stringify(state))}catch(e){}}
+function has(id){return state.eggs.includes(id)||state.clues.includes(id)||state.switches.includes(id)||state.opened.includes(id)||state.broken.includes(id)}
+function objective(){
+ if(!state.clues.includes("clue1"))return "Explore the forest and discover the first ancient clue.";
+ if(!state.eggs.includes("egg1"))return "Find the first golden egg hidden near the forest shrine.";
+ if(!state.clues.includes("clue2"))return "Find the old journal in the eastern forest.";
+ if(!state.switches.includes("switch1"))return "Activate the forest power switch.";
+ if(!state.power)return "Find the generator and restore ancient power in the dungeon.";
+ if(!state.clues.includes("clue3"))return "Find the tablet inside the dungeon.";
+ if(!state.switches.includes("switch2")||!state.switches.includes("switch3"))return "Activate both dungeon switches.";
+ if(!state.clues.includes("clue4"))return "Enter the crypt and uncover its inscription.";
+ if(!state.switches.includes("switch4"))return "Activate the crypt's hidden power switch.";
+ if(!state.altar)return "Return to the ancient altar and begin the ritual.";
+ if(!state.secret)return "Find the concealed passage in the forest.";
+ if(!state.ending)return "Enter the sanctum and interact with the final altar.";
+ return "Main quest complete! Search for the ultimate hidden egg.";
+}
+function updateUI(){
+ $("objective").textContent="Quest: "+objective();
+ $("stats").textContent=`Eggs: ${state.eggs.filter(x=>/^egg/.test(x)).length}/5 · Clues: ${state.clues.filter(x=>/^clue/.test(x)).length}/4 · Power: ${state.power?"ON":"OFF"}`;
+ updateJournal();
+}
+function updateJournal(){
+ $("journal").innerHTML=`<b>Main objective</b><br>${objective()}<hr>
+ <b>Golden eggs</b>: ${state.eggs.filter(x=>/^egg/.test(x)).length}/5<br>
+ <b>Clues discovered</b>: ${state.clues.filter(x=>/^clue/.test(x)).length}/4<br>
+ <b>Power restored</b>: ${state.power?"Yes":"No"}<br>
+ <b>Switches activated</b>: ${state.switches.length}/4<br>
+ <b>Cracked walls opened</b>: ${state.broken.length}<br>
+ <b>Secret passage</b>: ${state.secret?"Discovered":"Unknown"}<br>
+ <b>Main quest</b>: ${state.ending?"Complete":"In progress"}<hr>
+ <small>Hints: inspect shrines and inscriptions. The sword can break cracked walls. Some doors require clues or restored power. Return to earlier rooms after finding new clues.</small>`;
+}
+function say(s,t=3){notice=s;noticeTime=t}
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
 function blocked(x,y){
- const p={x,y,r:player.r};
- if(x<player.r||y<player.r||x>(area==="Forest"?WORLD.w:800)-player.r||y>(area==="Forest"?WORLD.h:500)-player.r)return true;
- return obstacles.some(o=>o.kind!=="water"&&rectHit(p,o));
-}
-function enterDoor(d){
- if(d.to==="Dungeon"){
-  area="Dungeon";player.x=395;player.y=420;makeDungeon();
-  say("Dungeon entered! Defeat the skeletons and find the treasure.");
- }else{
-  area="Forest";player.x=1225;player.y=950;makeWorld();
-  say("You're back in the forest. Explore and find more treasure!");
+ if(x<40||y<40||x>rooms[room].w-40||y>rooms[room].h-40)return true;
+ for(const w of walls){
+  if(w.type==="water"){
+   if(x>w.x-7&&x<w.x+w.w+7&&y>w.y-7&&y<w.y+w.h+7){
+    if(room==="forest"&&x>685&&x<775&&y>630&&y<760)continue;
+    return true;
+   }
+   continue;
+  }
+  if(x+player.r>w.x&&x-player.r<w.x+w.w&&y+player.r>w.y&&y-player.r<w.y+w.h)return true;
  }
- updateHUD();
+ return false;
+}
+function activeThings(){
+ return things.filter(t=>!state.eggs.includes(t.id)&&!state.clues.includes(t.id)&&!state.opened.includes(t.id)&&!state.broken.includes(t.id)&&!(t.type==="switch"&&state.switches.includes(t.id)));
+}
+function closest(){
+ let best=null,bd=75;
+ for(const t of activeThings()){let d=dist(player,t);if(d<bd){best=t;bd=d}}
+ return best;
 }
 function interact(){
- if(!started||dead)return;
- for(const d of doors){
-  if(Math.hypot(player.x-(d.x+d.w/2),player.y-(d.y+d.h/2))<65){
-   enterDoor(d);return;
+ const t=closest();if(!t){say("Nothing nearby to interact with.");return}
+ if(t.requires==="clue2"&&!state.clues.includes("clue2")){say("The entrance is sealed. Find the old journal first.");return}
+ if(t.requires==="power"&&!state.power){say("This mechanism has no power. Restore power first.");return}
+ switch(t.type){
+ case "egg":state.eggs.push(t.id);say("🥚 Golden egg collected! "+state.eggs.filter(x=>/^egg/.test(x)).length+"/5");break;
+ case "ultimate":
+  if(!state.ending){say("The impossible egg hums with ancient energy. The final secret is close.");state.eggs.push(t.id)}
+  else{say("The ultimate Easter egg! You discovered every layer of the mystery.");state.secret=true}
+  break;
+ case "clue":
+ case "note":
+  state.clues.push(t.id);say(({clue1:"Clue found: The shrine answers to the old forest power.",clue2:"Journal: 'When the forest wakes, the buried doors shall open.'",clue3:"Tablet: 'Two runes and a living generator awaken the altar.'",clue4:"Crypt inscription: 'The ritual begins only when all four switches sing.'",note1:"Inscription: 'A cracked wall hides a road where roots cannot reach.'",finalNote:"Final secret: 'The true prize waits where the first light falls.'"}[t.id]||"You discovered a clue."));break;
+ case "switch":
+  state.switches.push(t.id);say("Switch activated! "+state.switches.length+"/4 ancient mechanisms active.");
+  if(state.switches.includes("switch1")&&state.switches.includes("switch2")&&state.switches.includes("switch3")){state.power=true;say("⚡ POWER RESTORED! Ancient doors are waking.");}
+  if(state.switches.includes("switch4")&&state.power){say("The crypt's power joins the ritual. Return to the main altar.");}
+  break;
+ case "chest":
+  state.opened.push(t.id);
+  if(!state.eggs.includes("egg"+(state.eggs.filter(x=>/^egg/.test(x)).length+1))&&state.eggs.filter(x=>/^egg/.test(x)).length<5){say("Chest opened! A golden egg was hidden inside.");state.eggs.push("egg"+(state.eggs.filter(x=>/^egg/.test(x)).length+1))}
+  else{say("Chest opened. You found an old clue.");state.codePieces.push(t.id)}
+  break;
+ case "door":
+  if(t.id==="cryptDoor"||t.id==="cryptDoor2"){
+   if(!state.power){say("The crypt door is sealed without power.");return}
+   if(!state.clues.includes("clue3")){say("A tablet may explain how to open this door.");return}
   }
+  if(t.target==="sanctum"&&!state.power){say("The hidden door is dormant. Restore the ancient power first.");return}
+  room=t.target;player.x=t.tx;player.y=t.ty;buildRoom();say("Entered: "+room.toUpperCase());break;
+ case "secretdoor":
+  state.secret=true;room=t.target;player.x=t.tx;player.y=t.ty;buildRoom();say("SECRET ROOM DISCOVERED!");break;
+ case "secretwall":
+  say("The wall is cracked. Strike it with your sword!");return;
+ case "altar":
+  if(t.id==="forestShrine"){
+   if(!state.clues.includes("clue1"))say("The shrine is covered in symbols. Find the carved stone nearby.");
+   else{state.altar=true;say("The shrine glows. A distant mechanism awakens.");}
+  }else{
+   if(!state.power||!state.switches.includes("switch3")||!state.switches.includes("switch4")||!state.clues.includes("clue4")){say("The altar needs power, both runes, and the crypt inscription.");return}
+   state.altar=true;say("RITUAL COMPLETE! A hidden passage stirs in the forest.");
+  }break;
+ case "finalaltar":
+  if(!state.altar||!state.secret){say("The final altar needs the completed ritual and the hidden passage.");return}
+  if(state.eggs.filter(x=>/^egg/.test(x)).length<5||state.clues.filter(x=>/^clue/.test(x)).length<4){say("The altar demands five eggs and four ancient clues.");return}
+  state.ending=true;say("🏆 QUEST COMPLETE! The vault opens. You uncovered the ancient secret!");
+  break;
+ case "bridge":say("The bridge crosses the river. Search both sides for clues.");return;
+ default:say("You examine "+t.label+".");break;
  }
- let c=chests.find(c=>!c.taken&&Math.hypot(player.x-c.x,player.y-c.y)<45);
- if(c){c.taken=true;const prize=area==="Dungeon"?75:35;gold+=prize;say("Treasure found! +"+prize+" gold.");updateHUD();return;}
- say("Nothing nearby. Look for a door or treasure chest.");
+ updateUI();persist();
 }
-function attack(){
- if(!started||dead||won||performance.now()-attackTime<360)return;
- attackTime=performance.now();swing=14;
- let hit=false;
- for(const e of [...enemies]){
-  const dx=e.x-player.x,dy=e.y-player.y;
-  const forward=dx*player.faceX+dy*player.faceY;
-  const side=Math.abs(dx*player.faceY-dy*player.faceX);
-  if(forward>-10&&forward<54&&side<32){
-   e.hp--;e.hurt=10;hit=true;
-   if(e.hp<=0){
-    enemies=enemies.filter(x=>x!==e);gold+=e.kind==="boss"?250:15;
-    say(e.kind==="boss"?"BOSS DEFEATED! +250 gold!":"Monster defeated! +15 gold.");
-   }else say("Sword strike! Enemy health reduced.");
-  }
+function swing(){
+ attackTime=.24;
+ let target=things.find(t=>t.type==="secretwall"&&!state.broken.includes(t.id)&&dist(player,t)<65);
+ if(target){
+  state.broken.push(target.id);
+  // Open a wall gap for the hidden passage
+  walls.splice(0,walls.length,...walls.filter(w=>!(w.id===target.id)));
+  if(target.id==="secretWall"){state.secret=true;say("CRACK! The wall breaks, revealing a hidden passage!");}
+  else say("CRACK! The ancient wall crumbles.");
+  updateUI();persist();return;
  }
- if(!hit)say("Sword slash! Get closer and face your enemy.");
- updateHUD();
- if(enemies.length===0&&area==="Dungeon"){
-  won=true;started=false;say("DUNGEON CLEARED! You defeated every monster!");
- }
+ say("You swing your sword. No enemies nearby.");
 }
-function drawTree(x,y){
- ctx.fillStyle="#4a2c20";ctx.fillRect(x-5,y+4,10,16);
- ctx.fillStyle="#124a37";ctx.beginPath();ctx.arc(x,y,19,0,Math.PI*2);ctx.fill();
- ctx.fillStyle="#23734a";ctx.beginPath();ctx.arc(x-5,y-6,12,0,Math.PI*2);ctx.fill();
+function update(dt){
+ let dx=0,dy=0;
+ if(keys.w||keys.W||keys.ArrowUp)dy--;
+ if(keys.s||keys.S||keys.ArrowDown)dy++;
+ if(keys.a||keys.A||keys.ArrowLeft)dx--;
+ if(keys.d||keys.D||keys.ArrowRight)dx++;
+ if(dx||dy){
+  let len=Math.hypot(dx,dy);dx/=len;dy/=len;player.faceX=dx;player.faceY=dy;
+  let nx=player.x+dx*player.speed*dt,ny=player.y+dy*player.speed*dt;
+  if(!blocked(nx,player.y))player.x=nx;
+  if(!blocked(player.x,ny))player.y=ny;
+ }
+ attackTime=Math.max(0,attackTime-dt);
+ noticeTime=Math.max(0,noticeTime-dt);
+ near=closest();
+ if(near&&noticeTime<=0)notice="Press I: "+near.label;
+ else if(!near&&noticeTime<=0)notice="";
+ if(room==="dungeon"&&state.switches.includes("switch1")&&state.switches.includes("switch2")&&state.switches.includes("switch3"))state.power=true;
+ persist();
 }
 function draw(){
- const w=canvas.width,h=canvas.height;
- ctx.clearRect(0,0,w,h);
- const worldW=area==="Forest"?WORLD.w:800,worldH=area==="Forest"?WORLD.h:500;
- camera.x=Math.max(0,Math.min(worldW-w,player.x-w/2));
- camera.y=Math.max(0,Math.min(worldH-h,player.y-h/2));
- ctx.save();ctx.translate(-camera.x,-camera.y);
- if(area==="Forest"){
-  ctx.fillStyle="#286541";ctx.fillRect(camera.x,camera.y,w,h);
-  // Subtle grass
-  ctx.fillStyle="#34764a";
-  for(let y=Math.floor(camera.y/64)*64;y<camera.y+h+64;y+=64)
-   for(let x=Math.floor(camera.x/64)*64;x<camera.x+w+64;x+=64){ctx.fillRect(x+8,y+12,3,3);ctx.fillRect(x+35,y+40,2,2);}
-  // River and bridge
-  ctx.fillStyle="#287da2";ctx.fillRect(1000,0,65,WORLD.h);
-  ctx.fillStyle="#3c9fc0";for(let y=0;y<WORLD.h;y+=35)ctx.fillRect(1012,y,3,18);
-  ctx.fillStyle="#92613b";ctx.fillRect(987,690,91,130);
-  ctx.fillStyle="#c18a51";for(let y=700;y<820;y+=20)ctx.fillRect(990,y,85,4);
- }else{
-  ctx.fillStyle="#242a33";ctx.fillRect(0,0,800,500);
-  for(let y=0;y<500;y+=32)for(let x=0;x<800;x+=32){
-   ctx.fillStyle=((x+y)/32)%2?"#3c424a":"#343a43";ctx.fillRect(x,y,32,32);
+ ctx.clearRect(0,0,W,H);
+ const world=rooms[room],scale=Math.min(W/world.w,H/world.h,1.4);
+ const zoom=Math.min(1.3,Math.max(.72,Math.min(W/900,H/600)));
+ const s=zoom;
+ const camX=Math.max(0,Math.min(world.w-W/s,player.x-W/(2*s)));
+ const camY=Math.max(0,Math.min(world.h-H/s,player.y-H/(2*s)));
+ ctx.save();ctx.scale(s,s);ctx.translate(-camX,-camY);
+ // Ground
+ ctx.fillStyle=room==="forest"?"#244b2f":room==="dungeon"?"#30343b":room==="crypt"?"#292b32":"#252239";
+ ctx.fillRect(camX,camY,W/s,H/s);
+ // Floor texture
+ for(let x=Math.floor(camX/90)*90;x<camX+W/s;x+=90)for(let y=Math.floor(camY/90)*90;y<camY+H/s;y+=90){
+  ctx.fillStyle=((x+y)/90)%2?"#ffffff08":"#00000008";ctx.fillRect(x,y,88,88);
+  if(room==="forest"){ctx.fillStyle="#94a86a18";ctx.fillRect(x+20,y+25,3,3);ctx.fillRect(x+58,y+61,2,2)}
+ }
+ // River
+ if(room==="forest"){ctx.fillStyle="#286a8a";ctx.fillRect(700,0,55,1600);ctx.fillStyle="#7dc9d933";for(let y=0;y<1600;y+=35)ctx.fillRect(708,y,35,2);ctx.fillStyle="#98734c";ctx.fillRect(680,630,95,130);for(let y=638;y<755;y+=17){ctx.fillStyle="#d4b07a";ctx.fillRect(684,y,87,4)}}
+ // Things drawn behind walls
+ for(const t of things){
+  if(state.eggs.includes(t.id)||state.clues.includes(t.id)||state.opened.includes(t.id)||state.broken.includes(t.id))continue;
+  if(t.type==="switch"&&state.switches.includes(t.id))continue;
+  let x=t.x,y=t.y;
+  ctx.save();
+  if(t.type==="egg"||t.type==="ultimate"){ctx.fillStyle="#f5d85d";ctx.shadowColor="#f6da60";ctx.shadowBlur=18;ctx.beginPath();ctx.ellipse(x,y,9,13,0,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle="#fff3aa";ctx.beginPath();ctx.ellipse(x-3,y-4,2,4,0,0,Math.PI*2);ctx.fill()}
+  else if(t.type==="clue"||t.type==="note"||t.type==="code"){ctx.fillStyle="#d6c58b";ctx.fillRect(x-9,y-7,18,14);ctx.fillStyle="#4d4434";ctx.fillRect(x-5,y-3,10,2);ctx.fillRect(x-5,y+2,7,2)}
+  else if(t.type==="switch"){ctx.fillStyle=state.switches.includes(t.id)?"#6cf2a2":"#6c9b9a";ctx.fillRect(x-12,y-12,24,24);ctx.fillStyle="#d8ffe4";ctx.fillRect(x-3,y-7,6,14)}
+  else if(t.type==="chest"){ctx.fillStyle="#8b542b";ctx.fillRect(x-16,y-11,32,22);ctx.fillStyle="#e6bc55";ctx.fillRect(x-16,y-3,32,5);ctx.fillRect(x-3,y-3,6,8)}
+  else if(t.type==="door"||t.type==="secretdoor"){ctx.fillStyle=t.type==="secretdoor"?"#6f5d96":"#79523a";ctx.fillRect(x-20,y-13,40,26);ctx.strokeStyle="#dfbd76";ctx.lineWidth=3;ctx.strokeRect(x-20,y-13,40,26);ctx.fillStyle="#ffdf88";ctx.fillRect(x+9,y-1,3,3)}
+  else if(t.type==="altar"||t.type==="finalaltar"){ctx.fillStyle="#747e8b";ctx.fillRect(x-22,y-17,44,34);ctx.fillStyle=state.altar?"#65edc0":"#4e8da2";ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.fill()}
+  else if(t.type==="secretwall"){ctx.fillStyle="#6d6b61";ctx.fillRect(x-18,y-16,36,32);ctx.strokeStyle="#1c1c20";ctx.beginPath();ctx.moveTo(x-6,y-13);ctx.lineTo(x+3,y-2);ctx.lineTo(x-4,y+7);ctx.lineTo(x+8,y+14);ctx.stroke()}
+  else if(t.type==="bridge"){ctx.fillStyle="#a67c52";ctx.fillRect(x-40,y-55,80,110)}
+  ctx.restore();
+ }
+ // Walls / trees
+ for(const w of walls){
+  if(w.x+w.w<camX||w.y+w.h<camY||w.x>camX+W/s||w.y>camY+H/s)continue;
+  if(w.type==="water")continue;
+  if(w.type==="tree"){
+   ctx.fillStyle="#153520";ctx.beginPath();ctx.arc(w.x+w.w/2,w.y+w.h/2+5,22,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle="#2c6b3c";ctx.beginPath();ctx.arc(w.x+w.w/2,w.y+w.h/2-5,20,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle="#4d8750";ctx.beginPath();ctx.arc(w.x+w.w/2-5,w.y+w.h/2-10,9,0,Math.PI*2);ctx.fill();
+  }else{
+   ctx.fillStyle=w.type==="pillar"?"#545a63":"#565d63";ctx.fillRect(w.x,w.y,w.w,w.h);
+   ctx.strokeStyle="#8a9194";ctx.strokeRect(w.x,w.y,w.w,w.h);
   }
  }
- // Objects
- for(const o of obstacles){
-  if(o.x<camera.x-70||o.y<camera.y-70||o.x>camera.x+w+70||o.y>camera.y+h+70)continue;
-  if(o.kind==="tree")drawTree(o.x+o.w/2,o.y+o.h/2);
-  else if(o.kind==="rock"){ctx.fillStyle="#818b91";ctx.beginPath();ctx.ellipse(o.x+o.w/2,o.y+o.h/2,o.w/2,o.h/2,0,0,Math.PI*2);ctx.fill();}
-  else if(o.kind==="water"){ctx.fillStyle="#247ba0";ctx.fillRect(o.x,o.y,o.w,o.h);}
-  else{ctx.fillStyle="#626b76";ctx.fillRect(o.x,o.y,o.w,o.h);ctx.fillStyle="#84919c";ctx.fillRect(o.x,o.y,o.w,5);}
+ // Player
+ ctx.fillStyle="#0008";ctx.beginPath();ctx.ellipse(player.x,player.y+9,12,6,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#d6a26e";ctx.beginPath();ctx.arc(player.x,player.y-4,8,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#356bb1";ctx.fillRect(player.x-9,player.y+3,18,16);
+ ctx.fillStyle="#26364b";ctx.fillRect(player.x-10,player.y+16,7,9);ctx.fillRect(player.x+3,player.y+16,7,9);
+ ctx.fillStyle="#f1e6ce";ctx.fillRect(player.x-6,player.y-6,3,2);ctx.fillRect(player.x+3,player.y-6,3,2);
+ if(attackTime>0){
+  ctx.strokeStyle="#e8e8d8";ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(player.x+player.faceX*8,player.y+player.faceY*8);ctx.lineTo(player.x+player.faceX*36-player.faceY*14,player.y+player.faceY*36+player.faceX*14);ctx.stroke();
  }
- if(area==="Forest"){
-  // Entrance building
-  ctx.fillStyle="#4c5058";ctx.fillRect(1090,700,270,220);
-  ctx.fillStyle="#737b86";ctx.fillRect(1110,720,230,180);
-  ctx.fillStyle="#292e36";ctx.fillRect(1180,850,90,60);
-  ctx.fillStyle="#b1a07c";ctx.fillRect(1185,855,80,55);
-  ctx.fillStyle="#2b201b";ctx.fillRect(1195,865,60,45);
-  ctx.fillStyle="#f8d77c";ctx.fillRect(1243,883,4,4);
-  ctx.fillStyle="#fff";ctx.font="bold 14px Arial";ctx.fillText("DUNGEON",1168,744);
- }else{
-  ctx.fillStyle="#f0b45c";ctx.fillRect(345,18,110,20);
-  ctx.fillStyle="#432a1b";ctx.fillRect(365,20,70,15);
- }
- for(const d of doors){
-  ctx.fillStyle="#b27b40";ctx.fillRect(d.x,d.y,d.w,d.h);
-  ctx.fillStyle="#ffdc82";ctx.fillRect(d.x+d.w-13,d.y+d.h/2-3,4,6);
- }
- for(const c of chests){
-  if(c.taken)continue;
-  ctx.fillStyle="#6c3d20";ctx.fillRect(c.x-12,c.y-9,24,18);
-  ctx.fillStyle="#edb34b";ctx.fillRect(c.x-12,c.y-10,24,6);
-  ctx.fillStyle="#ffe9a4";ctx.fillRect(c.x-2,c.y-5,4,7);
- }
- for(const e of enemies){
-  ctx.fillStyle=e.hurt>0?"#fff":e.kind==="boss"?"#9e3bd2":e.kind==="skeleton"?"#c6c6b6":"#58d76b";
-  ctx.beginPath();ctx.arc(e.x,e.y,e.kind==="boss"?19:13,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle="#25252a";ctx.fillRect(e.x-8,e.y-4,5,5);ctx.fillRect(e.x+3,e.y-4,5,5);
-  ctx.fillStyle="#641e2c";ctx.fillRect(e.x-15,e.y-23,30,4);
-  ctx.fillStyle="#70ff77";ctx.fillRect(e.x-15,e.y-23,30*Math.max(0,e.hp/e.max),4);
- }
- // Player shadow and body
- ctx.fillStyle="#14241d";ctx.beginPath();ctx.ellipse(player.x,player.y+9,13,7,0,0,Math.PI*2);ctx.fill();
- ctx.fillStyle="#287bbd";ctx.fillRect(player.x-10,player.y-11,20,23);
- ctx.fillStyle="#f2c59a";ctx.fillRect(player.x-8,player.y-17,16,12);
- ctx.fillStyle="#4c2e22";ctx.fillRect(player.x-9,player.y-19,18,5);
- ctx.fillStyle="#fff";ctx.fillRect(player.x+player.faceX*5-4,player.y+player.faceY*5-11,3,3);
- // Sword points in facing direction, slash when attacking
- const sx=player.x+player.faceX*18,sy=player.y+player.faceY*18;
- ctx.save();ctx.translate(sx,sy);ctx.rotate(Math.atan2(player.faceY,player.faceX)+(swing>0?-.8:0));
- ctx.fillStyle="#76502c";ctx.fillRect(0,-3,12,6);
- ctx.fillStyle="#e1eaf5";ctx.beginPath();ctx.moveTo(10,-4);ctx.lineTo(35,0);ctx.lineTo(10,4);ctx.fill();
- ctx.fillStyle="#ffe58a";ctx.fillRect(8,-6,4,12);
+ if(near){ctx.strokeStyle="#ffe681";ctx.lineWidth=2;ctx.beginPath();ctx.arc(near.x,near.y,26,0,Math.PI*2);ctx.stroke()}
  ctx.restore();
- if(swing>0){
-  ctx.strokeStyle="#b8f8ff";ctx.lineWidth=4;ctx.beginPath();
-  ctx.arc(player.x,player.y,38,-.9+Math.atan2(player.faceY,player.faceX),.9+Math.atan2(player.faceY,player.faceX));ctx.stroke();
- }
- ctx.restore();
- if(!started&&!dead&&!won){
-  ctx.fillStyle="#06101bdc";ctx.fillRect(120,170,560,145);
-  ctx.fillStyle="#5ceaff";ctx.font="bold 30px Arial";ctx.textAlign="center";ctx.fillText("DUNGEON ESCAPE",400,218);
-  ctx.fillStyle="#fff";ctx.font="16px Arial";ctx.fillText("Explore the forest · Find the dungeon · Fight the boss",400,252);
-  ctx.fillText("Press START ADVENTURE",400,281);ctx.textAlign="left";
- }
- if(dead||won){
-  ctx.fillStyle="#06101bee";ctx.fillRect(120,170,560,145);
-  ctx.fillStyle=won?"#76ffac":"#ff657b";ctx.font="bold 28px Arial";ctx.textAlign="center";
-  ctx.fillText(won?"DUNGEON CLEARED!":"YOU FELL IN BATTLE",400,220);
-  ctx.fillStyle="#fff";ctx.font="16px Arial";ctx.fillText("Gold: "+gold+" · Press RESTART to play again",400,258);ctx.textAlign="left";
- }
+ $("message").textContent=notice;
+ if(state.ending){$("message").textContent="🏆 MAIN QUEST COMPLETE — THE ANCIENT SECRET IS YOURS!";$("message").style.color="#ffe681"}else $("message").style.color="#fff";
 }
-function tick(now){
- if(!started)return;
- const dt=Math.min(2,(now-lastTime)/16.67||1);lastTime=now;
- if(swing>0)swing-=dt;
- let dx=0,dy=0;
- if(keys.KeyA||keys.ArrowLeft)dx--;
- if(keys.KeyD||keys.ArrowRight)dx++;
- if(keys.KeyW||keys.ArrowUp)dy--;
- if(keys.KeyS||keys.ArrowDown)dy++;
- if(dx||dy){
-  const len=Math.hypot(dx,dy);dx=dx/len*player.speed*dt;dy=dy/len*player.speed*dt;
-  if(Math.abs(dx)>Math.abs(dy)){player.faceX=Math.sign(dx);player.faceY=0;}
-  else{player.faceX=0;player.faceY=Math.sign(dy);}
-  // Water is blocked except for the bridge
-  function isWater(x,y){
-   if(area!=="Forest")return false;
-   return x>1000&&x<1065&&!(y>685&&y<825);
-  }
-  if(!blocked(player.x+dx,player.y)&&!isWater(player.x+dx,player.y))player.x+=dx;
-  if(!blocked(player.x,player.y+dy)&&!isWater(player.x,player.y+dy))player.y+=dy;
+let last=performance.now();
+function loop(now){let dt=Math.min(.04,(now-last)/1000);last=now;update(dt);draw();requestAnimationFrame(loop)}
+// Reset quest deliberately clears this game's local save only.
+$("reset").onclick=()=>{
+ if(confirm("Reset all Dungeon Escape quest progress?")){
+  localStorage.removeItem(saveKey);state={eggs:[],clues:[],switches:[],codePieces:[],power:false,altar:false,secret:false,ending:false,broken:[],opened:[],room:"forest",px:480,py:430,sword:0};
+  room="forest";player.x=480;player.y=430;buildRoom();updateUI();say("Quest reset.");persist();
  }
- for(const e of enemies){
-  if(e.hurt>0)e.hurt-=dt;
-  const vx=player.x-e.x,vy=player.y-e.y,d=Math.hypot(vx,vy);
-  if(d>20&&d<330){
-   const ex=vx/d*e.speed*dt,ey=vy/d*e.speed*dt;
-   if(!blocked(e.x+ex,e.y))e.x+=ex;
-   if(!blocked(e.x,e.y+ey))e.y+=ey;
-  }else if(d<=24&&player.invuln<=0){
-   player.health-=e.kind==="boss"?12:5;player.invuln=40;
-   say("You were hit! Move away and swing your sword.");
-   updateHUD();
-   if(player.health<=0){player.health=0;dead=true;started=false;say("You were defeated. Press RESTART to try again.");updateHUD();draw();return;}
-  }
- }
- if(player.invuln>0)player.invuln-=dt;
- // Door prompts
- const d=doors.find(d=>Math.hypot(player.x-(d.x+d.w/2),player.y-(d.y+d.h/2))<60);
- if(d)say("Press E to enter "+d.to);
- draw();updateHUD();
- requestAnimationFrame(tick);
-}
-$("start").addEventListener("click",()=>{
- if(dead||won)reset();
- started=true;lastTime=performance.now();say("Explore! Space swings your sword. E opens nearby doors and treasure.");requestAnimationFrame(tick);
-});
-$("restart").addEventListener("click",reset);
-document.addEventListener("keydown",e=>{
- keys[e.code]=true;
- if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code))e.preventDefault();
- if(e.code==="Space")attack();
- if(e.code==="KeyE")interact();
- if(e.code==="KeyR")reset();
-});
-document.addEventListener("keyup",e=>keys[e.code]=false);
-canvas.addEventListener("pointerdown",()=>{
- if(started)attack();
-});
-reset();
+};
+buildRoom();updateUI();say("Find the ancient clues. Press I to interact.",5);requestAnimationFrame(loop);
 })();
 </script>
 </body>
