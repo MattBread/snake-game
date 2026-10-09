@@ -1,225 +1,134 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>MattBread Arcade</title>
-
-    <link rel="icon" type="image/png" href="ChatGPT%20Image%20Oct%202,%202026,%2005_50_43%20PM.png">
-
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
-            background: #0b0b0f;
-            color: white;
-        }
-
-        header {
-            text-align: center;
-            padding: 60px 20px 35px;
-        }
-
-        h1 {
-            margin: 0;
-            font-size: 52px;
-        }
-
-        header p {
-            color: #aaa;
-            font-size: 18px;
-            margin-top: 12px;
-        }
-
-        .games {
-            max-width: 1100px;
-            margin: 20px auto 70px;
-            padding: 20px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 22px;
-        }
-
-        .game-card {
-            display: block;
-            text-decoration: none;
-            color: white;
-            background: #15151c;
-            border: 1px solid #292933;
-            border-radius: 18px;
-            padding: 28px;
-            transition: 0.2s;
-        }
-
-        .game-card:hover {
-            transform: translateY(-5px);
-            border-color: #666;
-            background: #1b1b24;
-        }
-
-        .game-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-        }
-
-        .game-card h3 {
-            font-size: 25px;
-            margin: 0 0 10px;
-        }
-
-        .game-card p {
-            color: #aaa;
-            line-height: 1.5;
-            min-height: 48px;
-        }
-
-        .play {
-            margin-top: 22px;
-            font-weight: bold;
-            font-size: 15px;
-        }
-
-        .coming {
-            opacity: 0.55;
-        }
-
-        footer {
-            text-align: center;
-            color: #666;
-            padding: 30px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MattBread Arcade</title>
+<meta name="theme-color" content="#050b18">
+<style>
+:root{--bg:#050b18;--panel:#08172a;--blue:#00cfff;--gold:#ffbd43;--muted:#9bbbd4}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:#edf7ff;font-family:Consolas,"Courier New",monospace}
+a{color:inherit;text-decoration:none}
+header{height:auto;min-height:76px;padding:18px 5%;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;background:#030915;border-bottom:2px solid #123553}
+.logo{font-size:clamp(20px,3vw,30px);font-weight:900;letter-spacing:1px;color:#fff}
+.logo span{color:var(--blue);text-shadow:0 0 12px #00bfff}
+nav{display:flex;gap:22px;flex-wrap:wrap}
+nav a{color:var(--muted);font-weight:bold}
+nav a:hover{color:var(--blue)}
+.hero{min-height:430px;padding:60px 7%;display:grid;grid-template-columns:1fr 1.1fr;align-items:center;gap:35px;position:relative;overflow:hidden;background:radial-gradient(ellipse at 78% 45%,#563019 0%,#152039 28%,#071020 64%,#030812 100%);border-bottom:2px solid #123553}
+.hero:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,#030812 0%,transparent 75%)}
+.hero-copy,.dungeon-art{position:relative;z-index:1}
+.eyebrow{color:var(--blue);font-weight:bold;letter-spacing:4px}
+h1{font-size:clamp(42px,7vw,82px);line-height:.9;margin:18px 0;color:#f8f1e2;text-shadow:3px 4px 0 #583e2c}
+h1 span{display:block;color:var(--gold);margin-top:12px}
+.hero p{font-size:17px;line-height:1.7;color:#c1d1df;max-width:450px}
+.ribbon{display:inline-block;margin-top:16px;padding:13px 26px;background:#651b20;border:2px solid var(--gold);color:#fff4d5;font-size:clamp(18px,3vw,26px);font-weight:900;letter-spacing:4px;box-shadow:0 0 22px #b76a2640;transform:skew(-3deg)}
+.dungeon-art{min-height:290px;border:2px solid #6f5739;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:linear-gradient(180deg,#080d19aa,#080d19aa),url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=85') center/cover;box-shadow:0 0 35px #000b,0 0 25px #c47b2430}
+.art-label{text-align:center;padding:20px;text-shadow:0 3px 8px #000;font-size:clamp(20px,3vw,32px);font-weight:bold;letter-spacing:3px}
+.art-label small{display:block;color:var(--gold);font-size:14px;margin-top:15px}
+main{max-width:1400px;margin:auto;padding:42px 5% 65px}
+.section-title{text-align:center;color:#d5efff;font-size:clamp(24px,4vw,34px);letter-spacing:5px;margin:0 0 12px}
+.subtitle{text-align:center;color:var(--muted);margin:0 0 34px;font-family:Arial,sans-serif}
+.games{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:20px}
+.card{background:linear-gradient(150deg,#0b2037,#06101f);border:1px solid #174064;border-radius:12px;overflow:hidden;transition:transform .2s,border-color .2s,box-shadow .2s}
+.card:hover{transform:translateY(-5px);border-color:var(--blue);box-shadow:0 0 22px #00bfff30}
+.thumb{height:145px;display:flex;align-items:center;justify-content:center;font-size:64px;background:radial-gradient(circle at center,#173d5d,#071020 72%);border-bottom:1px solid #174064}
+.card-body{padding:18px;text-align:center}
+.card h3{margin:0 0 17px;font-size:18px;letter-spacing:1px}
+.play{display:block;padding:11px;border:1px solid var(--blue);border-radius:5px;color:var(--blue);font-weight:bold;letter-spacing:2px}
+.play:hover{background:var(--blue);color:#03101d}
+.soon-card{border-color:#966a2e}
+.soon-card .thumb{background:radial-gradient(circle,#4a2c1b,#100d13 75%)}
+.soon-card .play{border-color:var(--gold);color:var(--gold)}
+.soon-card .play:hover{background:var(--gold);color:#211306}
+footer{text-align:center;border-top:1px solid #17324b;padding:26px;color:#7898b3;font-size:13px}
+@media(max-width:760px){.hero{grid-template-columns:1fr;padding:45px 6%;gap:24px}.dungeon-art{min-height:210px}.hero:after{background:linear-gradient(180deg,#03081222,#03081288)}header{justify-content:center}nav{justify-content:center;gap:15px}}
+</style>
 </head>
-
 <body>
+<header>
+<a class="logo" href="./">🎮 MATTBREAD <span>ARCADE</span></a>
+<nav>
+<a href="./">⌂ HOME</a>
+<a href="#games">🎮 GAMES</a>
+<a href="#about">ⓘ ABOUT</a>
+</nav>
+</header>
 
-    <header>
-        <h1>🎮 MattBread Arcade</h1>
-        <p>Classic games. Simple fun. Play anytime.</p>
-    </header>
+<section class="hero">
+<div class="hero-copy">
+<div class="eyebrow">AN ADVENTURE IS WAITING</div>
+<h1>DUNGEON <span>ESCAPE</span></h1>
+<p>Solve the clues. Find the secrets. Explore hidden passages and uncover the mystery buried beneath the dungeon.</p>
+<div class="ribbon">✦ COMING SOON ✦</div>
+</div>
+<div class="dungeon-art" role="img" aria-label="Atmospheric dark fantasy dungeon artwork">
+<div class="art-label">⚔️ ENTER THE UNKNOWN<small>YOUR NEXT ADVENTURE AWAITS</small></div>
+</div>
+</section>
 
-    <main class="games">
+<main id="games">
+<h2 class="section-title">FEATURED GAMES</h2>
+<p class="subtitle">Choose your game and jump straight into the action.</p>
+<div class="games">
 
-        <!-- SNAKE -->
-        <a class="game-card" href="games/snake/">
-            <div class="game-icon">🐍</div>
-            <h3>Snake</h3>
-            <p>
-                Eat the food, grow longer and try to beat your best score.
-            </p>
-            <div class="play">PLAY →</div>
-        </a>
+<article class="card soon-card">
+<div class="thumb">🏰</div>
+<div class="card-body">
+<h3>DUNGEON ESCAPE</h3>
+<div class="play">COMING SOON</div>
+</div>
+</article>
 
-        <!-- PONG -->
-        <a class="game-card" href="games/pong/">
-            <div class="game-icon">🏓</div>
-            <h3>Pong</h3>
-            <p>
-                Classic paddle action. Keep the ball away and score points.
-            </p>
-            <div class="play">PLAY →</div>
-        </a>
+<article class="card">
+<div class="thumb">🐍</div>
+<div class="card-body">
+<h3>SNAKE</h3>
+<a class="play" href="snake-game/">PLAY NOW</a>
+</div>
+</article>
 
-        <!-- BREAKOUT -->
-        <a class="game-card" href="games/breakout/">
-            <div class="game-icon">🧱</div>
-            <h3>Breakout</h3>
-            <p>
-                Break the bricks, keep the ball alive and chase a high score.
-            </p>
-            <div class="play">PLAY →</div>
-        </a>
+<article class="card">
+<div class="thumb">🏓</div>
+<div class="card-body">
+<h3>PONG</h3>
+<a class="play" href="games/pong/">PLAY NOW</a>
+</div>
+</article>
 
-        <!-- TETRIS -->
-        <a class="game-card" href="games/tetris/">
-            <div class="game-icon">🧩</div>
-            <h3>Tetris</h3>
-            <p>
-                Stack blocks, clear lines and chase the highest score.
-            </p>
-            <div class="play">PLAY →</div>
-        </a>
+<article class="card">
+<div class="thumb">🧱</div>
+<div class="card-body">
+<h3>BREAKOUT</h3>
+<a class="play" href="games/breakout/">PLAY NOW</a>
+</div>
+</article>
 
-        <!-- SKY HOPPER -->
-        <a class="game-card" href="games/flappy/">
-            <div class="game-icon">☁️</div>
-            <h3>Sky Hopper</h3>
-            <p>
-                Dodge the pipes, stay in the sky and chase your highest score.
-            </p>
-            <div class="play">PLAY →</div>
-        </a>
+<article class="card">
+<div class="thumb">🧩</div>
+<div class="card-body">
+<h3>MEMORY MATCH</h3>
+<a class="play" href="games/memory-match/">PLAY NOW</a>
+</div>
+</article>
 
-        <!-- MEMORY MATCH -->
-        <a class="game-card" href="games/memory/">
-            <div class="game-icon">🧠</div>
-            <h3>Memory Match</h3>
-            <p>
-                Match the cards, test your memory and chase your best score.
-            </p>
-            <div class="play">PLAY →</div>
-        </a>
+<article class="card">
+<div class="thumb">🚀</div>
+<div class="card-body">
+<h3>SPACE SHOOTER</h3>
+<a class="play" href="games/space-shooter/">PLAY NOW</a>
+</div>
+</article>
 
-        <!-- SPACE SHOOTER -->
-        <a class="game-card" href="games/space-shooter/">
-            <div class="game-icon">🚀</div>
-            <h3>Space Shooter</h3>
-            <p>
-                Blast enemies, survive the attack and chase your highest score.
-            </p>
-            <div class="play">PLAY →</div>
-        </a>
+</div>
+</main>
 
-        <!-- FROGGER -->
-        <a class="game-card" href="games/frogger/">
-            <div class="game-icon">🐸</div>
-            <h3>Frogger</h3>
-            <p>
-                Cross the road, avoid traffic and reach the other side.
-            </p>
-            <div class="play">PLAY →</div>
-        </a>
-
-        <!-- SPACE INVADERS -->
-        <a class="game-card" href="games/space-invaders/">
-            <div class="game-icon">👾</div>
-            <h3>Space Invaders</h3>
-            <p>
-                Defeat the invading aliens, dodge their attacks and chase your highest score.
-            </p>
-            <div class="play">PLAY →</div>
-        </a>
-
-        <!-- RACING -->
-        <a class="game-card" href="games/racing/index.html">
-            <div class="game-icon">🏎️</div>
-            <h3>Racing</h3>
-            <p>
-                Dodge enemy cars, survive the traffic and chase your highest score.
-            </p>
-            <div class="play">PLAY →</div>
-        </a>
-
-        <!-- MORE GAMES -->
-        <div class="game-card coming">
-            <div class="game-icon">🎯</div>
-            <h3>More Games</h3>
-            <p>
-                More arcade games are on the way.
-            </p>
-            <div class="play">COMING SOON</div>
-        </div>
-
-    </main>
-
-    <footer>
-        © 2026 MattBread Arcade
-    </footer>
-
+<footer id="about">
+<p>🎮 MATTBREAD ARCADE</p>
+<p>PLAY • EXPLORE • ENJOY</p>
+</footer>
 </body>
 </html>
