@@ -2,516 +2,323 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dungeon Escape | MattBread Arcade</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dungeon Escape 3D | MattBread Arcade</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#090d16;color:#f2f5ff;font-family:Arial,sans-serif;overflow:hidden}
-canvas{display:block;width:100vw;height:100vh;image-rendering:pixelated}
-#hud{position:fixed;top:14px;left:14px;z-index:2;background:#101827e8;border:1px solid #34445f;border-radius:12px;padding:12px 16px;min-width:210px}
-#hud strong{color:#7cf7ff}
-#health{height:10px;background:#3b1c2b;border-radius:8px;margin-top:8px;overflow:hidden}
-#healthFill{height:100%;width:100%;background:#ff496c;transition:width .15s}
-#help{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:#101827e8;border:1px solid #34445f;border-radius:10px;padding:10px 14px;text-align:center;font-size:13px;width:max-content;max-width:95vw}
-#overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#050812c9;z-index:5;padding:20px}
-.panel{max-width:510px;width:100%;padding:30px;background:linear-gradient(145deg,#17243a,#0c1220);border:1px solid #425b80;border-radius:18px;text-align:center;box-shadow:0 0 50px #00d9ff22}
-h1{font-size:clamp(30px,6vw,48px);margin:0 0 10px;color:#7cf7ff;text-shadow:0 0 18px #00d9ff66}
-p{line-height:1.6;color:#c8d3e8}
-button{cursor:pointer;background:linear-gradient(90deg,#00bcd4,#7164ff);color:white;border:0;border-radius:9px;padding:13px 22px;font-size:16px;font-weight:bold;margin:6px}
-button:hover{filter:brightness(1.15)}
-.small{font-size:12px;color:#8e9cb4}
+body{margin:0;overflow:hidden;background:#080c14;color:#fff;font-family:Arial,sans-serif}
+canvas{display:block}
+#hud{position:fixed;top:12px;left:12px;padding:13px 16px;background:#101b2ddd;border:1px solid #49647f;border-radius:12px;z-index:3;min-width:215px}
+#brand{font-weight:bold;color:#75efff;letter-spacing:1px}
+#stats{font-size:14px;line-height:1.7;margin-top:7px}
+#bar{height:9px;background:#44202c;border-radius:8px;overflow:hidden}
+#health{height:100%;width:100%;background:#ff496c}
+#objective{font-size:12px;color:#ffe09b;margin-top:7px}
+#crosshair{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font-size:23px;color:#dfffff;text-shadow:0 0 8px #00eaff;z-index:3;pointer-events:none}
+#hint{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);z-index:3;background:#101b2ddd;padding:10px 14px;border:1px solid #49647f;border-radius:8px;text-align:center;font-size:12px;white-space:nowrap}
+#back{position:fixed;right:12px;top:12px;z-index:4;color:#85efff;text-decoration:none;background:#101b2ddd;padding:10px;border-radius:8px;font-size:12px}
+#overlay{position:fixed;inset:0;background:#050914dd;z-index:10;display:flex;align-items:center;justify-content:center;padding:18px}
+.panel{width:min(540px,96vw);background:linear-gradient(145deg,#192b42,#0b1220);border:1px solid #496b8b;border-radius:18px;padding:30px;text-align:center;box-shadow:0 20px 70px #0009}
+h1{color:#75efff;font-size:clamp(32px,6vw,49px);margin:0 0 12px}
+p{line-height:1.6;color:#d0dced}
+button{padding:14px 25px;background:linear-gradient(90deg,#00abc5,#665bff);border:0;border-radius:9px;color:white;font-weight:bold;font-size:16px;cursor:pointer}
+#toast{position:fixed;top:24%;left:50%;transform:translateX(-50%);z-index:5;color:#ffe59b;font-weight:bold;text-shadow:0 2px 8px black;text-align:center}
+#gun{position:fixed;right:7%;bottom:-12px;width:190px;height:165px;z-index:2;pointer-events:none;filter:drop-shadow(0 6px 5px #0009)}
+#slide{position:absolute;right:14px;bottom:52px;width:135px;height:42px;background:linear-gradient(#85919a,#2c3945 45%,#111923);border:3px solid #090e14;border-radius:7px;transform:skewY(-8deg)}
+#slide:before{content:"";position:absolute;top:7px;left:10px;width:66px;height:4px;background:#c2ccd3}
+#grip{position:absolute;right:33px;bottom:5px;width:43px;height:78px;background:repeating-linear-gradient(0deg,#222a33 0 5px,#47515b 5px 8px);border:3px solid #0a1017;border-radius:4px 4px 12px 10px;transform:rotate(-12deg);clip-path:polygon(0 0,100% 0,100% 72%,72% 100%,18% 93%)}
+#arm{position:absolute;right:48px;bottom:0;width:78px;height:53px;background:linear-gradient(120deg,#d8ae86,#936144);border-radius:24px 20px 0 0;transform:rotate(-8deg)}
+@media(max-width:600px){#hud{padding:9px;min-width:185px}#stats{font-size:12px}#hint{white-space:normal;width:94%;font-size:11px}#gun{right:-25px;transform:scale(.8);transform-origin:bottom right}}
 </style>
 </head>
 <body>
 <div id="hud">
-  <strong>DUNGEON ESCAPE</strong>
-  <div id="stats">Health: 100 · Enemies: 5</div>
-  <div id="health"><div id="healthFill"></div></div>
-  <div style="margin-top:8px;font-size:13px" id="objective">Find the golden exit.</div>
+ <div id="brand">MATTBREAD // DUNGEON ESCAPE</div>
+ <div id="stats">Health: 100<br>Points: 500<br>Weapon: M1911</div>
+ <div id="bar"><div id="health"></div></div>
+ <div id="objective">Defeat enemies. Buy the outdoor gate.</div>
 </div>
-<div id="help">Move: WASD / Arrow Keys &nbsp; · &nbsp; Attack: Space / Click &nbsp; · &nbsp; Restart: R</div>
-<div id="overlay">
-  <div class="panel">
-    <h1 id="title">DUNGEON ESCAPE</h1>
-    <p id="message">Fight through the dungeon, defeat every monster, and reach the glowing golden exit.</p>
-    <button id="start">ENTER THE DUNGEON</button>
-    <p class="small">A MattBread Arcade adventure</p>
-    <a href="../../../" style="color:#7cf7ff;font-size:13px">← Back to MattBread Arcade</a>
-  </div>
-</div>
+<a id="back" href="../../../">← BACK TO ARCADE</a>
+<div id="crosshair">+</div><div id="toast"></div>
+<div id="gun"><div id="arm"></div><div id="grip"></div><div id="slide"></div></div>
+<div id="hint">WASD move · Mouse look · Click shoot · E buy/open · Shift sprint · R restart</div>
+<div id="overlay"><div class="panel">
+ <h1 id="title">DUNGEON<br>ESCAPE</h1>
+ <p id="message">First-person 3D survival. Start with an M1911 pistol, earn points by shooting monsters, buy stronger weapons from wall stations, and spend 650 points to unlock the outdoor ruins.</p>
+ <button id="start">ENTER THE DUNGEON</button>
+ <p style="font-size:12px;color:#91a9c3">Click to capture mouse · WASD to move · Click to fire · E to interact</p>
+ <a href="../../../" style="color:#75efff;font-size:13px">Back to MattBread Arcade</a>
+</div></div>
 
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script>
-(() => {
+(()=>{
 "use strict";
+const $=id=>document.getElementById(id);
+if(!window.THREE){$("message").textContent="The 3D engine could not load. Check your internet connection and refresh.";return;}
 
-const canvas = document.createElement("canvas");
-document.body.insertBefore(canvas, document.body.firstChild);
-const ctx = canvas.getContext("2d");
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x8a9aaa);
+scene.fog=new THREE.Fog(0x8a9aaa,20,65);
+const camera=new THREE.PerspectiveCamera(76,innerWidth/innerHeight,.1,140);
+camera.rotation.order="YXZ";
 
-const hudStats = document.getElementById("stats");
-const healthFill = document.getElementById("healthFill");
-const objective = document.getElementById("objective");
-const overlay = document.getElementById("overlay");
-const title = document.getElementById("title");
-const message = document.getElementById("message");
-const startButton = document.getElementById("start");
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputEncoding=THREE.sRGBEncoding;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.3;
+document.body.insertBefore(renderer.domElement,document.body.firstChild);
 
-const TILE = 48;
-const MAP = [
-"####################",
-"#P.....#..........E#",
-"#......#..##.......#",
-"#..##.....##..##...#",
-"#..##............###",
-"#......####.........#",
-"###...........##....#",
-"#......##...........#",
-"#..##......###......#",
-"#..##...............#",
-"#......###....##....#",
-"#.............##....#",
-"#..##...............#",
-"#..##...##......##..#",
-"#........##.........#",
-"#.............##....#",
-"#..##...............#",
-"#.............##....#",
-"#...................#",
-"####################"
+scene.add(new THREE.HemisphereLight(0xc8e0ff,0x51402c,1.5));
+scene.add(new THREE.AmbientLight(0xffffff,.55));
+const sun=new THREE.DirectionalLight(0xffe4bd,1.5);
+sun.position.set(-8,18,7);
+sun.castShadow=true;
+sun.shadow.mapSize.set(1024,1024);
+scene.add(sun);
+
+const colliders=[],enemies=[],stations=[],torches=[];
+const material=(c,r=.9,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
+const stone=material(0x596675),stoneDark=material(0x293746),stoneTop=material(0x82909c),floorMat=material(0x414b55),wood=material(0x543622),gold=material(0xffd05b,.35,.3);
+
+function box(w,h,d,mat,x,y,z,solid=true){
+ const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
+ mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;scene.add(mesh);
+ if(solid)colliders.push({x,z,hw:w/2,hz:d/2,mesh});
+ return mesh;
+}
+function floor(w,d,x,z,mat=floorMat){
+ const m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),mat);
+ m.rotation.x=-Math.PI/2;m.position.set(x,0,z);m.receiveShadow=true;scene.add(m);return m;
+}
+function wallX(x,z,length,h=4){box(length,h,.7,stone,x,h/2,z);}
+function wallZ(x,z,length,h=4){box(.7,h,length,stone,x,h/2,z);}
+
+function torch(x,z){
+ box(.12,.65,.12,wood,x,1.9,z,false);
+ const flame=new THREE.Mesh(new THREE.IcosahedronGeometry(.17,1),new THREE.MeshBasicMaterial({color:0xffa33b}));
+ flame.position.set(x,2.35,z);scene.add(flame);
+ const light=new THREE.PointLight(0xffa04a,2.3,11);light.position.set(x,2.4,z);scene.add(light);
+ torches.push({flame,light,phase:Math.random()*10});
+}
+
+// Indoor dungeon with a central gap for the locked outdoor gate.
+floor(34,34,0,0);
+wallX(0,-17,34);wallX(0,17,34);
+wallZ(-17,0,34);wallZ(17,-7,20);
+wallZ(-7,-7,11,3.2);wallX(-11,1,9,3.2);
+wallX(3,6,11,3.5);wallZ(8,-7,9,3.2);
+wallX(-2,-2,7,2.8);wallZ(11,7,8,3.2);
+for(let x=-13;x<=13;x+=7){torch(x,-15.7);torch(x,15.7);}
+torch(-15,-8);torch(15,9);torch(-5,2);torch(5,-11);
+
+// Gate is a solid door until purchased.
+box(1,4,1,stone,17,2,-2.8);
+box(1,4,1,stone,17,2,2.8);
+box(1,.6,6.4,stoneTop,17,3.8,0);
+const gate=box(.35,3.2,4.8,wood,16.65,1.6,0,true);
+const door={x:16.65,z:0,cost:650,mesh:gate,open:false};
+
+// Outdoor area, path, trees, rocks, and low ruined walls.
+floor(46,42,39,0,material(0x354a38));
+floor(30,5,31,0,material(0x66645b));
+wallX(39,-21,38,3);wallX(39,21,38,3);
+wallZ(20,0,42,3);wallZ(58,0,42,3);
+wallX(32,-10,9,1.5);wallZ(45,9,9,1.7);wallX(51,6,8,1.5);
+
+for(const [x,z,s] of [[27,-13,1.4],[35,12,1.7],[48,-12,1.9],[54,14,1.4],[43,-17,1.2]]){
+ const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(s),material(0x58634f));
+ rock.position.set(x,s*.65,z);rock.castShadow=true;scene.add(rock);
+ colliders.push({x,z,hw:s*.8,hz:s*.8,mesh:rock});
+}
+for(const [x,z] of [[29,-15],[40,-15],[52,-15],[31,14],[49,15]]){
+ box(.55,3,.55,material(0x493322),x,1.5,z);
+ const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(2,1),material(0x294b37));
+ crown.position.set(x,4,z);crown.castShadow=true;scene.add(crown);
+ colliders.push({x,z,hw:.65,hz:.65,mesh:crown});
+}
+const moon=new THREE.Mesh(new THREE.SphereGeometry(2,16,12),new THREE.MeshBasicMaterial({color:0xe5edff}));
+moon.position.set(48,17,-18);scene.add(moon);
+const moonLight=new THREE.PointLight(0x9dbbff,2,35);moonLight.position.set(44,12,-7);scene.add(moonLight);
+
+const weapons=[
+ {name:"M1911",cost:0,damage:35,rate:.32,color:0x8e9ba7},
+ {name:"GLOCK 17",cost:450,damage:28,rate:.23,color:0x343a42},
+ {name:"MP5",cost:1100,damage:19,rate:.105,color:0x525d67},
+ {name:"AK-47",cost:1800,damage:42,rate:.22,color:0x77533a},
+ {name:"PUMP SHOTGUN",cost:1500,damage:17,rate:.68,color:0x69452c}
 ];
+let weapon=weapons[0],points=500,health=100,started=false,gameOver=false,gateOpen=false,fireCooldown=0,hasLock=false,yaw=0,pitch=0;
+const player={x:0,z:10,r:.42,speed:5.1};
+const keys=Object.create(null);
 
-const mapHeight = MAP.length;
-const mapWidth = Math.max(...MAP.map(row => row.length));
-const worldWidth = mapWidth * TILE;
-const worldHeight = mapHeight * TILE;
-
-let walls = [];
-let enemies = [];
-let particles = [];
-let player;
-let started = false;
-let ended = false;
-let lastTime = 0;
-let attackCooldown = 0;
-let hurtFlash = 0;
-const keys = Object.create(null);
-
-function resize() {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  canvas.width = Math.floor(innerWidth * dpr);
-  canvas.height = Math.floor(innerHeight * dpr);
-  canvas.style.width = innerWidth + "px";
-  canvas.style.height = innerHeight + "px";
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+function makeStation(name,x,z,w){
+ const g=new THREE.Group();g.position.set(x,1.65,z);scene.add(g);
+ const plaque=new THREE.Mesh(new THREE.BoxGeometry(1.7,1.3,.18),material(0x111a26,.5,.3));g.add(plaque);
+ const gun=new THREE.Mesh(new THREE.BoxGeometry(.85,.18,.23),material(w.color,.45,.5));gun.position.set(0,.1,.14);g.add(gun);
+ const grip=new THREE.Mesh(new THREE.BoxGeometry(.18,.34,.2),material(0x20252a));grip.position.set(-.12,-.17,.16);g.add(grip);
+ const strip=new THREE.Mesh(new THREE.BoxGeometry(1.4,.06,.05),new THREE.MeshBasicMaterial({color:0x64edff}));strip.position.set(0,-.48,.15);g.add(strip);
+ stations.push({name,x,z,weapon:w});
 }
-window.addEventListener("resize", resize);
-resize();
+makeStation("GLOCK 17",-14,-8,weapons[1]);
+makeStation("MP5",5,13,weapons[2]);
+makeStation("AK-47",12,-12,weapons[3]);
+makeStation("PUMP SHOTGUN",28,1,weapons[4]);
 
-function resetGame() {
-  walls = [];
-  enemies = [];
-  particles = [];
-  player = {
-    x: TILE * 1.5, y: TILE * 1.5,
-    r: 13, speed: 185, health: 100,
-    facingX: 1, facingY: 0,
-    attack: 0, invulnerable: 0
-  };
-  attackCooldown = 0;
-  hurtFlash = 0;
-  ended = false;
-
-  for (let y = 0; y < mapHeight; y++) {
-    for (let x = 0; x < mapWidth; x++) {
-      const cell = (MAP[y] || "")[x] || "#";
-      if (cell === "#") walls.push({x, y});
-      if (cell === "E") {
-        enemies.push({
-          x: x * TILE + TILE / 2,
-          y: y * TILE + TILE / 2,
-          r: 14, health: 55, speed: 57,
-          attackCooldown: Math.random(),
-          alive: true, wander: Math.random() * 6
-        });
-      }
-    }
-  }
+function addEnemy(x,z){
+ const group=new THREE.Group();
+ const body=new THREE.Mesh(new THREE.CapsuleGeometry(.38,.7,4,8),material(0x71364b));
+ body.position.y=.85;body.castShadow=true;group.add(body);
+ const head=new THREE.Mesh(new THREE.SphereGeometry(.28,12,10),material(0x9b806c));
+ head.position.y=1.52;head.castShadow=true;group.add(head);
+ const eyes=new THREE.Mesh(new THREE.BoxGeometry(.22,.055,.05),new THREE.MeshBasicMaterial({color:0xff344f}));
+ eyes.position.set(0,1.55,.25);group.add(eyes);
+ group.position.set(x,0,z);scene.add(group);
+ enemies.push({group,x,z,hp:100,speed:1.2+Math.random()*.4,alive:true,attack:Math.random()});
 }
+[[-12,10],[-2,11],[8,11],[-12,-10],[4,-11],[11,2],[27,2],[34,-8],[45,10],[51,-5]].forEach(p=>addEnemy(p[0],p[1]));
 
-function isWallAt(x, y) {
-  const tx = Math.floor(x / TILE);
-  const ty = Math.floor(y / TILE);
-  if (ty < 0 || ty >= mapHeight || tx < 0 || tx >= mapWidth) return true;
-  return ((MAP[ty] || "")[tx] || "#") === "#";
+function collides(x,z,r=.42){
+ for(const c of colliders){
+  if(Math.abs(x-c.x)<c.hw+r&&Math.abs(z-c.z)<c.hz+r)return true;
+ }
+ return false;
+}
+function movePlayer(dx,dz){
+ if(!collides(player.x+dx,player.z))player.x+=dx;
+ if(!collides(player.x,player.z+dz))player.z+=dz;
+}
+function near(x,z,d=2.6){return Math.hypot(player.x-x,player.z-z)<d;}
+function toast(t){$("toast").textContent=t;$("toast").dataset.until=String(performance.now()+1800);}
+
+function interact(){
+ if(!started||gameOver)return;
+ if(!gateOpen&&near(door.x,door.z,3.4)){
+  if(points<door.cost){toast("NEED 650 POINTS TO OPEN THE GATE");return;}
+  points-=door.cost;gateOpen=true;door.open=true;scene.remove(door.mesh);
+  const i=colliders.findIndex(c=>c.mesh===door.mesh);if(i>=0)colliders.splice(i,1);
+  for(let i=0;i<5;i++)addEnemy(26+i*2,i%2?5:-5);
+  toast("GATE OPEN! OUTDOOR RUINS UNLOCKED");return;
+ }
+ const s=stations.find(a=>near(a.x,a.z,2.5));
+ if(s){
+  if(weapon===s.weapon){toast("ALREADY EQUIPPED");return;}
+  if(points<s.weapon.cost){toast("NEED "+s.weapon.cost+" POINTS FOR "+s.name);return;}
+  points-=s.weapon.cost;weapon=s.weapon;toast("PURCHASED "+weapon.name);return;
+ }
+ toast("MOVE CLOSER TO A DOOR OR WEAPON WALL-BUY");
 }
 
-// Circle-versus-tile collision. Walls and movement use the same map.
-function blocked(x, y, radius) {
-  const minX = Math.floor((x - radius) / TILE);
-  const maxX = Math.floor((x + radius) / TILE);
-  const minY = Math.floor((y - radius) / TILE);
-  const maxY = Math.floor((y + radius) / TILE);
-
-  for (let ty = minY; ty <= maxY; ty++) {
-    for (let tx = minX; tx <= maxX; tx++) {
-      if (ty < 0 || ty >= mapHeight || tx < 0 || tx >= mapWidth ||
-          ((MAP[ty] || "")[tx] || "#") === "#") {
-        const left = tx * TILE, top = ty * TILE;
-        const cx = Math.max(left, Math.min(x, left + TILE));
-        const cy = Math.max(top, Math.min(y, top + TILE));
-        const dx = x - cx, dy = y - cy;
-        if (dx * dx + dy * dy < radius * radius) return true;
-      }
-    }
-  }
-  return false;
+function shoot(){
+ if(!started||gameOver||fireCooldown>0)return;
+ fireCooldown=weapon.rate;
+ const gun=$("gun");gun.style.transform="translateY(10px) rotate(-2deg)";
+ setTimeout(()=>gun.style.transform="",65);
+ const origin=new THREE.Vector3(player.x,1.65,player.z);
+ const dir=new THREE.Vector3(-Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch)).normalize();
+ let target=null,best=Infinity;
+ for(const e of enemies){
+  if(!e.alive)continue;
+  const p=new THREE.Vector3(e.x,1.1,e.z),to=p.clone().sub(origin),along=to.dot(dir);
+  if(along<0||along>32)continue;
+  const closest=origin.clone().addScaledVector(dir,along);
+  if(closest.distanceTo(p)<.9&&along<best){best=along;target=e;}
+ }
+ if(target){
+  target.hp-=weapon.damage;points+=10;toast("HIT +10");
+  if(target.hp<=0){target.alive=false;scene.remove(target.group);points+=90;toast("ENEMY ELIMINATED +90");}
+ }
 }
 
-function moveEntity(entity, dx, dy) {
-  if (!blocked(entity.x + dx, entity.y, entity.r)) entity.x += dx;
-  if (!blocked(entity.x, entity.y + dy, entity.r)) entity.y += dy;
+function updateHUD(){
+ $("stats").innerHTML="Health: "+Math.ceil(health)+"<br>Points: "+points+"<br>Weapon: "+weapon.name+" · Ammo: ∞";
+ $("health").style.width=Math.max(0,health)+"%";
+ $("objective").textContent=gateOpen?"OUTDOOR RUINS UNLOCKED · Clear enemies and reach the far exit":"Earn points · Purchase the 650-point gate";
+}
+function endGame(won){
+ gameOver=true;started=false;
+ if(document.pointerLockElement)document.exitPointerLock();
+ $("overlay").style.display="flex";
+ $("title").innerHTML=won?"DUNGEON<br>CONQUERED":"YOU WERE OVERRUN";
+ $("message").textContent=won?"The outdoor ruins are secured. You escaped!":"The monsters got you. Try again, earn points, and buy stronger weapons.";
+ startBtn.textContent="PLAY AGAIN";
+}
+function restart(){
+ player.x=0;player.z=10;health=100;points=500;weapon=weapons[0];gateOpen=false;gameOver=false;started=true;
+ for(const e of enemies)scene.remove(e.group);enemies.length=0;
+ [[-12,10],[-2,11],[8,11],[-12,-10],[4,-11],[11,2],[27,2],[34,-8],[45,10],[51,-5]].forEach(p=>addEnemy(...p));
+ door.open=false;scene.add(door.mesh);
+ if(!colliders.some(c=>c.mesh===door.mesh))colliders.push({x:door.x,z:door.z,hw:.175,hz:2.4,mesh:door.mesh});
+ $("overlay").style.display="none";updateHUD();
 }
 
-function spawnParticles(x, y, color, amount = 8) {
-  for (let i = 0; i < amount; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const speed = 35 + Math.random() * 130;
-    particles.push({
-      x, y,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      life: .25 + Math.random() * .45,
-      maxLife: .7,
-      color
-    });
-  }
-}
-
-function attack() {
-  if (!started || ended || attackCooldown > 0) return;
-  attackCooldown = .38;
-  player.attack = .19;
-
-  const reach = 57;
-  let hitSomething = false;
-  for (const enemy of enemies) {
-    if (!enemy.alive) continue;
-    const dx = enemy.x - player.x;
-    const dy = enemy.y - player.y;
-    const distance = Math.hypot(dx, dy);
-    if (distance > reach + enemy.r) continue;
-    if (distance > 0 &&
-        (dx / distance) * player.facingX +
-        (dy / distance) * player.facingY < .15) continue;
-
-    enemy.health -= 30;
-    spawnParticles(enemy.x, enemy.y, "#ffbf69", 10);
-    hitSomething = true;
-    if (enemy.health <= 0) {
-      enemy.alive = false;
-      spawnParticles(enemy.x, enemy.y, "#ff496c", 18);
-    }
-  }
-  if (!hitSomething) spawnParticles(
-    player.x + player.facingX * 36,
-    player.y + player.facingY * 36,
-    "#7cf7ff", 4
-  );
-}
-
-function aliveEnemies() {
-  return enemies.filter(e => e.alive).length;
-}
-
-function showEnd(won) {
-  ended = true;
-  started = false;
-  overlay.style.display = "flex";
-  title.textContent = won ? "DUNGEON CLEARED!" : "YOU WERE DEFEATED";
-  message.textContent = won
-    ? "Every monster has fallen. You escaped the dungeon!"
-    : "The dungeon was too dangerous this time. Give it another try.";
-  startButton.textContent = "PLAY AGAIN";
-}
-
-function update(dt) {
-  if (!started || ended) return;
-  dt = Math.min(dt, .035);
-
-  attackCooldown = Math.max(0, attackCooldown - dt);
-  player.attack = Math.max(0, player.attack - dt);
-  player.invulnerable = Math.max(0, player.invulnerable - dt);
-  hurtFlash = Math.max(0, hurtFlash - dt);
-
-  let dx = 0, dy = 0;
-  if (keys.KeyW || keys.ArrowUp) dy -= 1;
-  if (keys.KeyS || keys.ArrowDown) dy += 1;
-  if (keys.KeyA || keys.ArrowLeft) dx -= 1;
-  if (keys.KeyD || keys.ArrowRight) dx += 1;
-
-  if (dx || dy) {
-    const length = Math.hypot(dx, dy);
-    dx /= length; dy /= length;
-    player.facingX = dx;
-    player.facingY = dy;
-    moveEntity(player, dx * player.speed * dt, dy * player.speed * dt);
-  }
-
-  for (const enemy of enemies) {
-    if (!enemy.alive) continue;
-    enemy.attackCooldown -= dt;
-    enemy.wander += dt;
-
-    const vx = player.x - enemy.x;
-    const vy = player.y - enemy.y;
-    const distance = Math.hypot(vx, vy);
-
-    if (distance < TILE * 5 && distance > player.r + enemy.r + 2) {
-      moveEntity(enemy, vx / distance * enemy.speed * dt,
-                        vy / distance * enemy.speed * dt);
-    } else if (distance > player.r + enemy.r + 2) {
-      const wx = Math.cos(enemy.wander) * .35;
-      const wy = Math.sin(enemy.wander) * .35;
-      moveEntity(enemy, wx * enemy.speed * dt, wy * enemy.speed * dt);
-    }
-
-    const nowDistance = Math.hypot(player.x - enemy.x, player.y - enemy.y);
-    if (nowDistance < player.r + enemy.r + 5 &&
-        enemy.attackCooldown <= 0 && player.invulnerable <= 0) {
-      player.health -= 10;
-      player.invulnerable = .7;
-      enemy.attackCooldown = .85;
-      hurtFlash = .18;
-      spawnParticles(player.x, player.y, "#ff496c", 8);
-      if (player.health <= 0) {
-        player.health = 0;
-        showEnd(false);
-      }
-    }
-  }
-
-  for (const p of particles) {
-    p.x += p.vx * dt;
-    p.y += p.vy * dt;
-    p.life -= dt;
-  }
-  particles = particles.filter(p => p.life > 0);
-
-  const remaining = aliveEnemies();
-  hudStats.textContent = `Health: ${player.health} · Enemies: ${remaining}`;
-  healthFill.style.width = player.health + "%";
-  objective.textContent = remaining
-    ? `Defeat the remaining ${remaining} monster${remaining === 1 ? "" : "s"}.`
-    : "The exit is open! Find the golden door.";
-
-  // Exit tile is only usable after all enemies are defeated.
-  if (remaining === 0) {
-    const exitX = (mapWidth - 2) * TILE + TILE / 2;
-    const exitY = TILE * 1.5;
-    if (Math.hypot(player.x - exitX, player.y - exitY) < TILE * .6) {
-      showEnd(true);
-    }
-  }
-}
-
-function draw() {
-  const w = innerWidth, h = innerHeight;
-  ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = "#070b13";
-  ctx.fillRect(0, 0, w, h);
-  if (!player) return;
-
-  // Camera follows the player.
-  const cameraX = Math.max(0, Math.min(worldWidth - w, player.x - w / 2));
-  const cameraY = Math.max(0, Math.min(worldHeight - h, player.y - h / 2));
-  ctx.save();
-  ctx.translate(-cameraX, -cameraY);
-
-  // Solid stone floor: no floating planks or gaps.
-  for (let y = 0; y < mapHeight; y++) {
-    for (let x = 0; x < mapWidth; x++) {
-      const px = x * TILE, py = y * TILE;
-      ctx.fillStyle = (x + y) % 2 ? "#343e4b" : "#3b4654";
-      ctx.fillRect(px, py, TILE, TILE);
-      ctx.strokeStyle = "#29323e";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(px + 1, py + 1, TILE - 2, TILE - 2);
-      // Subtle stone wear.
-      ctx.fillStyle = "#ffffff09";
-      ctx.fillRect(px + 5, py + 5, 9, 2);
-    }
-  }
-
-  // Walls are drawn from the exact same map used for collision.
-  for (const wall of walls) {
-    const x = wall.x * TILE, y = wall.y * TILE;
-    ctx.fillStyle = "#172131";
-    ctx.fillRect(x, y, TILE, TILE);
-    ctx.fillStyle = "#394b61";
-    ctx.fillRect(x + 2, y + 2, TILE - 4, TILE - 7);
-    ctx.fillStyle = "#53657a";
-    ctx.fillRect(x + 4, y + 4, TILE - 8, 5);
-    ctx.fillStyle = "#101724";
-    ctx.fillRect(x + 3, y + TILE - 7, TILE - 6, 5);
-    ctx.strokeStyle = "#101722";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x + 1, y + 1, TILE - 2, TILE - 2);
-  }
-
-  // Exit: the gate glows brighter once every enemy is defeated.
-  const exitX = (mapWidth - 2) * TILE + TILE / 2;
-  const exitY = TILE * 1.5;
-  const exitOpen = aliveEnemies() === 0;
-  const glow = ctx.createRadialGradient(exitX, exitY, 3, exitX, exitY, 72);
-  glow.addColorStop(0, exitOpen ? "#ffe87c66" : "#e9a73520");
-  glow.addColorStop(1, "#e9a73500");
-  ctx.fillStyle = glow;
-  ctx.fillRect(exitX - 75, exitY - 75, 150, 150);
-  ctx.fillStyle = exitOpen ? "#ffe06b" : "#96733b";
-  ctx.fillRect(exitX - 15, exitY - 22, 30, 44);
-  ctx.fillStyle = "#191d27";
-  ctx.fillRect(exitX - 9, exitY - 16, 18, 36);
-  ctx.fillStyle = "#ffe87b";
-  ctx.beginPath();
-  ctx.arc(exitX + 5, exitY + 1, 3, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Enemies.
-  for (const enemy of enemies) {
-    if (!enemy.alive) continue;
-    ctx.fillStyle = "#00000055";
-    ctx.beginPath();
-    ctx.ellipse(enemy.x, enemy.y + 8, 17, 8, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = "#8e2c54";
-    ctx.beginPath();
-    ctx.arc(enemy.x, enemy.y, enemy.r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#d64a70";
-    ctx.beginPath();
-    ctx.arc(enemy.x - 3, enemy.y - 4, 9, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#fff0d7";
-    ctx.fillRect(enemy.x - 7, enemy.y - 5, 4, 4);
-    ctx.fillRect(enemy.x + 3, enemy.y - 5, 4, 4);
-    ctx.fillStyle = "#ff496c";
-    ctx.fillRect(enemy.x - 15, enemy.y - 24, 30, 4);
-    ctx.fillStyle = "#80ff9f";
-    ctx.fillRect(enemy.x - 15, enemy.y - 24,
-      30 * Math.max(0, enemy.health) / 55, 4);
-  }
-
-  // Player and sword.
-  if (player.invulnerable <= 0 || Math.floor(performance.now() / 80) % 2 === 0) {
-    ctx.fillStyle = "#00000066";
-    ctx.beginPath();
-    ctx.ellipse(player.x, player.y + 8, 17, 8, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = "#2463a6";
-    ctx.beginPath();
-    ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#53b7ff";
-    ctx.beginPath();
-    ctx.arc(player.x - 3, player.y - 5, 9, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#f0d4a6";
-    ctx.beginPath();
-    ctx.arc(player.x, player.y - 3, 6, 0, Math.PI * 2);
-    ctx.fill();
-
-    const swordLength = player.attack > 0 ? 39 : 25;
-    const sx = player.x + player.facingX * swordLength;
-    const sy = player.y + player.facingY * swordLength;
-    ctx.strokeStyle = "#d7f8ff";
-    ctx.lineWidth = player.attack > 0 ? 7 : 4;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.moveTo(player.x + player.facingX * 8, player.y + player.facingY * 8);
-    ctx.lineTo(sx, sy);
-    ctx.stroke();
-    ctx.strokeStyle = "#f4bf65";
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(sx - player.facingY * 5, sy + player.facingX * 5);
-    ctx.lineTo(sx + player.facingY * 5, sy - player.facingX * 5);
-    ctx.stroke();
-  }
-
-  // Combat particles.
-  for (const p of particles) {
-    ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
-    ctx.fillStyle = p.color;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.globalAlpha = 1;
-
-  // Atmospheric darkness around the player with a large clear sight radius.
-  const light = ctx.createRadialGradient(player.x, player.y, 55, player.x, player.y, 310);
-  light.addColorStop(0, "#00000000");
-  light.addColorStop(.7, "#02061118");
-  light.addColorStop(1, "#020611b8");
-  ctx.fillStyle = light;
-  ctx.fillRect(cameraX, cameraY, w, h);
-
-  ctx.restore();
-
-  if (hurtFlash > 0) {
-    ctx.fillStyle = `rgba(255,35,80,${hurtFlash * .6})`;
-    ctx.fillRect(0, 0, w, h);
-  }
-}
-
-function frame(time) {
-  const dt = lastTime ? (time - lastTime) / 1000 : 0;
-  lastTime = time;
-  update(dt);
-  draw();
-  requestAnimationFrame(frame);
-}
-
-function startGame() {
-  if (started) return;
-  resetGame();
-  started = true;
-  ended = false;
-  overlay.style.display = "none";
-  lastTime = 0;
-}
-
-startButton.addEventListener("click", startGame);
-
-document.addEventListener("keydown", event => {
-  keys[event.code] = true;
-  if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.code)) {
-    event.preventDefault();
-  }
-  if (event.code === "Enter" && !started) startGame();
-  if (event.code === "Space") attack();
-  if (event.code === "KeyR") {
-    resetGame();
-    started = true;
-    ended = false;
-    overlay.style.display = "none";
-  }
+const cameraWeaponLight=new THREE.PointLight(0xffc27b,0,5);
+camera.add(cameraWeaponLight);scene.add(camera);
+function lockMouse(){renderer.domElement.requestPointerLock?.();}
+startBtn.addEventListener("click",()=>{
+ if(gameOver)restart();else{started=true;$("overlay").style.display="none";}
+ lockMouse();
+});
+document.addEventListener("pointerlockchange",()=>hasLock=document.pointerLockElement===renderer.domElement);
+document.addEventListener("mousemove",e=>{
+ if(!started||!hasLock)return;
+ yaw-=e.movementX*.0022;pitch-=e.movementY*.0022;
+ pitch=Math.max(-1.2,Math.min(1.2,pitch));
+});
+document.addEventListener("keydown",e=>{
+ keys[e.code]=true;
+ if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.code))e.preventDefault();
+ if(e.code==="Enter"&&!started){if(gameOver)restart();else{started=true;$("overlay").style.display="none";}}
+ if(e.code==="KeyE")interact();
+ if(e.code==="KeyR")restart();
+});
+document.addEventListener("keyup",e=>keys[e.code]=false);
+window.addEventListener("blur",()=>{for(const k in keys)keys[k]=false;});
+renderer.domElement.addEventListener("click",()=>{
+ if(started&&!hasLock)lockMouse();
+ else shoot();
+});
+window.addEventListener("resize",()=>{
+ camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);
 });
 
-document.addEventListener("keyup", event => {
-  keys[event.code] = false;
-});
-window.addEventListener("blur", () => {
-  for (const key in keys) keys[key] = false;
-});
-canvas.addEventListener("pointerdown", event => {
-  if (event.button === 0) attack();
-});
-
-resetGame();
-requestAnimationFrame(frame);
+let last=performance.now();
+function loop(now){
+ requestAnimationFrame(loop);
+ const dt=Math.min((now-last)/1000,.04);last=now;
+ if(started&&!gameOver){
+  fireCooldown=Math.max(0,fireCooldown-dt);
+  let f=0,s=0;
+  if(keys.KeyW||keys.ArrowUp)f++;
+  if(keys.KeyS||keys.ArrowDown)f--;
+  if(keys.KeyD||keys.ArrowRight)s++;
+  if(keys.KeyA||keys.ArrowLeft)s--;
+  const speed=player.speed*(keys.ShiftLeft||keys.ShiftRight?1.4:1);
+  if(f||s){const n=Math.hypot(f,s);f/=n;s/=n;movePlayer((-Math.sin(yaw)*f+Math.cos(yaw)*s)*speed*dt,(-Math.cos(yaw)*f-Math.sin(yaw)*s)*speed*dt);}
+  for(const e of enemies){
+   if(!e.alive)continue;
+   const vx=player.x-e.x,vz=player.z-e.z,dist=Math.hypot(vx,vz);e.attack-=dt;
+   if(dist<23&&dist>1.05){
+    const nx=e.x+vx/dist*e.speed*dt,nz=e.z+vz/dist*e.speed*dt;
+    if(!collides(nx,e.z,.32))e.x=nx;
+    if(!collides(e.x,nz,.32))e.z=nz;
+    e.group.position.set(e.x,0,e.z);e.group.lookAt(player.x,0,player.z);
+   }
+   if(dist<1.35&&e.attack<=0){health-=8;e.attack=1;if(health<=0){health=0;endGame(false);}}
+  }
+  if(gateOpen&&enemies.every(e=>!e.alive)&&player.x>53&&Math.abs(player.z)<4)endGame(true);
+  camera.position.set(player.x,1.65,player.z);camera.rotation.set(pitch,yaw,0,"YXZ");
+  for(const t of torches){t.light.intensity=2.1+Math.random()*.65;t.flame.scale.setScalar(.8+Math.random()*.5);}
+  updateHUD();
+ }
+ if(Number($("toast").dataset.until||0)<now)$("toast").textContent="";
+ renderer.render(scene,camera);
+}
+updateHUD();requestAnimationFrame(loop);
 })();
 </script>
 </body>
